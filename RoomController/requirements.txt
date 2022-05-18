@@ -1,4 +1,0 @@
-PyQt5==5.14.1
-requests==2.22.0
-https://github.com/hiransarkar21/python-mpv
-simplejson==3.16.0
