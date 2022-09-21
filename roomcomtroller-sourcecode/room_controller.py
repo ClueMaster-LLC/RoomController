@@ -25,6 +25,7 @@ class RoomController:
         self.discover_new_relays_request_api = None
         self.general_request_api = None
         self.search_for_devices_id = 12
+        self.null_responses = ["No room controller found", "No request found", "No record found"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.known_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "known_devices.json")
@@ -65,29 +66,32 @@ class RoomController:
                 print(">>> Console Output - Searching for new input relays request ...")
 
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
-                request_id = relays_discovery_request.json()["RequestID"]
 
-                if request_id == self.search_for_devices_id:
+                if relays_discovery_request.text not in self.null_responses:
+                    request_id = relays_discovery_request.json()["RequestID"]
 
-                    print(">>> Console Output - Searching for Input Replays ....")
-                    print(">>> Console Output - Acknowledging request ...")
-                    self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
-                    requests.post(self.general_request_api, headers=self.api_headers)
-
-                else:
-                    print(">>> Console Output - Request id ", relays_discovery_request.json()["RequestID"])
+                    if request_id == self.search_for_devices_id:
+                        print(">>> Console Output - Acknowledging request for Input Relay with RequestId ", request_id)
+                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
+                        requests.post(self.general_request_api, headers=self.api_headers)
+                    else:
+                        print(">>> Console Output - Request id ", relays_discovery_request.json()["RequestID"])
 
                 time.sleep(1)
 
             except requests.exceptions.ConnectionError:
                 # sleep for 1 sec before trying again
+                print(">>> Console Output - room_controller.py Connection Error")
                 time.sleep(1)
                 continue
 
-            except requests.exceptions.JSONDecodeError:
+            except requests.exceptions.JSONDecodeError as json_error:
+                print(">>> Console Output - room_controller.py JsonDecodeError")
+                print(">>> Console Output - Error ", json_error)
                 pass
 
             except KeyboardInterrupt:
+                print(">>> Console Output - room_controller.py Keyboard Interrupt")
                 break
 
     @staticmethod

@@ -27,7 +27,7 @@ class Authentication:
         self.api_bearer_key = None
         self.device_unique_id = None
         self.null_responses = ["No room controller found", "No request found", ""]
-        
+
         # instance methods
         self.configuration()
         self.execution_environment()
@@ -62,7 +62,8 @@ class Authentication:
                 request_id = device_request_api_response.json()["DeviceRequestid"]
 
                 # acknowledging requests
-                identify_device_api_url = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
+                identify_device_api_url = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                              request_id=request_id)
                 requests.post(identify_device_api_url, headers=self.api_headers)
                 print(">>> Console Output - Acknowledging Requestid ", request_id)
 
@@ -71,8 +72,11 @@ class Authentication:
 
         except requests.exceptions.ConnectionError:
             # if the app faces connection error when making api calls, then pass
-            print(">>> Console Output - Connection Error")
+            print(">>> Console Output - authentication.py Connection Error")
             pass
+
+        except KeyboardInterrupt:
+            print(">>> Console Output - authentication.py Keyboard Interrupt")
 
         except json.decoder.JSONDecodeError as e:
             # if the app faces json decode error when opening json files then pass
@@ -84,7 +88,7 @@ class Authentication:
             if "401 Client Error" in str(request_error):
                 self.reset_room_controller()
             else:
-                print(">> Console output - Not a 401 error Master Except Block")
+                print(">>> Console output - authentication.py Not a 401 error Master Except Block")
                 print(request_error)
 
     def reset_room_controller(self):

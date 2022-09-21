@@ -26,7 +26,7 @@ class AutoStartup:
 
         # global attributes
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
-        self.null_responses = ["No room controller found", "No request found", ""]
+        self.null_responses = ["No room controller found", "No request found", "No record found"]
         self.device_status = True
 
         # instance methods
@@ -60,7 +60,7 @@ class AutoStartup:
             while True:
                 try:
                     room_controller_response = requests.get(get_rc_request_api, headers=api_header)
-                    if room_controller_response.text == "No room controller found":
+                    if room_controller_response.status_code in [401, 500, 501]:
 
                         print(">>> Console output - API token invalid. Creating New Token")
                         new_api_bearer_key = self.generate_secure_api_token(device_id=device_unique_id)
@@ -70,9 +70,19 @@ class AutoStartup:
                     else:
                         self.device_status = True
 
+                    if room_controller_response.text not in self.null_responses:
+                        temp_response = room_controller_response.json()
+                        if temp_response["DeviceRequestid"] <= 7:
+                            self.device_status = False
+                        else:
+                            pass
+
+                    else:
+                        self.device_status = True
+
                     # committing newly generated token to unique_ids_file
                     ipv4_address = self.fetch_device_ipv4_address()
-                    json_response_of_unique_ids_file["IPv4 Address"] = ipv4_address
+                    json_response_of_unique_ids_file["ip_address"] = ipv4_address
 
                     with open(self.unique_ids_file, "w") as unique_code_json_file:
                         json.dump(json_response_of_unique_ids_file, unique_code_json_file)
@@ -80,6 +90,7 @@ class AutoStartup:
                     self.validate_device_status()
 
                 except requests.exceptions.ConnectionError:
+                    print(">>> Console Output - auto_startup.py Connection Error")
                     time.sleep(2)
                     continue
 
@@ -97,6 +108,7 @@ class AutoStartup:
             with open(self.unique_ids_file, "w") as unique_ids_file:
                 json.dump(unique_ids_dictionary, unique_ids_file)
 
+            print(">>> Console Output - MAC ADDRESS ", device_macaddress)
             self.device_status = False
             self.validate_device_status()
 
@@ -120,6 +132,7 @@ class AutoStartup:
                 return response["apiKey"]
 
             except requests.exceptions.ConnectionError:
+                print(">>> Console Output - auto_startup.py Connection Error")
                 time.sleep(3)
                 pass
 
