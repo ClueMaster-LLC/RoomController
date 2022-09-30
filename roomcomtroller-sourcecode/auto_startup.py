@@ -93,6 +93,13 @@ class AutoStartup:
                     time.sleep(2)
                     continue
 
+                except json.decoder.JSONDecodeError as json_error:
+                    print(">>> Console Output - room_controller.py JsonDecodeError")
+                    print(">>> Console Output - Error ", json_error)
+                    i_request = requests.get(get_rc_request_api, headers=api_header).text
+                    print(">>> Current General Request API Response - ", i_request)
+                    pass
+
                 else:
                     break
 

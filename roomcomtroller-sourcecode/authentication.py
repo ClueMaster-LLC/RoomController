@@ -78,10 +78,16 @@ class Authentication:
         except KeyboardInterrupt:
             print(">>> Console Output - authentication.py Keyboard Interrupt")
 
-        except json.decoder.JSONDecodeError as e:
-            # if the app faces json decode error when opening json files then pass
-            print(e)
-            print(requests.get(self.device_request_api_url, headers=self.api_headers).text)
+        except json.decoder.JSONDecodeError as json_error:
+            print(">>> Console Output - room_controller.py JsonDecodeError")
+            print(">>> Console Output - Error ", json_error)
+            i_request = requests.get(self.device_request_api_url, headers=self.api_headers).text
+            print(">>> Current General Request API Response - ", i_request)
+            pass
+
+        except requests.exceptions.JSONDecodeError as json_error:
+            print(">>> Console Output - room_controller.py JsonDecodeError")
+            print(">>> Console Output - Error ", json_error)
             pass
 
         except requests.exceptions.HTTPError as request_error:
