@@ -54,17 +54,9 @@ class RoomController:
             self.discover_new_relays_request_api = NEW_RELAYS_DISCOVERY_REQUEST.format(device_id=device_unique_id)
 
     def execution_environment(self):
-        if os.path.isfile(self.known_devices_file):
-            with open(self.known_devices_file) as known_devices_file_i:
-                json_response_of_known_devices_file = json.load(known_devices_file_i)
-
-            mac_address_of_known_devices = json_response_of_known_devices_file["devices_mac"]
-            self.connect_and_stream_data(mac_ids=mac_address_of_known_devices)
-
         while True:
             try:
                 print(">>> Console Output - Searching for new input relays request ...")
-
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
 
                 if relays_discovery_request.text not in self.null_responses:
