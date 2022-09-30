@@ -12,7 +12,7 @@ from requests.structures import CaseInsensitiveDict
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-MASTER_DIRECTORY = os.path.join(os.getcwd(), "CluemasterRoomController")
+MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 
