@@ -37,7 +37,7 @@ class AutoStartup:
 
     def execution_environment(self):
         # the main functionalities of the splash screen lies here -----
-        time.sleep(2)
+        time.sleep(1)
 
         if os.path.isdir(APPLICATION_DATA_DIRECTORY) is False:
             os.makedirs(APPLICATION_DATA_DIRECTORY)
@@ -90,7 +90,7 @@ class AutoStartup:
 
                 except requests.exceptions.ConnectionError:
                     print(">>> Console Output - auto_startup.py Connection Error")
-                    time.sleep(2)
+                    time.sleep(1)
                     continue
 
                 except json.decoder.JSONDecodeError as json_error:
@@ -153,7 +153,7 @@ class AutoStartup:
 
             except requests.exceptions.ConnectionError:
                 print(">>> Console Output - auto_startup.py Connection Error")
-                time.sleep(3)
+                time.sleep(1)
                 pass
 
     @staticmethod

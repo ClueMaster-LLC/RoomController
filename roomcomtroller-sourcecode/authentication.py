@@ -49,7 +49,7 @@ class Authentication:
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 if device_request_api_response.text in self.null_responses:
                     print(">>> Console output - No Registration Requests Found")
-                    time.sleep(2)
+                    time.sleep(1)
                     continue
 
                 else:
