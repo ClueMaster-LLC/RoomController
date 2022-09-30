@@ -116,12 +116,12 @@ class AutoStartup:
         for i in psutil.net_if_addrs().items():
             interface_ip_address = i[1][0][1]
             if interface_ip_address == ip_address:
-                i_mac_address = i[1][2][1]
+                i_mac_address = i[1][2][1].split(":")
 
                 first_pair = "".join(i_mac_address[0:2]).upper()
                 second_pair = "".join(i_mac_address[2:4]).upper()
                 third_pair = "".join(i_mac_address[4:6]).upper()
-                active_mac_address = first_pair + ":" + second_pair + ":" + third_pair
+                active_mac_address = first_pair + "-" + second_pair + "-" + third_pair
 
                 return active_mac_address
 
