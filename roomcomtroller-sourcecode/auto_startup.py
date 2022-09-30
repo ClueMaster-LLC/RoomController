@@ -37,7 +37,6 @@ class AutoStartup:
 
     def execution_environment(self):
         # the main functionalities of the splash screen lies here -----
-        time.sleep(1)
 
         if os.path.isdir(APPLICATION_DATA_DIRECTORY) is False:
             os.makedirs(APPLICATION_DATA_DIRECTORY)
