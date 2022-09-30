@@ -1,9 +1,8 @@
 import os
-import re
 import json
-import uuid
 import time
 import socket
+import psutil
 import requests
 import authentication
 import room_controller
@@ -98,9 +97,9 @@ class AutoStartup:
                     break
 
         else:
-            device_macaddress = '-'.join(re.findall('....', '%012x' % uuid.getnode())).upper()
-            api_bearer_key = self.generate_secure_api_token(device_id=device_macaddress)
             device_ipaddress = self.fetch_device_ipv4_address()
+            device_macaddress = self.fetch_active_network_interface_mac_address(ip_address=device_ipaddress)
+            api_bearer_key = self.generate_secure_api_token(device_id=device_macaddress)
 
             unique_ids_dictionary = {"device_id": device_macaddress, "api_token": api_bearer_key,
                                      "ip_address": device_ipaddress}
@@ -111,6 +110,14 @@ class AutoStartup:
             print(">>> Console Output - MAC ADDRESS ", device_macaddress)
             self.device_status = False
             self.validate_device_status()
+
+    @staticmethod
+    def fetch_active_network_interface_mac_address(ip_address):
+        for i in psutil.net_if_addrs().items():
+            interface_ip_address = i[1][0][1]
+            if interface_ip_address == ip_address:
+                active_mac_address = i[1][2][1]
+                return active_mac_address
 
     @staticmethod
     def generate_secure_api_token(device_id):
