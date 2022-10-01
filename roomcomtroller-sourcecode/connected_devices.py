@@ -24,7 +24,8 @@ class ConnectedDevices:
     def configurations(self):
         pass
 
-    def execution_environment(self):
+    @staticmethod
+    def execution_environment():
         while True:
             print(">>> Console Output - Connect to previously configured devices ... ")
             time.sleep(2)
