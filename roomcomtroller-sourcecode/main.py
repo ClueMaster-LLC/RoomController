@@ -1,8 +1,7 @@
 # CLUEMASTER ROOM CONTROLLER
-# This is the main.py that will trigger the room controller
+# This is the main.py that will trigger the room controller, starting two threads
 
 # imports
-import auto_startup
 import thread_manager
 
 
