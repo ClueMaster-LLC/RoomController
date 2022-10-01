@@ -15,18 +15,16 @@ class ConnectedDevices:
         super(ConnectedDevices, self).__init__()
 
         # global attributes
-        self.previously_connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-        self.previously_connected_devices_file_exists = None
+        self.active = None
 
         # instance methods
         self.configurations()
         self.execution_environment()
 
     def configurations(self):
-        if os.path.isfile(self.previously_connected_devices_file):
-            self.previously_connected_devices_file_exists = True
-        else:
-            pass
+        pass
 
     def execution_environment(self):
-        pass
+        while True:
+            print(">>> Console Output - Connect to previously configured devices ... ")
+            time.sleep(2)

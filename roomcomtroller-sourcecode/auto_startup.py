@@ -38,11 +38,6 @@ class AutoStartup:
     def execution_environment(self):
         # the main functionalities of the splash screen lies here -----
 
-        if os.path.isdir(APPLICATION_DATA_DIRECTORY) is False:
-            os.makedirs(APPLICATION_DATA_DIRECTORY)
-        else:
-            pass
-
         if os.path.isfile(self.unique_ids_file):
             with open(self.unique_ids_file) as unique_ids_file:
                 json_response_of_unique_ids_file = json.load(unique_ids_file)
