@@ -1,0 +1,8 @@
+#!/bin/sh
+echo "Preparing room controller ..."
+
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu/:$SNAP/usr/lib/x86_64-linux-gnu/samba/:$SNAP/"
+export PYTHONPATH="$SNAP/usr/lib/python3/dist-packages"
+echo "Room controller setup complete ..."
+
+exec "$@"
