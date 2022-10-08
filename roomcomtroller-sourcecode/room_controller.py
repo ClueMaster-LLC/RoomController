@@ -25,7 +25,7 @@ class RoomController:
         self.discover_new_relays_request_api = None
         self.general_request_api = None
         self.search_for_devices_id = 12
-        self.null_responses = ["No room controller found", "No request found", "No record found"]
+        self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.known_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "known_devices.json")
@@ -59,7 +59,7 @@ class RoomController:
                 print(">>> Console Output - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
 
-                if relays_discovery_request.text not in self.null_responses:
+                if relays_discovery_request.text not in self.api_active_null_responses:
                     request_id = relays_discovery_request.json()["RequestID"]
 
                     if request_id == self.search_for_devices_id:

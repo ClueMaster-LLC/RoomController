@@ -25,7 +25,7 @@ class AutoStartup:
 
         # global attributes
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
-        self.null_responses = ["No room controller found", "No request found", "No record found"]
+        self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
         self.device_status = True
 
         # instance methods
@@ -63,15 +63,22 @@ class AutoStartup:
                     else:
                         self.device_status = True
 
-                    if room_controller_response.text not in self.null_responses:
-                        temp_response = room_controller_response.json()
-                        if temp_response["DeviceRequestid"] <= 7:
+                    if room_controller_response.text not in self.api_active_null_responses:
+                        try:
+                            temp_response = room_controller_response.json()
+                            if temp_response["DeviceRequestid"] <= 7:
+                                self.device_status = False
+                            else:
+                                pass
+
+                        except json.decoder.JSONDecodeError:
                             self.device_status = False
-                        else:
-                            pass
 
                     else:
-                        self.device_status = True
+                        if room_controller_response.text == "":
+                            self.device_status = False
+                        else:
+                            self.device_status = True
 
                     # committing newly generated token to unique_ids_file
                     ipv4_address = self.fetch_device_ipv4_address()
@@ -88,7 +95,7 @@ class AutoStartup:
                     continue
 
                 except json.decoder.JSONDecodeError as json_error:
-                    print(">>> Console Output - room_controller.py JsonDecodeError")
+                    print(">>> Console Output - auto_startup.py JsonDecodeError")
                     print(">>> Console Output - Error ", json_error)
                     i_request = requests.get(get_rc_request_api, headers=api_header).text
                     print(">>> Current General Request API Response - ", i_request)

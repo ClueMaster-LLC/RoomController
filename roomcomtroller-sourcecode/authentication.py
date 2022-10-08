@@ -26,7 +26,7 @@ class Authentication:
         self.device_request_api_url = None
         self.api_bearer_key = None
         self.device_unique_id = None
-        self.null_responses = ["No room controller found", "No request found", ""]
+        self.api_active_null_responses = ["No room controller found", "No request found", ""]
 
         # instance methods
         self.configuration()
@@ -47,7 +47,7 @@ class Authentication:
         try:
             while True:
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
-                if device_request_api_response.text in self.null_responses:
+                if device_request_api_response.text in self.api_active_null_responses:
                     print(">>> Console output - No Registration Requests Found")
                     time.sleep(1)
                     continue
@@ -56,7 +56,7 @@ class Authentication:
                     print(">>> Console output - Room Controller Registration Requests Found")
                     break
 
-            while requests.get(self.device_request_api_url, headers=self.api_headers).text not in self.null_responses:
+            while requests.get(self.device_request_api_url, headers=self.api_headers).text not in self.api_active_null_responses:
                 # getting requests and their ids
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 request_id = device_request_api_response.json()["DeviceRequestid"]
