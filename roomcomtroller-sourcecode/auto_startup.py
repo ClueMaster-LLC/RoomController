@@ -1,4 +1,5 @@
 import os
+import platform
 import json
 import time
 import socket
@@ -121,17 +122,48 @@ class AutoStartup:
 
     @staticmethod
     def fetch_active_network_interface_mac_address(ip_address):
-        for i in psutil.net_if_addrs().items():
-            interface_ip_address = i[1][0][1]
-            if interface_ip_address == ip_address:
-                i_mac_address = i[1][2][1].split(":")
 
-                first_pair = "".join(i_mac_address[0:2]).upper()
-                second_pair = "".join(i_mac_address[2:4]).upper()
-                third_pair = "".join(i_mac_address[4:6]).upper()
-                active_mac_address = first_pair + "-" + second_pair + "-" + third_pair
+        if platform.system() == "Windows":
+            print(platform.system())
+            for i in psutil.net_if_addrs().items():
+                interface_ip_address = i[1][1][1]
 
-                return active_mac_address
+                print(">>> Console Output - Other IPs found " + interface_ip_address)
+
+                #print(i)
+                
+                if interface_ip_address == ip_address:
+                    i_mac_address = i[1][0][1].split("-")
+
+                    first_pair = "".join(i_mac_address[0:2]).upper()
+                    second_pair = "".join(i_mac_address[2:4]).upper()
+                    third_pair = "".join(i_mac_address[4:8]).upper()
+                    active_mac_address = first_pair + "-" + second_pair + "-" + third_pair
+
+                    return active_mac_address
+
+        elif platform.system() == "Linux" or platform.system() == "Linux2":
+            print(platform.system())
+            for i in psutil.net_if_addrs().items():
+                interface_ip_address = i[1][0][1]
+
+                print(">>> Console Output - Other IPs found " + interface_ip_address)
+
+                #print(i)
+                
+                if interface_ip_address == ip_address:
+                    i_mac_address = i[1][2][1].split(":")
+
+                    first_pair = "".join(i_mac_address[0:2]).upper()
+                    second_pair = "".join(i_mac_address[2:4]).upper()
+                    third_pair = "".join(i_mac_address[4:8]).upper()
+                    active_mac_address = first_pair + "-" + second_pair + "-" + third_pair
+
+                    return active_mac_address
+        else:
+            print(platform.system() + "OS not supported")
+
+
 
     @staticmethod
     def generate_secure_api_token(device_id):
@@ -168,7 +200,7 @@ class AutoStartup:
             ip_address = "127.0.0.1"
         finally:
             i_socket.close()
-
+            print(">>> Console Output - IP Address: " + ip_address)
         return ip_address
 
     def validate_device_status(self):
