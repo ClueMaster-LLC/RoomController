@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 import json
 import requests
 from apis import *
@@ -50,12 +51,12 @@ class Authentication:
             while True:
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 if device_request_api_response.text in self.api_active_null_responses:
-                    print(">>> Console output - No Registration Requests Found")
+                    print(">>> Console output " + str(datetime.datetime.utcnow()) + " - No Registration Requests Found")
                     time.sleep(1)
                     continue
 
                 else:
-                    print(">>> Console output - Room Controller Registration Requests Found")
+                    print(">>> Console output " + str(datetime.datetime.utcnow()) + "- Room Controller Registration Requests Found")
                     break
 
             while requests.get(self.device_request_api_url,
