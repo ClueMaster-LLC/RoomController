@@ -1,4 +1,5 @@
 import os
+import datetime
 import json
 import time
 import requests
@@ -56,7 +57,7 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                print(">>> Console Output - Searching for new input relays request ...")
+                print(">>> Console Output " + str(datetime.datetime.now()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
                 relays_discovery_request.raise_for_status()
 
