@@ -43,6 +43,8 @@ class Authentication:
         self.api_headers = CaseInsensitiveDict()
         self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
 
+        print(">>> Console Output - MAC ADDRESS: " + self.device_unique_id)
+
     def execution_environment(self):
         try:
             while True:
