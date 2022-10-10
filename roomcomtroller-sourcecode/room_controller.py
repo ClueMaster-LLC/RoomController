@@ -2,7 +2,6 @@ import os
 import json
 import time
 import requests
-import threading
 from apis import *
 from requests.structures import CaseInsensitiveDict
 
@@ -25,6 +24,7 @@ class RoomController:
         self.discover_new_relays_request_api = None
         self.general_request_api = None
         self.search_for_devices_id = 12
+        self.resetting_room_controller = False
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
@@ -58,6 +58,7 @@ class RoomController:
             try:
                 print(">>> Console Output - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
+                relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
                     request_id = relays_discovery_request.json()["RequestID"]
@@ -77,6 +78,14 @@ class RoomController:
                 time.sleep(1)
                 continue
 
+            except requests.exceptions.HTTPError as request_error:
+                if "401 Client Error" in str(request_error):
+                    self.reset_room_controller()
+                    break
+                else:
+                    print(">>> Console output - room_controller.py Not a API token invalid Error")
+                    print(request_error)
+
             except requests.exceptions.JSONDecodeError as json_error:
                 print(">>> Console Output - room_controller.py JsonDecodeError")
                 print(">>> Console Output - Error ", json_error)
@@ -89,4 +98,7 @@ class RoomController:
     @staticmethod
     def connect_and_stream_data(mac_ids):
         print(">>> Console output - Starting threads...")
+        pass
+
+    def reset_room_controller(self):
         pass

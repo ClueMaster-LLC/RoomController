@@ -1,6 +1,7 @@
 import os
 import json
 import threading
+import time
 import auto_startup
 import connected_devices
 
@@ -18,10 +19,16 @@ class RegistrationThread(threading.Thread):
 
         # global attributes
         self.active = None
+        self.auto_startup_instance = None
 
     def run(self):
         self.auto_startup_instance = auto_startup.AutoStartup()
         self.auto_startup_instance.__int__()
+
+        print(">>> Console Output - Stopped Base RegistrationThread ...")
+        print(">>> Console Output - Restarting Room Controller ...")
+        restart_room_controller()
+        return
 
 
 # ConnectPreviousDevicesThread connect to previously configured devices
@@ -32,10 +39,13 @@ class ConnectPreviousDevicesThread(threading.Thread):
 
         # global attributes
         self.active = None
+        self.connected_devices_instance = None
 
     def run(self):
-        self.connected_devices = connected_devices.ConnectedDevices()
-        self.connected_devices.__init__()
+        self.connected_devices_instance = connected_devices.ConnectedDevices()
+        self.connected_devices_instance.__init__()
+        print(">>> Console Output - Stopped Base ConnectPreviousDevicesThread ...")
+        return
 
 
 # master thread manager
@@ -48,6 +58,7 @@ class ThreadManager:
         self.active = None
         self.registration_thread = None
         self.connect_to_previous_device_thread = None
+        self.controller_status_thread = None
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
         self.previously_connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
 
@@ -67,6 +78,8 @@ class ThreadManager:
             json.dump(input_dictionary, configurations_file)
 
     def execution_environment(self):
+        time.sleep(2)
+
         if os.path.isfile(self.previously_connected_devices_file):
             self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
             self.connect_to_previous_device_thread.start()
@@ -81,3 +94,8 @@ class ThreadManager:
         # starting registration thread
         self.registration_thread = RegistrationThread()
         self.registration_thread.start()
+
+
+def restart_room_controller():
+    # triggering main function from main.py
+    thread_manager = ThreadManager()
