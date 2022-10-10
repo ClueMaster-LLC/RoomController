@@ -115,7 +115,7 @@ class AutoStartup:
             with open(self.unique_ids_file, "w") as unique_ids_file:
                 json.dump(unique_ids_dictionary, unique_ids_file)
 
-            print(">>> Console Output - MAC ADDRESS ", device_macaddress)
+            print(">>> Console Output - MAC ADDRESS ", str(device_macaddress))
             self.device_status = False
             self.validate_device_status()
 
