@@ -3,7 +3,6 @@ import time
 import json
 import requests
 from apis import *
-import auto_startup
 import room_controller
 from requests.structures import CaseInsensitiveDict
 
@@ -20,13 +19,14 @@ class Authentication:
         print(">>> Console Output - Authentication")
 
         # global attributes
-        self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
-        self.resetting_room_controller = False
         self.api_headers = None
         self.device_request_api_url = None
         self.api_bearer_key = None
         self.device_unique_id = None
         self.api_active_null_responses = ["No room controller found", "No request found", ""]
+
+        self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
+        self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
 
         # instance methods
         self.configuration()
@@ -58,7 +58,9 @@ class Authentication:
                     print(">>> Console output - Room Controller Registration Requests Found")
                     break
 
-            while requests.get(self.device_request_api_url, headers=self.api_headers).text not in self.api_active_null_responses:
+            while requests.get(self.device_request_api_url,
+                               headers=self.api_headers).text not in self.api_active_null_responses:
+
                 # getting requests and their ids
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 request_id = device_request_api_response.json()["DeviceRequestid"]
@@ -77,6 +79,14 @@ class Authentication:
             print(">>> Console Output - authentication.py Connection Error")
             pass
 
+        except requests.exceptions.HTTPError as request_error:
+            if "401 Client Error" in str(request_error):
+                self.reset_room_controller()
+
+            else:
+                print(">>> Console output - room_controller.py Not a API token invalid Error")
+                print(request_error)
+
         except KeyboardInterrupt:
             print(">>> Console Output - authentication.py Keyboard Interrupt")
 
@@ -92,16 +102,5 @@ class Authentication:
             print(">>> Console Output - Error ", json_error)
             pass
 
-        except requests.exceptions.HTTPError as request_error:
-            if "401 Client Error" in str(request_error):
-                self.reset_room_controller()
-            else:
-                print(">>> Console output - authentication.py Not a 401 error Master Except Block")
-                print(request_error)
-
     def reset_room_controller(self):
-        if self.resetting_room_controller is False:
-            self.resetting_room_controller = True
-
-            # calling autostartup
-            self.autostartup_window = auto_startup.AutoStartup()
+        pass
