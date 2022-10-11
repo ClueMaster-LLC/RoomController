@@ -127,11 +127,8 @@ class AutoStartup:
             print(platform.system())
             for i in psutil.net_if_addrs().items():
                 interface_ip_address = i[1][1][1]
-
                 print(">>> Console Output - Other IPs found " + interface_ip_address)
 
-                #print(i)
-                
                 if interface_ip_address == ip_address:
                     i_mac_address = i[1][0][1].split("-")
 
@@ -146,11 +143,8 @@ class AutoStartup:
             print(platform.system())
             for i in psutil.net_if_addrs().items():
                 interface_ip_address = i[1][0][1]
-
                 print(">>> Console Output - Other IPs found " + interface_ip_address)
 
-                #print(i)
-                
                 if interface_ip_address == ip_address:
                     i_mac_address = i[1][2][1].split(":")
 
@@ -162,8 +156,6 @@ class AutoStartup:
                     return active_mac_address
         else:
             print(platform.system() + "OS not supported")
-
-
 
     @staticmethod
     def generate_secure_api_token(device_id):
