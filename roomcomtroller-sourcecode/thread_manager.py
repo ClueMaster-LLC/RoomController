@@ -223,7 +223,7 @@ class ConnectAndStream(threading.Thread):
             ip_address = '127.0.0.1'
         finally:
             st.close()
-            print(">>> Console Output - Device IP Address - ", ip_address)
+            print(">>> Console Output - Room Controller IP Address - ", ip_address)
         return ip_address
 
 
