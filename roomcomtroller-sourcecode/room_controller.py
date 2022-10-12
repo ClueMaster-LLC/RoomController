@@ -35,9 +35,7 @@ class RoomController:
 
         # instance methods
         self.configurations()
-        self.connect_and_stream_data()
-        # self.execution_environment()
-        self.temp_method()
+        self.execution_environment()
 
     def configurations(self):
         try:
@@ -103,16 +101,10 @@ class RoomController:
                 print(">>> Console Output - room_controller.py Keyboard Interrupt")
                 break
 
-    def connect_and_stream_data(self, ip_address="10.0.2.15"):
-        print(">>> CONSOLE OUTPUT - CONNECT AND STREAM DATA")
+    @staticmethod
+    def connect_and_stream_data():
         print(">>> Console output - Starting threads...")
-        self.connect_and_stream_thread = thread_manager.ConnectAndStream(ip_address=ip_address)
-        self.connect_and_stream_thread.start()
-
-    def temp_method(self):
-        while True:
-            print("Temp methods")
-            time.sleep(5)
+        pass
 
     def reset_room_controller(self):
         pass
