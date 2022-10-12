@@ -42,18 +42,23 @@ class ConnectAndStream(threading.Thread):
                 connected = True
 
         try:
-            client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")  # all ports at once
-            rawdata = client_socket.recv(32)
+            client_socket.sendall(b"\xFE\x35\xE9")  # device identification
+            #rawdata = client_socket.recv(32)
+            rawdata = int.from_bytes(client_socket.recv(32), byteorder='little')
+            print('>>> Console Output - HEX BYTE > INT VALUES RETUNED FROM DEVICE ' + str(rawdata))            
+            #client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")  # all ports at once
+            #rawdata = client_socket.recv(32)
             bank_all = ''  # change to (rawdata[2:-1]) if you don't want init values sent on start
             print('>>> Console Output - Init values sent to API - READY')
 
             try:
                 while 1 == 1:
 
-                    client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")  # all ports at once
-                    # client_socket.sendall(b"\xAA\x04\xFE\x35\xF3\x04\xD8") #device identification maybe?
-                    # client_socket.sendall(b"\xFE\xAF\x00") #sends board Init
-                    # client_socket.sendall(b"\xFE\x21")  #tes sends board Init
+                    client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")      # read all ports at once
+                    # client_socket.sendall(b"\xAA\x04\xFE\x35\xF3\x04\xD8")    #device identification maybe?
+                    # client_socket.sendall(b"\xFE\x21\x8C\x63")                #0xFE 0x21 0x8C 0x63 #reboots the NCD device #Receive Byte: No Response
+                    # client_socket.sendall(b"\xFE\xAF\x00")                    #sends board Init
+                    # client_socket.sendall(b"\xFE\x21")                        #tes sends board Init
                     # Board returns this byte string b'\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
 
                     rawdata = client_socket.recv(32)
@@ -62,7 +67,7 @@ class ConnectAndStream(threading.Thread):
                     if bank_all != bank_all_value:
                         bank_all = bank_all_value
 
-                        print('>>> Console Output - SEND BYTE VALUES TO CLUEMASTER API ' + str(rawdata))
+                        print('>>> Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(rawdata))
                         print('>>> Console Output - SEND VALUES TO CLUEMASTER API ' + str(rawdata[2]), str(rawdata[3]))
 
                         # make a new array by ignoring the first two bytes and the last byte
@@ -180,13 +185,12 @@ class ConnectAndStream(threading.Thread):
             ip_address = '127.0.0.1'
         finally:
             st.close()
-            print(">>> Console Output - Device IP Address - ", ip_address)
+            print(">>> Console Output - Room Controller IP Address - ", ip_address)
         return ip_address
-
 
 def start_thread():
     if __name__ == "__main__":
-        connect_and_stream_instance = ConnectAndStream(ip_address="10.0.2.15")  # enter hardcoded ip
+        connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.19")  # enter hardcoded ip
         connect_and_stream_instance.start()
 
 
