@@ -37,3 +37,13 @@ class ControllerStatusThread(threading.Thread):
         else:
             pass
 
+
+# wite new found IP to file
+
+son_lastKnownIP_data = {"IP": clientIP}
+
+with open(os.path.join(ROOT_DIRECTORY, "appdata/lastKnownIP.json"), "w") as file:
+    json.dump(json_lastKnownIP_data, file)
+
+# Sending a reply to client
+# UDPServerSocket.sendto(bytesToSend, address)

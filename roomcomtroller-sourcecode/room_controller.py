@@ -4,6 +4,7 @@ import json
 import time
 import requests
 from apis import *
+import thread_manager
 from requests.structures import CaseInsensitiveDict
 
 # BASE DIRECTORIES
@@ -26,6 +27,7 @@ class RoomController:
         self.general_request_api = None
         self.search_for_devices_id = 12
         self.resetting_room_controller = False
+        self.connect_and_stream_thread = None
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
@@ -33,7 +35,9 @@ class RoomController:
 
         # instance methods
         self.configurations()
-        self.execution_environment()
+        self.connect_and_stream_data()
+        # self.execution_environment()
+        self.temp_method()
 
     def configurations(self):
         try:
@@ -57,8 +61,10 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                print(">>> Console Output " + str(
+                    datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
+                print(relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
@@ -66,7 +72,8 @@ class RoomController:
 
                     if request_id == self.search_for_devices_id:
                         print(">>> Console Output - Acknowledging request for Input Relay with RequestId ", request_id)
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
+                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                       request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
                     else:
                         print(">>> Console Output - Request id ", relays_discovery_request.json()["RequestID"])
@@ -96,10 +103,16 @@ class RoomController:
                 print(">>> Console Output - room_controller.py Keyboard Interrupt")
                 break
 
-    @staticmethod
-    def connect_and_stream_data(mac_ids):
+    def connect_and_stream_data(self, ip_address="10.0.2.15"):
+        print(">>> CONSOLE OUTPUT - CONNECT AND STREAM DATA")
         print(">>> Console output - Starting threads...")
-        pass
+        self.connect_and_stream_thread = thread_manager.ConnectAndStream(ip_address=ip_address)
+        self.connect_and_stream_thread.start()
+
+    def temp_method(self):
+        while True:
+            print("Temp methods")
+            time.sleep(5)
 
     def reset_room_controller(self):
         pass
