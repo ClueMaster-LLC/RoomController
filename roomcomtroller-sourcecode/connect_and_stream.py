@@ -42,22 +42,36 @@ class ConnectAndStream(threading.Thread):
                 connected = True
 
         try:
-            client_socket.sendall(b"\xFE\x35\xE9")  # device identification
-            #rawdata = client_socket.recv(32)
-            rawdata = int.from_bytes(client_socket.recv(32), byteorder='little')
-            print('>>> Console Output - HEX BYTE > INT VALUES RETUNED FROM DEVICE ' + str(rawdata))            
-            #client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")  # all ports at once
-            #rawdata = client_socket.recv(32)
+            
+            num = 144
+            sp2 = bytes([254,53,num])
+            while num < 159:
+                client_socket.sendall(sp2)
+                num = num+1
+                sp2 = bytes([254,53,num])
+
+                print(str(client_socket.recv(32)))
+                
+            
+            #client_socket.sendall(bytes([254,53,144:159])) #	Contains the Device Name up to 16 Characters.
+                                                            #   The device name is useful for indicating a location but may be
+                                                            #   used for other applications as well. These 16 bytes may be used
+                                                            #   for anything, but we suggest using it for a name so that E3C Device
+                                                            #   Discovery can function properly.
+                                                            #   Values 144-159 send to query
+
             bank_all = ''  # change to (rawdata[2:-1]) if you don't want init values sent on start
-            print('>>> Console Output - Init values sent to API - READY')
+
+            print('>>> Console Output - DEVICE CONNECTED AND READY')
 
             try:
                 while 1 == 1:
-
-                    client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")      # read all ports at once
+                    client_socket.sendall(bytes([170,4,254,175,0,15,106]))     # read all ports at once
+                    # client_socket.sendall(b"\xAA\x04\xFE\xAF\x00\x0F\x6A")      # send hex read all ports at once
                     # client_socket.sendall(b"\xAA\x04\xFE\x35\xF3\x04\xD8")    #device identification maybe?
-                    # client_socket.sendall(b"\xFE\x21\x8C\x63")                #0xFE 0x21 0x8C 0x63 #reboots the NCD device #Receive Byte: No Response
-                    # client_socket.sendall(b"\xFE\xAF\x00")                    #sends board Init
+                    # client_socket.sendall(b"\xFE\x21\x8C\x63")                #reboots the NCD device #Receive Byte: No Response
+                    # client_socket.sendall(bytes([254, 33, 140, 99]))           #reboots the NCD device #Receive Byte: No Response
+                    # client_socket.sendall(b"\xFE\xAF\x00")                    #sends board Init    
                     # client_socket.sendall(b"\xFE\x21")                        #tes sends board Init
                     # Board returns this byte string b'\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
 
@@ -68,22 +82,25 @@ class ConnectAndStream(threading.Thread):
                         bank_all = bank_all_value
 
                         print('>>> Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(rawdata))
-                        print('>>> Console Output - SEND VALUES TO CLUEMASTER API ' + str(rawdata[2]), str(rawdata[3]))
+                        print('>>> Console Output - LIST VALUES RETURNED FROM DEVICE ' + str(list(rawdata)))
+                        print('>>> Console Output - SEND VALUES TO CLUEMASTER API ' + str(list(rawdata[2:4])))
 
                         # make a new array by ignoring the first two bytes and the last byte
-                        readings = (rawdata[2:4])
+                        banks = 2  #dynamic, pull from device type
+                        inputs = 8 #dynamic, pull from device type
+                        readings = list(rawdata[2:banks+2])
                         counter = 0
                         bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
                         print('>>> Console Output - Binary values : ', bytes_as_bits)
 
                         for bank in readings:
                             # increment through each input
-                            for i in range(0, 8):
+                            for i in range(0, inputs):
                                 # << indicates a bit shift. Basically check corresponding bit in the reading
                                 state = (bank & (1 << i))
                                 if state != 0:
                                     # print('Input '+ str(bank) +' is high')
-                                    print('>>> Console Output - BANK Unknown: Input ' + str(i + 1) + ' is high')
+                                    print('>>> Console Output - BANK Unknown: Input ' + str(i + 1) + ' is high' )
                                 else:
                                     print('>>> Console Output - BANK Unknown: Input ' + str(i + 1) + ' is low')
                                 counter += 1
