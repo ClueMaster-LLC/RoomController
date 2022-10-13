@@ -43,12 +43,12 @@ class ConnectAndStream(threading.Thread):
 
         try:
             
-            num = 144
-            sp2 = bytes([254,53,num])
-            while num < 159:
-                client_socket.sendall(sp2)
-                num = num+1
-                sp2 = bytes([254,53,num])
+            mem_loc = 144
+            send_packet = bytes([254,53,mem_loc])
+            while mem_loc < 159:
+                client_socket.sendall(send_packet)
+                mem_loc = mem_loc+1
+                send_packet = bytes([254,53,mem_loc])
 
                 print(str(client_socket.recv(32)))
                 
