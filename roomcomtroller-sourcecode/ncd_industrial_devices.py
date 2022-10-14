@@ -4,6 +4,10 @@ class NCD_Controller:
 		self.__dict__.update(kwargs)
 		self.renew_replace_interface(combus)
 
+	def device_reboot(self):
+		command = self.wrap_in_api([254, 33, 140, 99])
+		return self.process_control_command_return(self.send_command(command, 4))
+
 	def test_comms(self):
 		command = self.wrap_in_api([254, 33])
 		return self.process_control_command_return(self.send_command(command, 4))
@@ -291,7 +295,7 @@ class NCD_Controller:
 		command = self.wrap_in_api([254, 149+channel])
 		return self.process_control_command_return(self.send_command(command, 32))
 
-	def get_dc_all_inputs(self):
+	def get_dc_all_inputs(self): #dry Contact Commands
 		command = self.wrap_in_api([254, 175, 0, 24])
 		return self.process_control_command_return(self.send_command(command, 32))
 	
@@ -300,6 +304,6 @@ class NCD_Controller:
 		return self.process_control_command_return(self.send_command(command, 32))
 
 	
-	def get_dc_bank_status(self, bank = 1):
-		command = self.wrap_in_api([254, 175, bank, 0])
+	def get_dc_bank_status(self, bank_start = 1, band_end = 2):
+		command = self.wrap_in_api([254, 175, bank_start, band_end])
 		return self.process_read_command_return(self.send_command(command, 4))
