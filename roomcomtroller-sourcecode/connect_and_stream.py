@@ -217,10 +217,21 @@ class ConnectAndStream(threading.Thread):
 
     def save_device_info(self):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "device_info.json")
-        device_info_dict = {"IP": "", "MacAddress": "", "DeviceType": ""}
+        device_info_dict = {"Device1": {"IP": "", "MacAddress": "", "DeviceType": ""}}
 
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
+
+    def read_device_info(self, i_mac):
+        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "device_info.json")
+        with open(device_info_file, "r") as device_info:
+            device_info_response = json.load(device_info)
+
+        for i in device_info_response.items():
+            values = i[1]
+            if values["MacAddress"] == i_mac:
+                print("Matched..")
+                return values["IP"], values["DeviceType"]
 
 
 def start_thread():
