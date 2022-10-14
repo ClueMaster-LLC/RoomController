@@ -15,9 +15,9 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 SERVER_PORT = 2101
 READ_SPEED = 0.05
 
-log_level = 1    #0 for disabled | 1 for details
+log_level = 1  # 0 for disabled | 1 for details
 
-#device hardware
+# device hardware
 cm_dc16_banks = 2
 cm_dc16_inputs = 8
 cm_dc32_banks = 4
@@ -25,10 +25,11 @@ cm_dc32_inputs = 32
 cm_dc48_banks = 6
 cm_dc48_inputs = 48
 
-#device_model = 'cm_dc16'  # set by API when scanning or from config file if connected prior
+# device_model = 'cm_dc16'  # set by API when scanning or from config file if connected prior
 
-bank_total = (cm_dc16_banks)-1
+bank_total = (cm_dc16_banks) - 1
 input_total = (cm_dc16_inputs)
+
 
 class ConnectAndStream(threading.Thread):
     def __init__(self, device_mac):
@@ -45,14 +46,16 @@ class ConnectAndStream(threading.Thread):
         while not connected:
             try:
                 print(">>> Console Output - Room Controller IP Address: " + str(self.extract_ip()))
-                print('>>> Console Output - Connecting to last known device IP: ' + str(self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
+                print('>>> Console Output - Connecting to last known device IP: ' + str(
+                    self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(1.0)
                 client_socket.connect((self.ip_address, SERVER_PORT))
                 print('>>> Console Output - Connected to ' + str(self.ip_address))
                 connected = True
             except socket.error:
-                print('The last known IP ' + str(self.ip_address) + ' is no longer valid. Searching network for device... ')
+                print('The last known IP ' + str(
+                    self.ip_address) + ' is no longer valid. Searching network for device... ')
 
                 self.ip_address = self.deviceDiscovery()  # find new device IP Address
                 print('>>> Console Output - Connecting to ' + str(self.ip_address))
@@ -69,17 +72,18 @@ class ConnectAndStream(threading.Thread):
             try:
                 while 1 == 1:
 
-                    data_responce = (ncd.get_dc_bank_status(0,bank_total))
+                    data_responce = (ncd.get_dc_bank_status(0, bank_total))
                     data_responce_new = (data_responce)
 
                     if data_responce_old != data_responce_new:
                         data_responce_old = data_responce_new
 
                         # insert SignalR stream
-                        print('>>> Console Output - SEND VALUES TO CLUEMASTER SignalR ' + str(data_responce))                        
+                        print('>>> Console Output - SEND VALUES TO CLUEMASTER SignalR ' + str(data_responce))
 
                         if log_level == 1:
-                            print('>>> Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(bytes(data_responce)))
+                            print('>>> Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
+                                bytes(data_responce)))
                             print('>>> Console Output - LIST VALUES RETURNED FROM DEVICE ' + str(data_responce))
 
                             # make a new array by ignoring the first two bytes and the last byte
@@ -96,7 +100,7 @@ class ConnectAndStream(threading.Thread):
                                     state = (bank & (1 << i))
                                     if state != 0:
                                         # print('Input '+ str(bank) +' is high')
-                                        print('>>> Console Output - BANK Unknown: Input ' + str(i + 1) + ' is high' )
+                                        print('>>> Console Output - BANK Unknown: Input ' + str(i + 1) + ' is high')
                                     else:
                                         print('>>> Console Output - BANK Unknown: Input ' + str(i + 1) + ' is low')
                                     counter += 1
@@ -180,25 +184,26 @@ class ConnectAndStream(threading.Thread):
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
                     print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
 
-                    #data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
+                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
                     discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
-                    discovery_version = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
+                    discovery_version = \
+                    (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
                     discover_model = "cm_dc16"
 
                     print(">>> Console Output - Discovered IP:  ", discover_ip)
                     print(">>> Console Output - Discovered MAC: ", discover_mac)
                     print(">>> Console Output - Discovered Model: ", discover_model)
                     print(">>> Console Output - Discovered Version: ", discovery_version)
-                    
+
                     break
                 except socket.error:  ## chagne to exception:
                     print(">>> Console Output - Error trying discovery device")
             self.save_device_info(discover_ip, discover_mac, discover_model)
-        except socket.error: ## chagne to exception:
+        except socket.error:  ## chagne to exception:
             print(">>> Console Output - Error trying open UDP discovery port")
 
         return discover_ip
@@ -242,19 +247,19 @@ class ConnectAndStream(threading.Thread):
             for i in device_info_response.items():
                 values = i[1]
                 if values["MacAddress"] == i_mac:
-                    #print("Matched..")
+                    # print("Matched..")
                     return values["IP"], values["DeviceModel"]
                 else:
-                    #print("Device record does not exist")
+                    # print("Device record does not exist")
                     return ['127.0.0.1', 'not_found']
-                    
+
         except Exception:
             print(">>> Console Output - device_info file does not exist")
-            
+
 
 def start_thread():
     if __name__ == "__main__":
-        #connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
+        # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
         connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDFD")  # enter hardcoded MAC
         connect_and_stream_instance.start()
 
