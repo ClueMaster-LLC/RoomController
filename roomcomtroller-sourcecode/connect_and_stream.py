@@ -6,8 +6,12 @@ import os
 import sys
 import ncd_industrial_devices
 
+# BASE DIRECTORIES
+ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
+APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
+
 # GLOBAL VARIABLES
-ROOT_DIRECTORY = os.getcwd()
 SERVER_PORT = 2101
 READ_SPEED = 0.05
 
@@ -210,6 +214,14 @@ class ConnectAndStream(threading.Thread):
             print(">>> Console Output - Device Rebooted")
         except Exception:
             print(">>> Console Output - Error Sending Reboot Command")
+
+    def save_device_info(self):
+        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "device_info.json")
+        device_info_dict = {"IP": "", "MacAddress": "", "DeviceType": ""}
+
+        with open(device_info_file, "w") as device_info:
+            json.dump(device_info_dict, device_info)
+
 
 def start_thread():
     if __name__ == "__main__":
