@@ -7,7 +7,7 @@ import sys
 
 
 class AddFindDevices(threading.Thread):
-    def __init__(self, method):
+    def __init__(self, *method):
         super(AddFindDevices, self).__init__()
 
         # global attributes
@@ -15,12 +15,12 @@ class AddFindDevices(threading.Thread):
         self.method = method
 
     def run(self):
-        if self.method == 'add':
-            self.ip_connect()
+        if self.method[0][0] == 'add':
+            self.ip_connect(self.method[0][1])
         else:
             self.network_search()
 
-    def ip_connect(self):
+    def ip_connect(self, ip_address):
         pass
 
     def network_search(self):
@@ -29,7 +29,7 @@ class AddFindDevices(threading.Thread):
 
 def main():
     if __name__ == "__main__":
-        add_find_device_thread = AddFindDevices(method='add') # add value for the argument method 'add or find'
+        add_find_device_thread = AddFindDevices('find')  # add value for the argument method 'add or find'
         add_find_device_thread.start()
 
 
