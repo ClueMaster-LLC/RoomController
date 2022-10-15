@@ -232,7 +232,7 @@ class ConnectAndStream(threading.Thread):
             print(">>> Console Output - Error Sending Reboot Command")
 
     def save_device_info(self, ip, i_mac, device_model):
-        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "device_info.json")
+        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
         device_info_dict = {"Device1": {"IP": ip, "MacAddress": i_mac, "DeviceModel": device_model}}
 
         with open(device_info_file, "w") as device_info:
@@ -240,7 +240,7 @@ class ConnectAndStream(threading.Thread):
 
     def read_device_info(self, i_mac):
         try:
-            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "device_info.json")
+            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
             with open(device_info_file, "r") as device_info:
                 device_info_response = json.load(device_info)
 
