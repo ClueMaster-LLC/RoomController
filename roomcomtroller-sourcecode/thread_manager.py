@@ -84,8 +84,6 @@ class ThreadManager:
             json.dump(input_dictionary, configurations_file)
 
     def execution_environment(self):
-        time.sleep(2)
-
         if os.path.isfile(self.previously_connected_devices_file):
             self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
             self.connect_to_previous_device_thread.start()
