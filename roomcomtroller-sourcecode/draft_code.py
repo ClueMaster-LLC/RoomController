@@ -47,3 +47,21 @@ with open(os.path.join(ROOT_DIRECTORY, "appdata/lastKnownIP.json"), "w") as file
 
 # Sending a reply to client
 # UDPServerSocket.sendto(bytesToSend, address)
+
+
+
+
+def read_device_info(self):
+        try:
+            connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+            with open(connected_devices_file, "r") as device_info:
+                device_info_response = json.load(device_info)
+
+            for i in device_info_response.items():
+                values = i[1]
+                if values["MacAddress"] == "0008DC21DDFD":
+                print("Matched..")
+                return values["MacAddress"]
+
+        except Exception:
+            print(">>> Console Output - device_info file does not exist or there is improperly formatted data")
