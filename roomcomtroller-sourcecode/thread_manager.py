@@ -49,7 +49,7 @@ class ConnectPreviousDevicesThread(threading.Thread):
 
     def run(self):
         self.connected_devices_instance = connected_devices.ConnectedDevices()
-        self.connected_devices_instance.__init__()
+        # self.connected_devices_instance.__init__()
         print(">>> Console Output - Stopped Base ConnectPreviousDevicesThread ...")
         return
 
