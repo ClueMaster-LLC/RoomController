@@ -50,7 +50,8 @@ class ConnectAndStream(threading.Thread):
         while not connected:
             try:
                 print(">>> Console Output - Room Controller IP Address: " + str(self.extract_ip()))
-                print('>>> Console Output - Connecting to last known device IP: ' + str(self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
+                print('>>> Console Output - Connecting to last known device IP: ' + str(
+                    self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
                 client_socket.connect((self.ip_address, SERVER_PORT))
@@ -58,7 +59,8 @@ class ConnectAndStream(threading.Thread):
                 connected = True
 
             except socket.error:
-                print('The last known IP ' + str(self.ip_address) + ' is no longer valid. Searching network for device... ')
+                print('The last known IP ' + str(
+                    self.ip_address) + ' is no longer valid. Searching network for device... ')
                 self.ip_address = self.deviceDiscovery(self.device_mac)  # find new device IP Address
                 print('>>> Console Output - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -191,7 +193,8 @@ class ConnectAndStream(threading.Thread):
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
                     discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
-                    discovery_version = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
+                    discovery_version = \
+                        (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
                     discover_model = "cm_dc16"
                     discover_device_type = self.device_type
 
@@ -219,7 +222,8 @@ class ConnectAndStream(threading.Thread):
             else:
                 print(">>> Console Output - Device not found on network.")
 
-        except socket.error:  # change to exception:
+        except socket.error as e:
+            print(e)  # change to exception:
             print(">>> Console Output - Error trying to open UDP discovery port")
             # set connection status and recreate socket
             self.connection_lost()
@@ -284,12 +288,14 @@ class ConnectAndStream(threading.Thread):
         except Exception:
             print(">>> Console Output - device_info file does not exist or there is improperly formatted data")
 
+# Comment out the function when testing from main.py
 
-def start_thread():
-    if __name__ == "__main__":
-        # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
-        connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")  # enter hardcoded MAC  #enter sped in milliseconds to query data from the device
-        connect_and_stream_instance.start()
-
-
-start_thread()
+# def start_thread():
+#     if __name__ == "__main__":
+#         # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
+#         connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
+#         # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
+#         connect_and_stream_instance.start()
+#
+#
+# start_thread()
