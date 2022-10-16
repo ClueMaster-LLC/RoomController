@@ -2,6 +2,7 @@ import os
 import time
 import json
 import requests
+import connect_and_stream
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -16,41 +17,27 @@ class ConnectedDevices:
 
         # global attributes
         self.active = None
+        self.connect_and_stream_thread_instance = None
+        self.previously_configured_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
 
         # instance methods
         self.configurations()
-##        self.execution_environment()
+        self.execution_environment()
 
     def configurations(self):
         pass
 
-    def run(self):
-        print("hello")
+    def execution_environment(self):
+        print(">>> Console Output - Connecting to previously configured devices ... ")
+        with open(self.previously_configured_devices_file) as connected_devices_file:
+            connected_devices_file_response = json.load(connected_devices_file)
 
-    @staticmethod
-    def execution_environment():
-        while True:
-            print(">>> Console Output - Connect to previously configured devices ... ")
-            time.sleep(2)
+            for devices in connected_devices_file_response.items():
+                device_mac_address = devices[1]["MacAddress"]
+                print(">>> Console Output - Found ", devices[0])
+                self.start_thread(mac_address=device_mac_address)
 
-    def read_device_info():
-        try:
-            connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-            with open(connected_devices_file, "r") as device_info:
-                device_info_response = json.load(device_info)
-
-            for i in device_info_response.items():
-                values = i[1]
-##                if values["MacAddress"] == "0008DC21DDFD":
-##                    print("Matched..")
-                return values["MacAddress"]
-                
-        except Exception:
-            print(">>> Console Output - device_info file does not exist or there is improperly formatted data")
-
-def start_thread():
-    if __name__ == "__main__":
-        connected_devices_stream_instance = ConnectedDevices()
-        connected_devices_stream_instance.start()
-
-start_thread()
+    def start_thread(self, mac_address):
+        print(f">>> Console Output - Starting ConnectAndStream Thread for MacAddress {mac_address}")
+        self.connect_and_stream_thread_instance = connect_and_stream.ConnectAndStream(device_mac=mac_address)
+        self.connect_and_stream_thread_instance.start()
