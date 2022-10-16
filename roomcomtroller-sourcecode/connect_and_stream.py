@@ -38,28 +38,27 @@ class ConnectAndStream(threading.Thread):
         # global attributes
         self.active = None
         self.device_mac = device_mac
-        self.ip_address = (self.read_device_info(self.device_mac)[0])
-        self.device_model = (self.read_device_info(self.device_mac)[1])
-        self.device_type = (
-            self.read_device_info(self.device_mac)[
-                2])  # will be one of the following options: dc_input, other_input, relay
-        self.read_speed = float(self.read_device_info(self.device_mac)[3])
+        self.ip_address, self.device_model, self.device_type, self.read_speed = self.read_device_info(self.device_mac)
+
+        # self.ip_address = (self.read_device_info(self.device_mac)[0])
+        # self.device_model = (self.read_device_info(self.device_mac)[1])
+        # self.device_type = (self.read_device_info(self.device_mac)[2])
+        # self.read_speed = float(self.read_device_info(self.device_mac)[3])
 
     def run(self):
         connected = False
         while not connected:
             try:
                 print(">>> Console Output - Room Controller IP Address: " + str(self.extract_ip()))
-                print('>>> Console Output - Connecting to last known device IP: ' + str(
-                    self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
+                print('>>> Console Output - Connecting to last known device IP: ' + str(self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
                 client_socket.connect((self.ip_address, SERVER_PORT))
                 print('>>> Console Output - Connected to ' + str(self.ip_address))
                 connected = True
+
             except socket.error:
-                print('The last known IP ' + str(
-                    self.ip_address) + ' is no longer valid. Searching network for device... ')
+                print('The last known IP ' + str(self.ip_address) + ' is no longer valid. Searching network for device... ')
                 self.ip_address = self.deviceDiscovery(self.device_mac)  # find new device IP Address
                 print('>>> Console Output - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -76,7 +75,7 @@ class ConnectAndStream(threading.Thread):
                 while 1 == 1:
 
                     data_response = (ncd.get_dc_bank_status(0, bank_total))
-                    data_response_new = (data_response)
+                    data_response_new = data_response
 
                     if data_response_old != data_response_new:
                         data_response_old = data_response_new
@@ -192,8 +191,7 @@ class ConnectAndStream(threading.Thread):
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
                     discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
-                    discovery_version = \
-                        (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
+                    discovery_version = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
                     discover_model = "cm_dc16"
                     discover_device_type = self.device_type
 
@@ -257,9 +255,8 @@ class ConnectAndStream(threading.Thread):
     @staticmethod
     def save_device_info(ip, i_mac, device_model, device_type, read_speed):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-        device_info_dict = {
-            "Device1": {"IP": ip, "MacAddress": i_mac, "DeviceModel": device_model, "DeviceType": device_type,
-                        "ReadSpeed": read_speed}}
+        device_info_dict = {"Device1": {"IP": ip, "MacAddress": i_mac, "DeviceModel": device_model,
+                                        "DeviceType": device_type, "ReadSpeed": read_speed}}
 
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
@@ -274,13 +271,15 @@ class ConnectAndStream(threading.Thread):
             for i in device_info_response.items():
                 values = i[1]
                 if values["MacAddress"] == i_mac:
-                    # print("Matched..")
+                    print("Device record exists for : ", i_mac)
                     return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
                 else:
-                    print("Device record does not exist for : ", i_mac)
+                    # print("Device record does not exist for : ", i_mac)
                     # return ["127.0.0.1", "not_found"]
                     # deviceDiscovery(i_mac)
                     # print("discovery done")
+
+                    pass
 
         except Exception:
             print(">>> Console Output - device_info file does not exist or there is improperly formatted data")
@@ -289,8 +288,7 @@ class ConnectAndStream(threading.Thread):
 def start_thread():
     if __name__ == "__main__":
         # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
-        connect_and_stream_instance = ConnectAndStream(
-            device_mac="0008DC21DDFD")  # enter hardcoded MAC  #enter sped in milliseconds to query data from the device
+        connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")  # enter hardcoded MAC  #enter sped in milliseconds to query data from the device
         connect_and_stream_instance.start()
 
 
