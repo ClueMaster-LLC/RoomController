@@ -15,7 +15,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 SERVER_PORT = 2101
 # READ_SPEED = 0.05
 
-log_level = 1  # 0 for disabled | 1 for details
+log_level = 0  # 0 for disabled | 1 for details
 
 # device hardware
 cm_dc16_banks = 2
@@ -39,6 +39,8 @@ class ConnectAndStream(threading.Thread):
         self.active = None
         self.device_mac = device_mac
         self.ip_address, self.device_model, self.device_type, self.read_speed = self.read_device_info(self.device_mac)
+        self.bank_total = 6-1
+        self.input_total = 48
 
         # self.ip_address = (self.read_device_info(self.device_mac)[0])
         # self.device_model = (self.read_device_info(self.device_mac)[1])
@@ -76,18 +78,17 @@ class ConnectAndStream(threading.Thread):
             try:
                 while 1 == 1:
 
-                    data_response = (ncd.get_dc_bank_status(0, bank_total))
+                    data_response = (ncd.get_dc_bank_status(0, self.bank_total))
                     data_response_new = data_response
 
                     if data_response_old != data_response_new:
                         data_response_old = data_response_new
 
                         # insert SignalR stream
-                        print('>>> Console Output - SEND VALUES TO CLUEMASTER SignalR ' + str(data_response))
+                        print('>>> Console Output - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' + str(data_response))
 
                         if log_level == 1:
-                            print('>>> Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
-                                bytes(data_response)))
+                            print('>>> Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(bytes(data_response)))
                             print('>>> Console Output - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
 
                             # make a new array by ignoring the first two bytes and the last byte
@@ -99,7 +100,7 @@ class ConnectAndStream(threading.Thread):
                             # This code block is only for displaying the of/off of the inputs to the log for diagnostics                            
                             for bank in readings:
                                 # increment through each input
-                                for i in range(0, input_total):
+                                for i in range(0, self.input_total):
                                     # << indicates a bit shift. Basically check corresponding bit in the reading
                                     state = (bank & (1 << i))
                                     if state != 0:
