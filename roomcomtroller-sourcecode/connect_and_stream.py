@@ -72,8 +72,10 @@ class ConnectAndStream(threading.Thread):
 
         try:
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
+            #data_response_init = client_socket.recvfrom(32)
             data_response_old = None
             print('>>> Console Output - DEVICE CONNECTED AND READY')
+            
 
             try:
                 while 1 == 1:
@@ -188,7 +190,7 @@ class ConnectAndStream(threading.Thread):
                 try:
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
                     #print(bytes_address_pair)
-                    #print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
+                    print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
                     # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
@@ -217,6 +219,8 @@ class ConnectAndStream(threading.Thread):
                             print(">>> Console Output - Saving updated device info to file.")
                             self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
                                                   self.device_type, self.read_speed, self.input_total, self.relay_total)
+                            ###### Only update the IP and PORT used, keeping all other values the same using self._
+                            ###### Need logic to update and safe file without looking other records in it.
                             UDPServerSocket.close()
                             break
                         except Exception:
@@ -276,11 +280,11 @@ class ConnectAndStream(threading.Thread):
             print(">>> Console Output - Error Sending Reboot Command")
 
     @staticmethod
-    def save_device_info(ip, i_mac, server_port, device_model, device_type, read_speed, input_total, relay_total):
+    def save_device_info(ip, server_port, i_mac, device_model, device_type, read_speed, input_total, relay_total):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-        device_info_dict = {"Device1": {"IP": ip, "ServerPort": server_port, "MacAddress": i_mac, "DeviceModel": device_model,
-                                        "DeviceType": device_type, "ReadSpeed": read_speed,
-                                        "InputTotal": input_total, "RelayTotal": relay_total}}
+        device_info_dict = {"Device1": {"IP": ip, "ServerPort": int(server_port), "MacAddress": i_mac, "DeviceModel": device_model,
+                                        "DeviceType": device_type, "ReadSpeed": float(read_speed),
+                                        "InputTotal": int(input_total), "RelayTotal": int(relay_total)}}
 ##        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac, "DeviceModel": self.device_model,
 ##                                        "DeviceType": self.device_type, "ReadSpeed": self.read_speed}}
 ##        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac}}
@@ -332,12 +336,12 @@ class ConnectAndStream(threading.Thread):
 
 # Comment out the function when testing from main.py
 
-# def start_thread():
-#     if __name__ == "__main__":
-#         # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
-#         connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
-#         # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
-#         connect_and_stream_instance.start()
-#
-#
-# start_thread()
+##def start_thread():
+## if __name__ == "__main__":
+##     # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
+##     connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
+##     # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
+##     connect_and_stream_instance.start()
+##
+##
+##start_thread()

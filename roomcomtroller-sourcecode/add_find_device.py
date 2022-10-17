@@ -18,25 +18,28 @@ class AddFindDevices(threading.Thread):
         # global attributes
         self.active = None
         self.method = method
-        self.server_port = 2101
+##        self.server_port = None
+##        self.mac_address = None
 
     def run(self):
         if self.method['method'] == 'add':
-            self.ip_connect(self.method['ip'])
+            self.ip_connect(self.method['ip'], self.method['server_port'], self.method['mac_address'])
         else:
             self.network_search()
 
-    def ip_connect(self, ip_address):
+    def ip_connect(self, ip_address, server_port, mac_adddress):
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.settimeout(5.0)
             client_socket.connect((ip_address, self.server_port))
+            print(ip_address, self.server_port)
+            #data_response_init = client_socket.recvfrom(32)[0]
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
 
-            print('>>> Console Output - Connected to ' + str(ip_address))
+            print('>>> Console Output - Connecting to ' + str(self))
             
             data_response = ncd.test_comms()
-            print(ip_address, str(data_response))
+            print(str(data_response))
             client_socket.close()
 ##            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
 ##                          self.device_type, self.read_speed, self.input_total, self.relay_total)
@@ -69,7 +72,7 @@ class AddFindDevices(threading.Thread):
             while True:
                 try:
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
-                    #print(bytes_address_pair)
+                    print(bytes_address_pair)
                     #print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
                     # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
@@ -177,7 +180,7 @@ class AddFindDevices(threading.Thread):
 
 def main():
     if __name__ == "__main__":
-        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.19')
+        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.19', server_port='2021', mac_address='0008DC21DDFD')
         #add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
