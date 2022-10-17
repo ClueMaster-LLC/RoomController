@@ -179,6 +179,7 @@ class ConnectAndStream(threading.Thread):
             UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # Bind to address and ip
             UDPServerSocket.bind((localIP, localPort))
+            #UDPServerSocket.settimeout(30.0)
 
             print("UDP server up - Searching Network for Device: " + str(device_mac))
 
@@ -186,7 +187,7 @@ class ConnectAndStream(threading.Thread):
             while True:
                 try:
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
-                    # print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
+                    print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
                     # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
@@ -198,28 +199,46 @@ class ConnectAndStream(threading.Thread):
                     discover_model = "cm_dc16"
                     discover_device_type = self.device_type
 
-                    print(">>> Console Output - Discovered Device IP:  ", discover_ip)
-                    print(">>> Console Output - Discovered Device MAC: ", discover_mac)
-                    print(">>> Console Output - Discovered Device Port: ", discover_port)
-                    print(">>> Console Output - Discovered Device Model: ", discover_model)
-                    print(">>> Console Output - Discovered Device Type: ", discover_device_type)
-                    print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
+##                    print(">>> Console Output - Discovered Device IP:  ", discover_ip)
+##                    print(">>> Console Output - Discovered Device MAC: ", discover_mac)
+##                    print(">>> Console Output - Discovered Device Port: ", discover_port)
+##                    print(">>> Console Output - Discovered Device Model: ", discover_model)
+##                    print(">>> Console Output - Discovered Device Type: ", discover_device_type)
+##                    print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
 
-                    break
+                    if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
+                        try:
+                            print(">>> Console Output - Discovered Device IP:  ", discover_ip)
+                            print(">>> Console Output - Discovered Device MAC: ", discover_mac)
+                            print(">>> Console Output - Discovered Device Port: ", discover_port)
+                            print(">>> Console Output - Discovered Device Model: ", discover_model)
+                            print(">>> Console Output - Discovered Device Type: ", discover_device_type)
+                            print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
+                            print(">>> Console Output - UDP Discovered Matching MAC Address")
+                            print(">>> Console Output - Saving updated device info to file.")
+                            self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
+                            break
+                        except Exception:
+                            print(">>> Console Output - Error: Unable to save updated device info to file.")
+                    else:
+                        print(">>> Console Output - Device: " + str(device_mac) + " not found on network. Continueing to search...")
+                            
+                    #break
                 except socket.error:  # change to exception:
                     print(">>> Console Output - Error trying discovery device")
                     # set connection status and recreate socket
                     self.connection_lost()
                     self.run()
 
-            if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
-                try:
-                    print(">>> Console Output - Saving updated device info to file.")
-                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
-                except Exception:
-                    print(">>> Console Output - Error: Unable to save updated device info to file.")
-            else:
-                print(">>> Console Output - Device not found on network.")
+##            if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
+##                try:
+##                    print(">>> Console Output - Saving updated device info to file.")
+##                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
+##                except Exception:
+##                    print(">>> Console Output - Error: Unable to save updated device info to file.")
+##
+##            else:
+##                print(">>> Console Output - Device not found on network.")
 
         except socket.error as e:
             print(e)  # change to exception:
@@ -267,22 +286,41 @@ class ConnectAndStream(threading.Thread):
     @staticmethod
     def read_device_info(i_mac):
         try:
+            deviceList = []
             device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-            with open(device_info_file, "r") as device_info:
-                device_info_response = json.load(device_info)
+            with open(device_info_file) as connected_devices_file:
+                for jsonObj in connected_devices_file:
+                    connected_devices_file_response = json.loads(jsonObj)
+                    deviceList.append(connected_devices_file_response)
 
-            for i in device_info_response.items():
-                values = i[1]
-                if values["MacAddress"] == i_mac:
-                    print("Device record exists for : ", i_mac)
-                    return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
-                else:
+            for i in deviceList:
+                for devices in i.items():
+                    #print(devices)
+                    values = devices[1]
+                    if values["MacAddress"] == i_mac:
+                        print("Device record exists for : ", i_mac)
+                        return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
+                        exit()
+##            deviceList = []
+##            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+##            with open(device_info_file, "r") as device_info:
+##                for jsonObj in device_info:
+##                    device_info_response = json.load(jsonObj)
+##                    deviceList.append(device_info_response)
+##            print(deviceList)
+##
+##            for i in deviceList.items():
+##                values = i[1]
+##                if values["MacAddress"] == i_mac:
+##                    print("Device record exists for : ", i_mac)
+##                    return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
+                    else:
                     # print("Device record does not exist for : ", i_mac)
                     # return ["127.0.0.1", "not_found"]
                     # deviceDiscovery(i_mac)
                     # print("discovery done")
 
-                    pass
+                        pass
 
         except Exception:
             print(">>> Console Output - device_info file does not exist or there is improperly formatted data")

@@ -45,9 +45,9 @@ class ConnectedDevices:
                 deviceList.append(connected_devices_file_response)
 
         for devices in deviceList:
-            for devices in devices.items():
-                device_mac_address = devices[1]["MacAddress"]
-                print(">>> Console Output - Found ", devices[0])
+            for device in devices.items():
+                device_mac_address = device[1]["MacAddress"]
+                print(">>> Console Output - Found ", device[0])
                 self.start_thread(mac_address=device_mac_address)
 
     def start_thread(self, mac_address):
