@@ -27,8 +27,8 @@ cm_dc48_inputs = 48
 
 # device_model = 'cm_dc16'  # set by API when scanning or from config file if connected prior
 
-bank_total = cm_dc16_banks - 1
-input_total = cm_dc16_inputs
+##bank_total = cm_dc16_banks - 1
+##input_total = cm_dc16_inputs
 
 
 class ConnectAndStream(threading.Thread):
@@ -38,9 +38,8 @@ class ConnectAndStream(threading.Thread):
         # global attributes
         self.active = None
         self.device_mac = device_mac
-        self.ip_address, self.device_model, self.device_type, self.read_speed = self.read_device_info(self.device_mac)
-        self.bank_total = 6-1
-        self.input_total = 48
+        self.ip_address, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(self.device_mac)
+        self.bank_total = ((self.input_total//8)-1)
 
         # self.ip_address = (self.read_device_info(self.device_mac)[0])
         # self.device_model = (self.read_device_info(self.device_mac)[1])
@@ -180,7 +179,6 @@ class ConnectAndStream(threading.Thread):
             UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # Bind to address and ip
             UDPServerSocket.bind((localIP, localPort))
-            #UDPServerSocket.settimeout(30.0)
 
             print("UDP server up - Searching Network for Device: " + str(device_mac))
 
@@ -188,16 +186,16 @@ class ConnectAndStream(threading.Thread):
             while True:
                 try:
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
-                    print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
+                    #print(bytes_address_pair)
+                    #print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
                     # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
                     discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
-                    discovery_version = \
-                        (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
-                    discover_model = "cm_dc16"
+                    discovery_version = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
+                    discover_model = self.device_model
                     discover_device_type = self.device_type
 
 ##                    print(">>> Console Output - Discovered Device IP:  ", discover_ip)
@@ -215,9 +213,9 @@ class ConnectAndStream(threading.Thread):
                             print(">>> Console Output - Discovered Device Model: ", discover_model)
                             print(">>> Console Output - Discovered Device Type: ", discover_device_type)
                             print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
-                            print(">>> Console Output - UDP Discovered Matching MAC Address")
                             print(">>> Console Output - Saving updated device info to file.")
-                            self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
+                            self.save_device_info(discover_ip, self.device_mac, self.device_model,
+                                                  self.device_type, self.read_speed, self.input_total, self.relay_total)
                             break
                         except Exception:
                             print(">>> Console Output - Error: Unable to save updated device info to file.")
@@ -276,13 +274,19 @@ class ConnectAndStream(threading.Thread):
             print(">>> Console Output - Error Sending Reboot Command")
 
     @staticmethod
-    def save_device_info(ip, i_mac, device_model, device_type, read_speed):
+    def save_device_info(ip, i_mac, device_model, device_type, read_speed, input_total, relay_total):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
         device_info_dict = {"Device1": {"IP": ip, "MacAddress": i_mac, "DeviceModel": device_model,
-                                        "DeviceType": device_type, "ReadSpeed": read_speed}}
+                                        "DeviceType": device_type, "ReadSpeed": read_speed,
+                                        "InputTotal": input_total, "RelayTotal": relay_total}}
+##        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac, "DeviceModel": self.device_model,
+##                                        "DeviceType": self.device_type, "ReadSpeed": self.read_speed}}
+##        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac}}
+        #print (str(device_info_dict))
 
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
+            #############################  CHANGE TO SAVE ONLY THE IP ADDRESS FOUND FROM THE DISCOVERY METHOD FOR THIS MAC ADDRESS
 
     @staticmethod
     def read_device_info(i_mac):
@@ -296,11 +300,10 @@ class ConnectAndStream(threading.Thread):
 
             for i in deviceList:
                 for devices in i.items():
-                    #print(devices)
                     values = devices[1]
                     if values["MacAddress"] == i_mac:
                         print("Device record exists for : ", i_mac)
-                        return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
+                        return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"], values["InputTotal"], values["RelayTotal"]
                         exit()
 ##            deviceList = []
 ##            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
@@ -316,11 +319,10 @@ class ConnectAndStream(threading.Thread):
 ##                    print("Device record exists for : ", i_mac)
 ##                    return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
                     else:
-                    # print("Device record does not exist for : ", i_mac)
-                    # return ["127.0.0.1", "not_found"]
-                    # deviceDiscovery(i_mac)
-                    # print("discovery done")
-
+##                        print("Device record does not exist for : ", i_mac)
+##                        return ["127.0.0.1", "not_found"]
+##                        deviceDiscovery(i_mac)
+##                        print("discovery done")
                         pass
 
         except Exception:
