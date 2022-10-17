@@ -4,7 +4,12 @@ import socket
 import threading
 import time
 import sys
+import ncd_industrial_devices
 
+# BASE DIRECTORIES
+ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
+APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 class AddFindDevices(threading.Thread):
     def __init__(self, **method):
@@ -13,6 +18,7 @@ class AddFindDevices(threading.Thread):
         # global attributes
         self.active = None
         self.method = method
+        self.server_port = 2101
 
     def run(self):
         if self.method['method'] == 'add':
@@ -21,16 +27,158 @@ class AddFindDevices(threading.Thread):
             self.network_search()
 
     def ip_connect(self, ip_address):
-        pass
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.settimeout(5.0)
+            client_socket.connect((ip_address, self.server_port))
+            ncd = ncd_industrial_devices.NCD_Controller(client_socket)
+
+            print('>>> Console Output - Connected to ' + str(ip_address))
+            
+            data_response = ncd.test_comms()
+            print(ip_address, str(data_response))
+            client_socket.close()
+##            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
+##                          self.device_type, self.read_speed, self.input_total, self.relay_total)
+            
+            return (ip_address, data_response) ## send to API (IP, MAC Address, etc.) that connection was a success?
+        
+        except Exception:
+            print("No device found with IP address " + ip_address)
+            pass
+
 
     def network_search(self):
-        pass
+        try:
+            localIP = self.extract_ip()
+            localPort = 13000
+            bufferSize = 1024
+
+            msgFromServer = "Connected"
+            bytesToSend = str.encode(msgFromServer)
+
+            # Create a datagram socket
+            UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+            UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # Bind to address and ip
+            UDPServerSocket.bind((localIP, localPort))
+
+            print("UDP server up - Searching Network for Devices ")
+
+            # Listen for incoming datagrams
+            while True:
+                try:
+                    bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
+                    #print(bytes_address_pair)
+                    #print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
+                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
+
+                    discover_ip = ((bytes_address_pair[1])[0])
+                    discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
+                    discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
+                    discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
+                    discovery_version = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
+##                    discover_model = self.device_model
+##                    discover_device_type = self.device_type
+
+                    if bytes_address_pair != None:
+                        try:
+                            print(">>> Console Output - Discovered Device IP:  ", discover_ip)
+                            print(">>> Console Output - Discovered Device MAC: ", discover_mac)
+                            print(">>> Console Output - Discovered Device Port: ", discover_port)
+##                            print(">>> Console Output - Discovered Device Model: ", discover_model)
+##                            print(">>> Console Output - Discovered Device Type: ", discover_device_type)
+                            print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
+##                            print(">>> Console Output - Saving updated device info to file.")
+##                            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
+##                                                      self.device_type, self.read_speed, self.input_total, self.relay_total)
+                            UDPServerSocket.close()
+                            break
+                        except Exception:
+                            print(">>> Console Output - Error: Unable to save updated device info to file.")
+                    else:
+                        print(">>> Console Output - No devices found on network. Continueing to search...")
+                            
+                    #break
+                except socket.error:
+                    print(">>> Console Output - Error trying discovery device")
+                    # set connection status and recreate socket
+                    self.connection_lost()
+                    self.run()
+
+        except socket.error as e:
+            print(e)
+            print(">>> Console Output - Error trying to open UDP discovery port")
+            # set connection status and recreate socket
+            # self.connection_lost()
+            self.run()
+
+        return discover_ip
+
+    @staticmethod
+    def extract_ip():
+        st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            st.connect(('10.255.255.255', 1))
+            ip_address = st.getsockname()[0]
+        except Exception:
+            ip_address = '127.0.0.1'
+            print(">>> Console Output - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
+        finally:
+            st.close()
+        return ip_address
+
+    @staticmethod
+    def reboot_device():
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ncd = ncd_industrial_devices.NCD_Controller(client_socket)
+            ncd.device_reboot()
+            client_socket.close()
+            print(">>> Console Output - Device Rebooted")
+
+        except Exception:
+            print(">>> Console Output - Error Sending Reboot Command")
+
+    @staticmethod
+    def save_device_info(ip, i_mac, server_port, device_model, device_type, read_speed, input_total, relay_total):
+        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+        device_info_dict = {"Device1": {"IP": ip, "ServerPort": server_port, "MacAddress": i_mac, "DeviceModel": device_model,
+                                        "DeviceType": device_type, "ReadSpeed": read_speed,
+                                        "InputTotal": input_total, "RelayTotal": relay_total}}
+
+        with open(device_info_file, "w") as device_info:
+            json.dump(device_info_dict, device_info)
+
+    @staticmethod
+    def read_device_info(i_mac):
+        try:
+            deviceList = []
+            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+            with open(device_info_file) as connected_devices_file:
+                for jsonObj in connected_devices_file:
+                    connected_devices_file_response = json.loads(jsonObj)
+                    deviceList.append(connected_devices_file_response)
+
+            for i in deviceList:
+                for devices in i.items():
+                    values = devices[1]
+                    if values["MacAddress"] == i_mac:
+                        print("Device record exists for : ", i_mac)
+                        return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"], values["InputTotal"], values["RelayTotal"]
+                        exit()
+                    else:
+                        pass
+
+        except Exception:
+            print(">>> Console Output - device_info file does not exist or there is improperly formatted data")
+
 
 
 def main():
     if __name__ == "__main__":
-        add_find_device_thread = AddFindDevices(method='add', ip='192.168.0.100')
-        # add_find_device_thread = AddFindDevices(method='find', ip=None)
+        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.19')
+        #add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
 

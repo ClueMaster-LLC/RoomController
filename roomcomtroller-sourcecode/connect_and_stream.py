@@ -12,18 +12,18 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 # GLOBAL VARIABLES
-SERVER_PORT = 2101
-# READ_SPEED = 0.05
+##SERVER_PORT = 2101
+##READ_SPEED = 0.05
 
 log_level = 0  # 0 for disabled | 1 for details
 
 # device hardware
-cm_dc16_banks = 2
-cm_dc16_inputs = 8
-cm_dc32_banks = 4
-cm_dc32_inputs = 32
-cm_dc48_banks = 6
-cm_dc48_inputs = 48
+##cm_dc16_banks = 2
+##cm_dc16_inputs = 8
+##cm_dc32_banks = 4
+##cm_dc32_inputs = 32
+##cm_dc48_banks = 6
+##cm_dc48_inputs = 48
 
 # device_model = 'cm_dc16'  # set by API when scanning or from config file if connected prior
 
@@ -38,9 +38,10 @@ class ConnectAndStream(threading.Thread):
         # global attributes
         self.active = None
         self.device_mac = device_mac
-        self.ip_address, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(self.device_mac)
+        self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total//8)-1)
 
+        #self.server_port = 2101
         # self.ip_address = (self.read_device_info(self.device_mac)[0])
         # self.device_model = (self.read_device_info(self.device_mac)[1])
         # self.device_type = (self.read_device_info(self.device_mac)[2])
@@ -55,7 +56,7 @@ class ConnectAndStream(threading.Thread):
                     self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
-                client_socket.connect((self.ip_address, SERVER_PORT))
+                client_socket.connect((self.ip_address, self.server_port))
                 print('>>> Console Output - Connected to ' + str(self.ip_address))
                 connected = True
 
@@ -66,7 +67,7 @@ class ConnectAndStream(threading.Thread):
                 print('>>> Console Output - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
-                client_socket.connect((self.ip_address, SERVER_PORT))
+                client_socket.connect((self.ip_address, self.server_port))
                 connected = True
 
         try:
@@ -144,7 +145,7 @@ class ConnectAndStream(threading.Thread):
             try:
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(1.0)
-                client_socket.connect((self.ip_address, SERVER_PORT))
+                client_socket.connect((self.ip_address, self.server_port))
                 connected = True
                 print("re-connection successful")
             except socket.error:
@@ -205,7 +206,7 @@ class ConnectAndStream(threading.Thread):
 ##                    print(">>> Console Output - Discovered Device Type: ", discover_device_type)
 ##                    print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
 
-                    if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
+                    if discover_mac == self.device_mac:  ########### change logic to look inside array and if the MAC is found, then save that new data
                         try:
                             print(">>> Console Output - Discovered Device IP:  ", discover_ip)
                             print(">>> Console Output - Discovered Device MAC: ", discover_mac)
@@ -214,8 +215,9 @@ class ConnectAndStream(threading.Thread):
                             print(">>> Console Output - Discovered Device Type: ", discover_device_type)
                             print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
                             print(">>> Console Output - Saving updated device info to file.")
-                            self.save_device_info(discover_ip, self.device_mac, self.device_model,
+                            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
                                                   self.device_type, self.read_speed, self.input_total, self.relay_total)
+                            UDPServerSocket.close()
                             break
                         except Exception:
                             print(">>> Console Output - Error: Unable to save updated device info to file.")
@@ -229,7 +231,7 @@ class ConnectAndStream(threading.Thread):
                     self.connection_lost()
                     self.run()
 
-##            if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
+##            if discover_mac == self.device_mac:  
 ##                try:
 ##                    print(">>> Console Output - Saving updated device info to file.")
 ##                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
@@ -274,9 +276,9 @@ class ConnectAndStream(threading.Thread):
             print(">>> Console Output - Error Sending Reboot Command")
 
     @staticmethod
-    def save_device_info(ip, i_mac, device_model, device_type, read_speed, input_total, relay_total):
+    def save_device_info(ip, i_mac, server_port, device_model, device_type, read_speed, input_total, relay_total):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-        device_info_dict = {"Device1": {"IP": ip, "MacAddress": i_mac, "DeviceModel": device_model,
+        device_info_dict = {"Device1": {"IP": ip, "ServerPort": server_port, "MacAddress": i_mac, "DeviceModel": device_model,
                                         "DeviceType": device_type, "ReadSpeed": read_speed,
                                         "InputTotal": input_total, "RelayTotal": relay_total}}
 ##        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac, "DeviceModel": self.device_model,
@@ -303,7 +305,7 @@ class ConnectAndStream(threading.Thread):
                     values = devices[1]
                     if values["MacAddress"] == i_mac:
                         print("Device record exists for : ", i_mac)
-                        return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"], values["InputTotal"], values["RelayTotal"]
+                        return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"], values["InputTotal"], values["RelayTotal"]
                         exit()
 ##            deviceList = []
 ##            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")

@@ -306,4 +306,4 @@ class NCD_Controller:
 	
 	def get_dc_bank_status(self, bank_start = 1, band_end = 2):
 		command = self.wrap_in_api([254, 175, bank_start, band_end])
-		return self.process_read_command_return(self.send_command(command, 4))
+		return self.process_read_command_return(self.send_command(command, 32))
