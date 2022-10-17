@@ -112,14 +112,14 @@ class ConnectAndStream(threading.Thread):
                     # wait for a few defined seconds
                     time.sleep(self.read_speed)
 
-            except KeyboardInterrupt:
-                print('>>> Console Output - Keyboard Interrupted')
-                try:
-                    print(">>> Console Output - Connection closed")
-                    client_socket.close()
-                    sys.exit(0)
-                except SystemExit:
-                    pass
+##            except KeyboardInterrupt:
+##                print('>>> Console Output - Keyboard Interrupted')
+##                try:
+##                    print(">>> Console Output - Connection closed")
+##                    client_socket.close()
+##                    sys.exit(0)
+##                except SystemExit:
+##                    pass
 
             except socket.error:
                 # set connection status and recreate socket
@@ -215,8 +215,7 @@ class ConnectAndStream(threading.Thread):
             if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
                 try:
                     print(">>> Console Output - Saving updated device info to file.")
-                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,
-                                          self.read_speed)
+                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
                 except Exception:
                     print(">>> Console Output - Error: Unable to save updated device info to file.")
             else:
