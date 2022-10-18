@@ -18,36 +18,38 @@ class AddFindDevices(threading.Thread):
         # global attributes
         self.active = None
         self.method = method
-##        self.server_port = None
-##        self.mac_address = None
+
 
     def run(self):
         if self.method['method'] == 'add':
-            self.ip_connect(self.method['ip'], self.method['server_port'], self.method['mac_address'])
+            self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'], self.method['device_model'],
+                            int(self.method['device_type']), int(self.method['input_total']), int(self.method['relay_total']), float(self.method['read_speed']))
         else:
             self.network_search()
 
-    def ip_connect(self, ip_address, server_port, mac_adddress):
+    def ip_connect(self, ip_address, server_port, mac_address, device_model, device_type, input_total, relay_total, read_speed):
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.settimeout(5.0)
-            client_socket.connect((ip_address, self.server_port))
-            print(ip_address, self.server_port)
+            client_socket.connect((ip_address, server_port))
             #data_response_init = client_socket.recvfrom(32)[0]
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
 
-            print('>>> Console Output - Connecting to ' + str(self))
+            print('>>> add_find_device - Console Output - Connecting to ' + str(mac_address))
             
             data_response = ncd.test_comms()
-            print(str(data_response))
-            client_socket.close()
-##            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
-##                          self.device_type, self.read_speed, self.input_total, self.relay_total)
+            if data_response != None:
+                print('>>> add_find_device - Console Output - Device responded ' + str(mac_address))
+                client_socket.close()
+                self.save_device_info(ip_address, server_port, mac_address, device_model, device_type, read_speed, input_total, relay_total)  ## need to append to file, not overwrite
+                print('>>> add_find_device - Console Output - Saving device ' + str(mac_address) + ' to local file.')
+                print('add_find_device - Console Output - Return Success to API')
             
-            return (ip_address, data_response) ## send to API (IP, MAC Address, etc.) that connection was a success?
+            return ("Success") ## send to API ???? that connection was a success?
         
-        except Exception:
-            print("No device found with IP address " + ip_address)
+        except Exception as e:
+            print(e)
+            return ("Fail")
             pass
 
 
@@ -66,57 +68,65 @@ class AddFindDevices(threading.Thread):
             # Bind to address and ip
             UDPServerSocket.bind((localIP, localPort))
 
-            print("UDP server up - Searching Network for Devices ")
+            print("add_find_device - Console Output - UDP server up - Searching Network for Devices ")
 
             # Listen for incoming datagrams
             while True:
                 try:
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
-                    print(bytes_address_pair)
+##                    print(bytes_address_pair)
                     #print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
-                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
+                    # data returned# (b'192.168.1.21,0008DC222A0C,2101,cm_dc48,2.1', ('192.168.1.21', 1460))
+                    # or
+                    # data returned# (b'192.168.1.19,0008DC21DDFD,2101,cm_dc16,2.2\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', ('192.168.1.19', 13000))
 
-                    discover_ip = ((bytes_address_pair[1])[0])
+##                    discover_ip = ((bytes_address_pair[1])[0])
+                    discover_ip = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[0]
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
                     discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
                     discovery_version = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
 ##                    discover_model = self.device_model
 ##                    discover_device_type = self.device_type
-
+                    
                     if bytes_address_pair != None:
                         try:
-                            print(">>> Console Output - Discovered Device IP:  ", discover_ip)
-                            print(">>> Console Output - Discovered Device MAC: ", discover_mac)
-                            print(">>> Console Output - Discovered Device Port: ", discover_port)
+                            print(">>> add_find_device - Console Output - Discovered Device IP:  ", discover_ip)
+                            print(">>> add_find_device - Console Output - Discovered Device MAC: ", discover_mac)
+                            print(">>> add_find_device - Console Output - Discovered Device Port: ", discover_port)
 ##                            print(">>> Console Output - Discovered Device Model: ", discover_model)
 ##                            print(">>> Console Output - Discovered Device Type: ", discover_device_type)
-                            print(">>> Console Output - Discovered Device Firmware Version: ", discovery_version)
+                            print(">>> add_find_device - Console Output - Discovered Device Firmware Version: ", discovery_version)
 ##                            print(">>> Console Output - Saving updated device info to file.")
 ##                            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
 ##                                                      self.device_type, self.read_speed, self.input_total, self.relay_total)
                             UDPServerSocket.close()
+                            print(">>>add_find_device - Console Output - Return Success to API")
                             break
-                        except Exception:
-                            print(">>> Console Output - Error: Unable to save updated device info to file.")
+
+                        except Exception as e:
+##                            print(">>> Console Output - Error: Unable to save updated device info to file.")
+                            print(e)
                     else:
-                        print(">>> Console Output - No devices found on network. Continueing to search...")
+##                        timer = (timer - 1)
+##                        print(timer)
+                        print(">>> add_find_device - Console Output - No devices found on network. Continueing to search...")
                             
                     #break
                 except socket.error:
-                    print(">>> Console Output - Error trying discovery device")
+                    print(">>> add_find_device - Console Output - Error trying discovery device")
                     # set connection status and recreate socket
                     self.connection_lost()
                     self.run()
 
         except socket.error as e:
             print(e)
-            print(">>> Console Output - Error trying to open UDP discovery port")
+            print(">>> add_find_device - Console Output - Error trying to open UDP discovery port")
             # set connection status and recreate socket
             # self.connection_lost()
             self.run()
 
-        return discover_ip
+        return discover_mac #return Mac addresses found to API
 
     @staticmethod
     def extract_ip():
@@ -126,7 +136,7 @@ class AddFindDevices(threading.Thread):
             ip_address = st.getsockname()[0]
         except Exception:
             ip_address = '127.0.0.1'
-            print(">>> Console Output - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
+            print(">>> add_find_device - Console Output - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
         finally:
             st.close()
         return ip_address
@@ -138,10 +148,10 @@ class AddFindDevices(threading.Thread):
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
             ncd.device_reboot()
             client_socket.close()
-            print(">>> Console Output - Device Rebooted")
+            print(">>> add_find_device - Console Output - Device Rebooted")
 
         except Exception:
-            print(">>> Console Output - Error Sending Reboot Command")
+            print(">>> add_find_device - Console Output - Error Sending Reboot Command")
 
     @staticmethod
     def save_device_info(ip, i_mac, server_port, device_model, device_type, read_speed, input_total, relay_total):
@@ -174,14 +184,13 @@ class AddFindDevices(threading.Thread):
                         pass
 
         except Exception:
-            print(">>> Console Output - device_info file does not exist or there is improperly formatted data")
-
-
+            print(">>> add_find_device - Console Output - device_info file does not exist or there is improperly formatted data")
 
 def main():
     if __name__ == "__main__":
-        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.19', server_port='2021', mac_address='0008DC21DDFD')
-        #add_find_device_thread = AddFindDevices(method='find', ip=None)
+        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.22', server_port='2101', mac_address='0008DC222B5E', device_model='cm_dc16',
+                                                device_type='1', input_total='16', relay_total='0', read_speed='0.05')
+##        add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
 

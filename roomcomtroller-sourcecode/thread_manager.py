@@ -13,15 +13,13 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 # BASE VARIABLES
-SERVER_PORT = 2101
-READ_SPEED = 0.05
 
 
 # RegistrationThread checks for device registration
 class RegistrationThread(threading.Thread):
     def __init__(self):
         super(RegistrationThread, self).__init__()
-        print(">>> Console Output - RegistrationThread active ....")
+        print(">>> thread_manager - Console Output - RegistrationThread active ....")
 
         # global attributes
         self.active = None
@@ -31,8 +29,8 @@ class RegistrationThread(threading.Thread):
         self.auto_startup_instance = auto_startup.AutoStartup()
         self.auto_startup_instance.__int__()
 
-        print(">>> Console Output - Stopped Base RegistrationThread ...")
-        print(">>> Console Output - Restarting Room Controller ...")
+        print(">>> thread_manager - Console Output - Stopped Base RegistrationThread ...")
+        print(">>> thread_manager - Console Output - Restarting Room Controller ...")
         restart_room_controller()
         return
 
@@ -41,7 +39,7 @@ class RegistrationThread(threading.Thread):
 class ConnectPreviousDevicesThread(threading.Thread):
     def __init__(self):
         super(ConnectPreviousDevicesThread, self).__init__()
-        print(">>> Console Output - ConnectPreviousThread active ....")
+        print(">>> thread_manager - Console Output - ConnectPreviousThread active ....")
 
         # global attributes
         self.active = None
@@ -50,7 +48,7 @@ class ConnectPreviousDevicesThread(threading.Thread):
     def run(self):
         self.connected_devices_instance = connected_devices.ConnectedDevices()
         # self.connected_devices_instance.__init__()
-        print(">>> Console Output - Stopped Base ConnectPreviousDevicesThread ...")
+        print(">>> thread_manager - Console Output - Stopped Base ConnectPreviousDevicesThread ...")
         return
 
 
@@ -58,7 +56,7 @@ class ConnectPreviousDevicesThread(threading.Thread):
 class ThreadManager:
     def __init__(self):
         super(ThreadManager, self).__init__()
-        print(">>> Console Output - Starting Thread Manager ....")
+        print(">>> thread_manager - Console Output - Starting Thread Manager ....")
 
         # global attributes
         self.active = None

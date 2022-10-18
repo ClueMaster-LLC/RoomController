@@ -17,7 +17,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 class Authentication:
     def __init__(self):
         super(Authentication, self).__init__()
-        print(">>> Console Output - Authentication")
+        print(">>> authentication - Console Output - Authentication")
 
         # global attributes
         self.api_headers = None
@@ -43,7 +43,7 @@ class Authentication:
 
         self.api_headers = CaseInsensitiveDict()
         self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
-        print(">>> Console Output - MAC ADDRESS: " + str(self.device_unique_id))
+        print(">>> authentication - Console Output - MAC ADDRESS: " + str(self.device_unique_id))
 
     def execution_environment(self):
         try:
@@ -69,14 +69,14 @@ class Authentication:
                 identify_device_api_url = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
                                                                               request_id=request_id)
                 requests.post(identify_device_api_url, headers=self.api_headers)
-                print(">>> Console Output - Acknowledging Requestid ", request_id)
+                print(">>> authentication - Console Output - Acknowledging Requestid ", request_id)
 
             # forwarding application flow to room controller master environment
             room_controller_window = room_controller.RoomController()
 
         except requests.exceptions.ConnectionError:
             # if the app faces connection error when making api calls, then pass
-            print(">>> Console Output - authentication.py Connection Error")
+            print(">>> authentication - Console Output - authentication.py Connection Error")
             pass
 
         except requests.exceptions.HTTPError as request_error:
@@ -84,22 +84,22 @@ class Authentication:
                 self.reset_room_controller()
 
             else:
-                print(">>> Console output - room_controller.py Not a API token invalid Error")
+                print(">>> authentication - Console Output - room_controller.py Not a API token invalid Error")
                 print(request_error)
 
         except KeyboardInterrupt:
-            print(">>> Console Output - authentication.py Keyboard Interrupt")
+            print(">>> authentication - Console Output - authentication.py Keyboard Interrupt")
 
         except json.decoder.JSONDecodeError as json_error:
-            print(">>> Console Output - room_controller.py JsonDecodeError")
-            print(">>> Console Output - Error ", json_error)
+            print(">>> authentication - Console Output - room_controller.py JsonDecodeError")
+            print(">>> authentication - Console Output - Error ", json_error)
             i_request = requests.get(self.device_request_api_url, headers=self.api_headers).text
             print(">>> Current General Request API Response - ", i_request)
             pass
 
         except requests.exceptions.JSONDecodeError as json_error:
-            print(">>> Console Output - room_controller.py JsonDecodeError")
-            print(">>> Console Output - Error ", json_error)
+            print(">>> authentication - Console Output - room_controller.py JsonDecodeError")
+            print(">>> authentication - Console Output - Error ", json_error)
             pass
 
     def reset_room_controller(self):

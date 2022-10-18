@@ -38,7 +38,7 @@ class ConnectedDevices:
 ##                self.start_thread(mac_address=device_mac_address)
 
         deviceList = []
-        print(">>> Console Output - Connecting to previously configured devices ... ")
+        print(">>> connected_devices - Console Output - Connecting to previously configured devices ... ")
         with open(self.previously_configured_devices_file) as connected_devices_file:
             for jsonObj in connected_devices_file:
                 connected_devices_file_response = json.loads(jsonObj)
@@ -47,10 +47,10 @@ class ConnectedDevices:
         for devices in deviceList:
             for device in devices.items():
                 device_mac_address = device[1]["MacAddress"]
-                print(">>> Console Output - Found ", device[0])
+                print(">>> connected_devices - Console Output - Found ", device[0])
                 self.start_thread(mac_address=device_mac_address)
 
     def start_thread(self, mac_address):
-        print(f">>> Console Output - Starting ConnectAndStream Thread for MacAddress {mac_address}")
+        print(f">>> connected_devices - Console Output - Starting ConnectAndStream Thread for MacAddress {mac_address}")
         self.connect_and_stream_thread_instance = connect_and_stream.ConnectAndStream(device_mac=mac_address)
         self.connect_and_stream_thread_instance.start()

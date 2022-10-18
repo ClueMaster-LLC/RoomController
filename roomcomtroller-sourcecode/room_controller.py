@@ -17,7 +17,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 class RoomController:
     def __init__(self):
         super(RoomController, self).__init__()
-        print(">>> Console Output - Room Controller")
+        print(">>> room_controller - Console Output - Room Controller")
 
         # global attributes
         self.device_unique_id = None
@@ -46,7 +46,7 @@ class RoomController:
             api_key = json_response_of_unique_ids_file["api_token"]
 
         except FileNotFoundError:
-            print(">>> Console output - Unique ids file not found")
+            print(">>> room_controller - Console Output - Unique ids file not found")
 
         else:
             self.device_unique_id = device_unique_id
@@ -67,18 +67,18 @@ class RoomController:
                     request_id = relays_discovery_request.json()["RequestID"]
 
                     if request_id == self.search_for_devices_id:
-                        print(">>> Console Output - Acknowledging request for Input Relay with RequestId ", request_id)
+                        print(">>> room_controller - Console Output - Acknowledging request for Input Relay with RequestId ", request_id)
                         self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
                                                                                        request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
                     else:
-                        print(">>> Console Output - Request id ", relays_discovery_request.json()["RequestID"])
+                        print(">>> room_controller - Console Output - Request id ", relays_discovery_request.json()["RequestID"])
 
                 time.sleep(1)
 
             except requests.exceptions.ConnectionError:
                 # sleep for 1 sec before trying again
-                print(">>> Console Output - room_controller.py Connection Error")
+                print(">>> room_controller - Console Output - room_controller.py Connection Error")
                 time.sleep(1)
                 continue
 
@@ -87,21 +87,21 @@ class RoomController:
                     self.reset_room_controller()
                     break
                 else:
-                    print(">>> Console output - room_controller.py Not a API token invalid Error")
+                    print(">>> room_controller - Console Output - room_controller.py Not a API token invalid Error")
                     print(request_error)
 
             except requests.exceptions.JSONDecodeError as json_error:
-                print(">>> Console Output - room_controller.py JsonDecodeError")
-                print(">>> Console Output - Error ", json_error)
+                print(">>> room_controller - Console Output - room_controller.py JsonDecodeError")
+                print(">>> room_controller - Console Output - Error ", json_error)
                 pass
 
             except KeyboardInterrupt:
-                print(">>> Console Output - room_controller.py Keyboard Interrupt")
+                print(">>> room_controller - Console Output - room_controller.py Keyboard Interrupt")
                 break
 
     @staticmethod
     def connect_and_stream_data():
-        print(">>> Console output - Starting threads...")
+        print(">>> room_controller - Console Output - Starting threads...")
         pass
 
     def reset_room_controller(self):
