@@ -22,7 +22,7 @@ class AutoStartup:
 
     def __int__(self):
         super(AutoStartup, self).__init__()
-        print(">>> auto_startup - Console Output - AutoStartup")
+        print(">>> auto_startup - AutoStartup")
 
         # global attributes
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
@@ -56,7 +56,7 @@ class AutoStartup:
                     room_controller_response = requests.get(get_rc_request_api, headers=api_header)
                     if room_controller_response.status_code in [401, 500, 501]:
 
-                        print(">>> auto_startup - Console Output - API token invalid. Creating New Token")
+                        print(">>> auto_startup - API token invalid. Creating New Token")
                         new_api_bearer_key = self.generate_secure_api_token(device_id=device_unique_id)
                         json_response_of_unique_ids_file["api_token"] = new_api_bearer_key
                         self.device_status = False
@@ -91,13 +91,13 @@ class AutoStartup:
                     self.validate_device_status()
 
                 except requests.exceptions.ConnectionError:
-                    print(">>> auto_startup - Console Output - auto_startup.py Connection Error")
+                    print(">>> auto_startup - auto_startup.py Connection Error")
                     time.sleep(1)
                     continue
 
                 except json.decoder.JSONDecodeError as json_error:
-                    print(">>> auto_startup - Console Output - auto_startup.py JsonDecodeError")
-                    print(">>> auto_startup - Console Output - Error ", json_error)
+                    print(">>> auto_startup - auto_startup.py JsonDecodeError")
+                    print(">>> auto_startup - Error ", json_error)
                     i_request = requests.get(get_rc_request_api, headers=api_header).text
                     print(">>> Current General Request API Response - ", i_request)
                     pass
@@ -116,7 +116,7 @@ class AutoStartup:
             with open(self.unique_ids_file, "w") as unique_ids_file:
                 json.dump(unique_ids_dictionary, unique_ids_file)
 
-            print(">>> auto_startup - Console Output - MAC ADDRESS ", str(device_macaddress))
+            print(">>> auto_startup - MAC ADDRESS ", str(device_macaddress))
             self.device_status = False
             self.validate_device_status()
 
@@ -127,7 +127,7 @@ class AutoStartup:
             print(platform.system())
             for i in psutil.net_if_addrs().items():
                 interface_ip_address = i[1][1][1]
-                print(">>> auto_startup - Console Output - Other IPs found " + interface_ip_address)
+                print(">>> auto_startup - Other IPs found " + interface_ip_address)
 
                 if interface_ip_address == ip_address:
                     i_mac_address = i[1][0][1].split("-")
@@ -143,7 +143,7 @@ class AutoStartup:
             print(platform.system())
             for i in psutil.net_if_addrs().items():
                 interface_ip_address = i[1][0][1]
-                print(">>> auto_startup - Console Output - Other IPs found " + interface_ip_address)
+                print(">>> auto_startup - Other IPs found " + interface_ip_address)
 
                 if interface_ip_address == ip_address:
                     i_mac_address = i[1][2][1].split(":")
@@ -172,12 +172,12 @@ class AutoStartup:
                 bearer_data = initial_template.substitute(device_key=device_id)
 
                 response = requests.post(url=authentication_api_url, headers=api_headers, data=bearer_data).json()
-                print(">>> auto_startup - Console Output - API Auth status - ", response["status"])
-                print(">>> auto_startup - Console Output - New Token ", response["apiKey"])
+                print(">>> auto_startup - API Auth status - ", response["status"])
+                print(">>> auto_startup - New Token ", response["apiKey"])
                 return response["apiKey"]
 
             except requests.exceptions.ConnectionError:
-                print(">>> auto_startup - Console Output - auto_startup.py Connection Error")
+                print(">>> auto_startup - auto_startup.py Connection Error")
                 time.sleep(1)
                 pass
 
@@ -192,11 +192,11 @@ class AutoStartup:
             ip_address = "127.0.0.1"
         finally:
             i_socket.close()
-            print(">>> auto_startup - Console Output - IP Address: " + ip_address)
+            print(">>> auto_startup - Gateway IP Address: " + ip_address)
         return ip_address
 
     def validate_device_status(self):
-        print(">>> auto_startup - Console Output - Validating Device Status")
+        print(">>> auto_startup - Validating Device Status")
         if self.device_status is False:
             authentication_window = authentication.Authentication()
         else:

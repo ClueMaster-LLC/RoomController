@@ -2,6 +2,7 @@ import json
 import threading
 import socket
 import time
+import datetime
 import os
 import sys
 import ncd_industrial_devices
@@ -45,19 +46,19 @@ class ConnectAndStream(threading.Thread):
         connected = False
         while not connected:
             try:
-                print(">>> connect_and_stream - Console Output - Room Controller IP Address: " + str(self.extract_ip()))
-                print('>>> connect_and_stream - Console Output - Connecting to last known device IP: ' + str(
+##                print(">>> connect_and_stream - Room Controller IP Address: " + str(self.extract_ip()))
+                print('>>> connect_and_stream - Connecting to last known device IP: ' + str(
                     self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
                 client_socket.connect((self.ip_address, self.server_port))
-                print('>>> connect_and_stream - Console Output - Connected to ' + str(self.ip_address))
+                print('>>> connect_and_stream - Connected to ' + str(self.ip_address))
                 connected = True
 
             except socket.error:
-                print('>>> connect_and_stream - Console Output - The last known IP ' + str(self.ip_address) + ' is no longer valid. Searching network for device... ')
+                print('>>> connect_and_stream - The last known IP ' + str(self.ip_address) + ' is no longer valid. Searching network for device... ')
                 self.ip_address = self.deviceDiscovery(self.device_mac)  # find new device IP Address
-                print('>>> connect_and_stream - Console Output - Connecting to ' + str(self.ip_address))
+                print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
                 client_socket.connect((self.ip_address, self.server_port))
@@ -67,7 +68,7 @@ class ConnectAndStream(threading.Thread):
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
             #data_response_init = client_socket.recvfrom(32)
             data_response_old = None
-            print('>>> connect_and_stream - Console Output - DEVICE CONNECTED AND READY')
+            print('>>> connect_and_stream - DEVICE CONNECTED AND READY')
             
 
             try:
@@ -80,17 +81,17 @@ class ConnectAndStream(threading.Thread):
                         data_response_old = data_response_new
 
                         # insert SignalR stream
-                        print('>>> connect_and_stream - Console Output - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' + str(data_response))
+                        print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' + str(data_response))
 
                         if log_level == 1:
-                            print('>>> connect_and_stream - Console Output - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(bytes(data_response)))
-                            print('>>> connect_and_stream - Console Output - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
+                            print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(bytes(data_response)))
+                            print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
 
                             # make a new array by ignoring the first two bytes and the last byte
                             readings = bytes(data_response)
                             counter = 0
                             bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
-                            print('>>> connect_and_stream - Console Output - Binary Response Values : ', bytes_as_bits)
+                            print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
 
                             # This code block is only for displaying the of/off of the inputs to the log for diagnostics                            
                             for bank in readings:
@@ -100,18 +101,18 @@ class ConnectAndStream(threading.Thread):
                                     state = (bank & (1 << i))
                                     if state != 0:
                                         # print('Input '+ str(bank) +' is high')
-                                        print('>>> connect_and_stream - Console Output - BANK Unknown: Input ' + str(i + 1) + ' is high')
+                                        print('>>> connect_and_stream - BANK Unknown: Input ' + str(i + 1) + ' is high')
                                     else:
-                                        print('>>> connect_and_stream - Console Output - BANK Unknown: Input ' + str(i + 1) + ' is low')
+                                        print('>>> connect_and_stream - BANK Unknown: Input ' + str(i + 1) + ' is low')
                                     counter += 1
 
                     # wait for a few defined seconds
                     time.sleep(self.read_speed)
 
 ##            except KeyboardInterrupt:
-##                print('>>> connect_and_stream - Console Output - Keyboard Interrupted')
+##                print('>>> connect_and_stream - Keyboard Interrupted')
 ##                try:
-##                    print(">>> connect_and_stream - Console Output - Connection closed")
+##                    print(">>> connect_and_stream - Connection closed")
 ##                    client_socket.close()
 ##                    sys.exit(0)
 ##                except SystemExit:
@@ -134,20 +135,20 @@ class ConnectAndStream(threading.Thread):
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.settimeout(1.0)
         client_socket.close()
-        print(">>> connect_and_stream - Console Output - connection lost... reconnecting")
+        print(">>> connect_and_stream - connection lost... reconnecting")
         while not connected:
-            # attempt to reconnect, otherwise sleep for 5 seconds
+            # attempt to reconnect, otherwise sleep for 30 seconds
             try:
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(1.0)
                 client_socket.connect((self.ip_address, self.server_port))
                 connected = True
-                print(">>> connect_and_stream - Console Output - re-connection successful")
+                print(">>> connect_and_stream - re-connection successful")
             except socket.error:
-                print('>>> connect_and_stream - Console Output - searching...' + str(connect_retry))
+                print('>>> connect_and_stream - searching...' + str(connect_retry))
                 connect_retry += 1
-                if connect_retry == 15:
-                    print('>>> connect_and_stream - Console Output - Connection lost. Starting new search')
+                if connect_retry == 30:
+                    print('>>> connect_and_stream - Connection lost. Starting new search')
                     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client_socket.settimeout(1.0)
                     client_socket.close()
@@ -176,7 +177,7 @@ class ConnectAndStream(threading.Thread):
             # Bind to address and ip
             UDPServerSocket.bind((localIP, localPort))
 
-            print(">>> connect_and_stream - Console Output - UDP server up. Searching Network for Device: " + str(device_mac))
+            print(">>> connect_and_stream - UDP server up. Searching Network for Device: " + str(device_mac))
 
             # Listen for incoming datagrams
             while True:
@@ -194,22 +195,15 @@ class ConnectAndStream(threading.Thread):
                     discover_model = self.device_model
                     discover_device_type = self.device_type
 
-##                    print(">>> connect_and_stream - Console Output - Discovered Device IP:  ", discover_ip)
-##                    print(">>> connect_and_stream - Console Output - Discovered Device MAC: ", discover_mac)
-##                    print(">>> connect_and_stream - Console Output - Discovered Device Port: ", discover_port)
-##                    print(">>> connect_and_stream - Console Output - Discovered Device Model: ", discover_model)
-##                    print(">>> connect_and_stream - Console Output - Discovered Device Type: ", discover_device_type)
-##                    print(">>> connect_and_stream - Console Output - Discovered Device Firmware Version: ", discovery_version)
-
                     if discover_mac == self.device_mac:  ########### change logic to look inside array and if the MAC is found, then save that new data
                         try:
-                            print(">>> connect_and_stream - Console Output - Discovered Device IP:  ", discover_ip)
-                            print(">>> connect_and_stream - Console Output - Discovered Device MAC: ", discover_mac)
-                            print(">>> connect_and_stream - Console Output - Discovered Device Port: ", discover_port)
-                            print(">>> connect_and_stream - Console Output - Discovered Device Model: ", discover_model)
-                            print(">>> connect_and_stream - Console Output - Discovered Device Type: ", discover_device_type)
-                            print(">>> connect_and_stream - Console Output - Discovered Device Firmware Version: ", discovery_version)
-                            print(">>> connect_and_stream - Console Output - Saving updated device info to file.")
+                            print(">>> connect_and_stream - Discovered Device IP:  ", discover_ip)
+                            print(">>> connect_and_stream - Discovered Device MAC: ", discover_mac)
+                            print(">>> connect_and_stream - Discovered Device Port: ", discover_port)
+                            print(">>> connect_and_stream - Discovered Device Model: ", discover_model)
+                            print(">>> connect_and_stream - Discovered Device Type: ", discover_device_type)
+                            print(">>> connect_and_stream - Discovered Device Firmware Version: ", discovery_version)
+                            print(">>> connect_and_stream - Saving updated device info to file.")
                             self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
                                                   self.device_type, self.read_speed, self.input_total, self.relay_total)
                             ###### Only update the IP and PORT used, keeping all other values the same using self._
@@ -217,30 +211,30 @@ class ConnectAndStream(threading.Thread):
                             UDPServerSocket.close()
                             break
                         except Exception:
-                            print(">>> connect_and_stream - Console Output - Error: Unable to save updated device info to file.")
+                            print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
                     else:
-                        print(">>> connect_and_stream - Console Output - Device: " + str(device_mac) + " not found on network. Continueing to search...")
+                        print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - Device: " + str(device_mac) + " not found on network. Continueing to search...")
                             
                     #break
                 except socket.error:  # change to exception:
-                    print(">>> connect_and_stream - Console Output - Error trying discovery device")
+                    print(">>> connect_and_stream - Error trying discovery device")
                     # set connection status and recreate socket
                     self.connection_lost()
                     self.run()
 
 ##            if discover_mac == self.device_mac:  
 ##                try:
-##                    print(">>> connect_and_stream - Console Output - Saving updated device info to file.")
+##                    print(">>> connect_and_stream - Saving updated device info to file.")
 ##                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
 ##                except Exception:
-##                    print(">>> connect_and_stream - Console Output - Error: Unable to save updated device info to file.")
+##                    print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
 ##
 ##            else:
-##                print(">>> connect_and_stream - Console Output - Device not found on network.")
+##                print(">>> connect_and_stream - Device not found on network.")
 
         except socket.error as e:
             print(e)  # change to exception:
-            print(">>> connect_and_stream - Console Output - Error trying to open UDP discovery port")
+            print(">>> connect_and_stream - Error trying to open UDP discovery port")
             # set connection status and recreate socket
             self.connection_lost()
             self.run()
@@ -255,7 +249,7 @@ class ConnectAndStream(threading.Thread):
             ip_address = st.getsockname()[0]
         except Exception:
             ip_address = '127.0.0.1'
-            print(">>> connect_and_stream - Console Output - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
+            print(">>> connect_and_stream - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
         finally:
             st.close()
         return ip_address
@@ -267,10 +261,10 @@ class ConnectAndStream(threading.Thread):
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
             ncd.device_reboot()
             client_socket.close()
-            print(">>> connect_and_stream - Console Output - Device Rebooted")
+            print(">>> connect_and_stream - Device Rebooted")
 
         except Exception:
-            print(">>> connect_and_stream - Console Output - Error Sending Reboot Command")
+            print(">>> connect_and_stream - Error Sending Reboot Command")
 
     @staticmethod
     def save_device_info(ip, server_port, i_mac, device_model, device_type, read_speed, input_total, relay_total):
@@ -301,7 +295,7 @@ class ConnectAndStream(threading.Thread):
                 for devices in i.items():
                     values = devices[1]
                     if values["MacAddress"] == i_mac:
-                        print(">>> connect_and_stream - Console Output - Device record exists for : ", i_mac)
+                        print(">>> connect_and_stream - Device record exists for : ", i_mac)
                         return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"], values["InputTotal"], values["RelayTotal"]
                         exit()
 ##            deviceList = []
@@ -325,7 +319,7 @@ class ConnectAndStream(threading.Thread):
                         pass
 
         except Exception:
-            print(">>> connect_and_stream - Console Output - device_info file does not exist or there is improperly formatted data")
+            print(">>> connect_and_stream - device_info file does not exist or there is improperly formatted data")
 
 # Comment out the function when testing from main.py
 
