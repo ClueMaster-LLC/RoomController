@@ -55,7 +55,8 @@ class ConnectAndStream(threading.Thread):
                 print('>>> connect_and_stream - Connected to ' + str(self.ip_address))
                 connected = True
 
-            except socket.error:
+            except socket.error as e:
+                print(e)
                 print('>>> connect_and_stream - The last known IP ' + str(self.ip_address) + ' is no longer valid. Searching network for device... ')
                 self.ip_address = self.deviceDiscovery(self.device_mac)  # find new device IP Address
                 print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
@@ -66,13 +67,18 @@ class ConnectAndStream(threading.Thread):
 
         try:
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
-            #data_response_init = client_socket.recvfrom(32)
+            try:
+                ##to clear the buffer on NIC when first connect sends MAC.
+                data_response_init = client_socket.recvfrom(32)
+            except Exception as e:
+                print(e)
+                data_response_init = self.device_mac
             data_response_old = None
-            print('>>> connect_and_stream - DEVICE CONNECTED AND READY')
+            print('>>> connect_and_stream - ' + str(self.device_mac) + ' DEVICE CONNECTED AND READY')
             
 
             try:
-                while 1 == 1:
+                while True:
 
                     data_response = (ncd.get_dc_bank_status(0, self.bank_total))
                     data_response_new = data_response
@@ -134,18 +140,30 @@ class ConnectAndStream(threading.Thread):
         connect_retry = 0
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.settimeout(1.0)
+        try:
+            ##to clear the buffer on NIC when first connect sends MAC.
+            data_response_init = client_socket.recvfrom(32)
+        except Exception as e:
+            print(e)
+            data_response_init = self.device_mac
         client_socket.close()
-        print(">>> connect_and_stream - connection lost... reconnecting")
+        print('>>> connect_and_stream - connection lost... reconnecting')
         while not connected:
             # attempt to reconnect, otherwise sleep for 30 seconds
             try:
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(1.0)
                 client_socket.connect((self.ip_address, self.server_port))
+                try:
+                    ##to clear the buffer on NIC when first connect sends MAC.
+                    data_response_init = client_socket.recvfrom(32)
+                except Exception as e:
+                    print(e)
+                    data_response_init = self.device_mac
                 connected = True
-                print(">>> connect_and_stream - re-connection successful")
+                print('>>> connect_and_stream - re-connection successful to ' + str(self.device_mac))
                 client_socket.close()
-                time.sleep(5)
+##                time.sleep(1)
             except socket.error:
                 print('>>> connect_and_stream - searching...' + str(connect_retry))
                 connect_retry += 1
@@ -153,6 +171,12 @@ class ConnectAndStream(threading.Thread):
                     print('>>> connect_and_stream - Connection lost. Starting new search')
                     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client_socket.settimeout(1.0)
+                    try:
+                        ##to clear the buffer on NIC when first connect sends MAC.
+                        data_response_init = client_socket.recvfrom(32)
+                    except Exception as e:
+                        print(e)
+                        data_response_init = self.device_mac
                     client_socket.close()
                     try:
                         self.run()
@@ -189,7 +213,7 @@ class ConnectAndStream(threading.Thread):
                     if log_level in (1,3):
                         print(bytes_address_pair)
                         print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
-                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
+                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4 (IP, PORT)\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
@@ -208,8 +232,7 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Type: ", discover_device_type)
                             print(">>> connect_and_stream - Discovered Device Firmware Version: ", discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
-                            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
-                                                  self.device_type, self.read_speed, self.input_total, self.relay_total)
+##                            self.save_device_info(discover_ip)
                             ###### Only update the IP and PORT used, keeping all other values the same using self._
                             ###### Need logic to update and safe file without looking other records in it.
                             UDPServerSocket.close()
@@ -263,6 +286,11 @@ class ConnectAndStream(threading.Thread):
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
+            try:
+                data_response_init = client_socket.recvfrom(32)  ##to clear the buffer on NIC when first connect sends MAC.
+            except Exception as e:
+                print(e)
+                data_response_init = self.device_mac
             ncd.device_reboot()
             client_socket.close()
             print(">>> connect_and_stream - Device Rebooted")

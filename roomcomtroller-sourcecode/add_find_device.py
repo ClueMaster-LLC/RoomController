@@ -33,7 +33,8 @@ class AddFindDevices(threading.Thread):
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.settimeout(5.0)
             client_socket.connect((ip_address, server_port))
-            #data_response_init = client_socket.recvfrom(32)[0]
+            data_response_init = client_socket.recvfrom(32)[0]
+            print(data_response_init)
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
 
             print('>>> add_find_device - Connecting to ' + str(mac_address))
@@ -99,8 +100,7 @@ class AddFindDevices(threading.Thread):
 ##                            print(">>> Console Output - Discovered Device Type: ", discover_device_type)
                             print(">>> add_find_device - Discovered Device Firmware Version: ", discovery_version)
 ##                            print(">>> Console Output - Saving updated device info to file.")
-##                            self.save_device_info(discover_ip, discover_port, self.device_mac, self.device_model,
-##                                                      self.device_type, self.read_speed, self.input_total, self.relay_total)
+
                             UDPServerSocket.close()
                             print(">>>add_find_device - Return Success to API")
                             break
@@ -189,10 +189,8 @@ class AddFindDevices(threading.Thread):
 
 def main():
     if __name__ == "__main__":
-##        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.22', server_port='2101', mac_address='0008DC222B5E', device_model='cm_dc16',
-##                                                device_type='1', input_total='16', relay_total='0', read_speed='0.05')
-        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222B5E')
-##        add_find_device_thread = AddFindDevices(method='find', ip=None)
+##        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222B5E')
+        add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
 
