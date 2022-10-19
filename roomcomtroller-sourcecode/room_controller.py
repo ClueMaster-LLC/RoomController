@@ -75,12 +75,14 @@ class RoomController:
                         ####AFTER API REQUEST TO START (add, find) process,
                         ####return results to API for display on ClueMaster selection page.
                         ####after user selects the devices to add, they will be saved to the sql database.
-                        
+                        print(">>> room_controller - Add or Find devices and return")                        
                         ####
                         ####Then CALL new API to REQUEST ALL DEVICES FOR THIS ROOM CONTROLLER
                         ####THIS SHOULD INCLUDE THE NEW ONES ADDED TO THE DATABASE
                         ####WE MIGHT NEED A DELAY OR SOME CHECKS TO ENSURE ENOUGH TIME PASSED
                         ####TO ALLOW API TO REFRESH NEW DATA FROM THE SQL DATABASE
+                        print(">>> room_controller - IF ADD DEVICE SUCCESS > GET API for new list of devices")
+                        print(">>> room_controller - IF FIND DEVICES > GET API for new list of devices")
 
                     else:
                         print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
