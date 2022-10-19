@@ -33,22 +33,28 @@ class AddFindDevices(threading.Thread):
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.settimeout(5.0)
             client_socket.connect((ip_address, server_port))
-            data_response_init = client_socket.recvfrom(32)[0]
-            print(data_response_init)
+            try:
+                ##to clear the buffer on NIC when first connect sends MAC.
+                data_response_init = ((list("{}".format(client_socket.recvfrom(32)[0])[2:-1].replace("\\x00", "").replace(":", "").split(",")))[0])
+            except Exception as e:
+                print(e)
+                data_response_init = 'No data in buffer'
+            #print(data_response_init)
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
 
             print('>>> add_find_device - Connecting to ' + str(mac_address))
             
             data_response = ncd.test_comms()
             if data_response != None:
-                print('>>> add_find_device - Device responded ' + str(mac_address))
-                client_socket.close()
-##                self.save_device_info(ip_address, server_port, mac_address, device_model, device_type, read_speed, input_total, relay_total)  ## need to append to file, not overwrite
-##                print('>>> add_find_device - Saving device ' + str(mac_address) + ' to local file.')
-                print('add_find_device - Return Success to API')
-            
-            return ("Success") ## send to API ???? that connection was a success?
-        
+                if data_response_init == mac_address:
+                    print('>>> add_find_device - Device responded ' + str(mac_address))
+                    client_socket.close()
+                    print('>>> add_find_device - Return Success to API')
+                    return ("Success") ## send to API ???? that connection was a success?
+                else:
+                    print('>>> add_find_device - Device does not match expected MAC Address: ' + str(data_response_init))
+                    return ("Fail")
+                    
         except Exception as e:
             print(e)
             return ("Fail")
@@ -117,7 +123,7 @@ class AddFindDevices(threading.Thread):
                 except socket.error:
                     print(">>> add_find_device - Error trying discovery device")
                     # set connection status and recreate socket
-                    self.connection_lost()
+                    # self.connection_lost()
                     self.run()
 
         except socket.error as e:
@@ -189,8 +195,8 @@ class AddFindDevices(threading.Thread):
 
 def main():
     if __name__ == "__main__":
-##        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222B5E')
-        add_find_device_thread = AddFindDevices(method='find', ip=None)
+        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222A0C')
+##        add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
 
