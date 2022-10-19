@@ -22,12 +22,13 @@ class AddFindDevices(threading.Thread):
 
     def run(self):
         if self.method['method'] == 'add':
-            self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'], self.method['device_model'],
-                            int(self.method['device_type']), int(self.method['input_total']), int(self.method['relay_total']), float(self.method['read_speed']))
+##            self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'], self.method['device_model'],
+##                            int(self.method['device_type']), int(self.method['input_total']), int(self.method['relay_total']), float(self.method['read_speed']))
+            self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'])
         else:
             self.network_search()
 
-    def ip_connect(self, ip_address, server_port, mac_address, device_model, device_type, input_total, relay_total, read_speed):
+    def ip_connect(self, ip_address, server_port, mac_address):
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.settimeout(5.0)
@@ -42,7 +43,7 @@ class AddFindDevices(threading.Thread):
                 print('>>> add_find_device - Device responded ' + str(mac_address))
                 client_socket.close()
 ##                self.save_device_info(ip_address, server_port, mac_address, device_model, device_type, read_speed, input_total, relay_total)  ## need to append to file, not overwrite
-                print('>>> add_find_device - Saving device ' + str(mac_address) + ' to local file.')
+##                print('>>> add_find_device - Saving device ' + str(mac_address) + ' to local file.')
                 print('add_find_device - Return Success to API')
             
             return ("Success") ## send to API ???? that connection was a success?
@@ -190,7 +191,8 @@ def main():
     if __name__ == "__main__":
 ##        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.22', server_port='2101', mac_address='0008DC222B5E', device_model='cm_dc16',
 ##                                                device_type='1', input_total='16', relay_total='0', read_speed='0.05')
-        add_find_device_thread = AddFindDevices(method='find', ip=None)
+        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222B5E')
+##        add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
 

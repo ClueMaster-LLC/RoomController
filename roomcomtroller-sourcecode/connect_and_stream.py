@@ -144,6 +144,8 @@ class ConnectAndStream(threading.Thread):
                 client_socket.connect((self.ip_address, self.server_port))
                 connected = True
                 print(">>> connect_and_stream - re-connection successful")
+                client_socket.close()
+                time.sleep(5)
             except socket.error:
                 print('>>> connect_and_stream - searching...' + str(connect_retry))
                 connect_retry += 1
