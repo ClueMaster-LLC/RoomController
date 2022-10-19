@@ -16,7 +16,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 ##SERVER_PORT = 2101
 ##READ_SPEED = 0.05
 
-log_level = 0  # 0 for disabled | 1 for details
+log_level = 0   # 0 for disabled | 1 for ALL details | 2 for device input/relay status | 3 for network connections
 
 # device hardware
 ##cm_dc16_banks = 2
@@ -83,7 +83,7 @@ class ConnectAndStream(threading.Thread):
                         # insert SignalR stream
                         print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' + str(data_response))
 
-                        if log_level == 1:
+                        if log_level in (1,2):
                             print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(bytes(data_response)))
                             print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
 
@@ -183,8 +183,10 @@ class ConnectAndStream(threading.Thread):
             while True:
                 try:
                     bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
-                    #print(bytes_address_pair)
-                    #print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
+
+                    if log_level in (1,3):
+                        print(bytes_address_pair)
+                        print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
                     # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
