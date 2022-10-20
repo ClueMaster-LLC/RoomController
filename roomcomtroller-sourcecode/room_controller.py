@@ -60,7 +60,7 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                #print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
                 relays_discovery_request.raise_for_status()
 
@@ -72,15 +72,14 @@ class RoomController:
                         self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
                                                                                        request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
-                        ####AFTER API REQUEST TO START (add, find) process,
-                        ####return results to API for display on ClueMaster selection page.
-                        ####after user selects the devices to add, they will be saved to the sql database.
-                        print(">>> room_controller - Add or Find devices and return")                        
-                        ####
-                        ####Then CALL new API to REQUEST ALL DEVICES FOR THIS ROOM CONTROLLER
-                        ####THIS SHOULD INCLUDE THE NEW ONES ADDED TO THE DATABASE
-                        ####WE MIGHT NEED A DELAY OR SOME CHECKS TO ENSURE ENOUGH TIME PASSED
-                        ####TO ALLOW API TO REFRESH NEW DATA FROM THE SQL DATABASE
+                        # AFTER API REQUEST TO START (add, find) process,
+                        # return results to API for display on ClueMaster selection page.
+                        # after user selects the devices to add, they will be saved to the sql database.
+                        print(">>> room_controller - Add or Find devices and return")
+                        # Then CALL new API to REQUEST ALL DEVICES FOR THIS ROOM CONTROLLER
+                        # THIS SHOULD INCLUDE THE NEW ONES ADDED TO THE DATABASE
+                        # WE MIGHT NEED A DELAY OR SOME CHECKS TO ENSURE ENOUGH TIME PASSED
+                        # TO ALLOW API TO REFRESH NEW DATA FROM THE SQL DATABASE
                         print(">>> room_controller - IF ADD DEVICE SUCCESS > GET API for new list of devices")
                         print(">>> room_controller - IF FIND DEVICES > GET API for new list of devices")
 

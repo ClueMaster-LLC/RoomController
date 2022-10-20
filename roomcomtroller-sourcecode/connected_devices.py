@@ -22,20 +22,20 @@ class ConnectedDevices:
 
         # instance methods
         self.configurations()
-        self.execution_environment()       
+        self.execution_environment()
 
     def configurations(self):
         pass
 
     def execution_environment(self):
-##        print(">>> Console Output - Connecting to previously configured devices ... ")
-##        with open(self.previously_configured_devices_file) as connected_devices_file:
-##            connected_devices_file_response = json.load(connected_devices_file)
-##
-##            for devices in connected_devices_file_response.items():
-##                device_mac_address = devices[1]["MacAddress"]
-##                print(">>> Console Output - Found ", devices[0])
-##                self.start_thread(mac_address=device_mac_address)
+        #        print(">>> Console Output - Connecting to previously configured devices ... ")
+        #        with open(self.previously_configured_devices_file) as connected_devices_file:
+        #            connected_devices_file_response = json.load(connected_devices_file)
+        #
+        #            for devices in connected_devices_file_response.items():
+        #                device_mac_address = devices[1]["MacAddress"]
+        #                print(">>> Console Output - Found ", devices[0])
+        #                self.start_thread(mac_address=device_mac_address)
 
         deviceList = []
         print(">>> connected_devices - Connecting to previously configured devices ... ")
