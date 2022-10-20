@@ -292,8 +292,7 @@ class ConnectAndStream(threading.Thread):
             st.close()
         return ip_address
 
-    @staticmethod
-    def reboot_device():
+    def reboot_device(self):
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
