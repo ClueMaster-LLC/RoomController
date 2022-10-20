@@ -4,6 +4,7 @@ import socket
 import time
 import datetime
 import os
+import platform
 import sys
 import ncd_industrial_devices
 
@@ -201,7 +202,11 @@ class ConnectAndStream(threading.Thread):
             UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # Bind to address and ip
-            UDPServerSocket.bind((localIP, localPort))
+            if platform.system() == "Windows":
+                UDPServerSocket.bind((localIP, localPort))
+            elif platform.system() == "Linux" or platform.system() == "Linux2":
+                # Bind to address and ip
+                UDPServerSocket.bind(("<broadcast>", localPort))
 
             print(">>> connect_and_stream - UDP server up. Searching Network for Device: " + str(device_mac))
 

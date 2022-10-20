@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 import socket
 import threading
 import time
@@ -73,8 +74,12 @@ class AddFindDevices(threading.Thread):
             # Create a datagram socket
             UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            # Bind to address and ip
-            UDPServerSocket.bind((localIP, localPort))
+
+            if platform.system() == "Windows":
+                UDPServerSocket.bind((localIP, localPort))
+            elif platform.system() == "Linux" or platform.system() == "Linux2":
+                # Bind to address and ip
+                UDPServerSocket.bind(("<broadcast>", localPort))
 
             print("add_find_device - UDP server up - Searching Network for Devices ")
 
@@ -133,7 +138,7 @@ class AddFindDevices(threading.Thread):
             # self.connection_lost()
             self.run()
 
-        return discover_mac #return Mac addresses found to API
+        return discover_mac, discover_ip, discover_port #return IP, Mac addresses, and PORT found to API
 
     @staticmethod
     def extract_ip():
@@ -195,8 +200,8 @@ class AddFindDevices(threading.Thread):
 
 def main():
     if __name__ == "__main__":
-        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222A0C')
-##        add_find_device_thread = AddFindDevices(method='find', ip=None)
+##        add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222A0C')
+        add_find_device_thread = AddFindDevices(method='find', ip=None)
         add_find_device_thread.start()
 
 
