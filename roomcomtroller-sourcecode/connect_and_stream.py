@@ -242,7 +242,7 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Type: ", discover_device_type)
                             print(">>> connect_and_stream - Discovered Device Firmware Version: ", discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
-                            # self.save_device_info(discover_ip)
+                            self.save_device_info(ip=discover_ip, i_mac=discover_mac)
                             # Only update the IP and PORT used, keeping all other values the same using self._
                             # Need logic to update and safe file without looking other records in it.
                             UDPServerSocket.close()
@@ -251,7 +251,7 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
                     else:
                         print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - Device: " + str(
-                            device_mac) + " not found on network. Continueing to search...")
+                            device_mac) + " not found on network. Continuing to search...")
 
                     # break
                 except socket.error:  # change to exception:
@@ -310,20 +310,17 @@ class ConnectAndStream(threading.Thread):
             print(">>> connect_and_stream - Error Sending Reboot Command")
 
     @staticmethod
-    def save_device_info(ip, server_port, i_mac, device_model, device_type, read_speed, input_total, relay_total):
+    def save_device_info(ip, i_mac):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-        device_info_dict = {
-            "Device1": {"IP": ip, "ServerPort": int(server_port), "MacAddress": i_mac, "DeviceModel": device_model,
-                        "DeviceType": int(device_type), "ReadSpeed": float(read_speed),
-                        "InputTotal": int(input_total), "RelayTotal": int(relay_total)}}
-        #        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac, "DeviceModel": self.device_model,
-        #                                        "DeviceType": self.device_type, "ReadSpeed": self.read_speed}}
-        #        device_info_dict = {"Device1": {"IP": ip, "MacAddress": self.device_mac}}
-        # print (str(device_info_dict))
+        with open(device_info_file) as connected_devices_file:
+            connected_devices_file_response = json.load(connected_devices_file)
+            for device in connected_devices_file_response["Devices"]:
+                if device["MacAddress"] == i_mac:
+                    print(f">>> connect_and_stream - Updating IP of {i_mac}")
+                    device["IP"] = ip
 
-        with open(device_info_file, "w") as device_info:
-            json.dump(device_info_dict, device_info)
-            # CHANGE TO SAVE ONLY THE IP ADDRESS FOUND FROM THE DISCOVERY METHOD FOR THIS MAC ADDRESS
+        with open(device_info_file, "w") as connected_devices_file:
+            json.dump(connected_devices_file_response, connected_devices_file)
 
     @staticmethod
     def read_device_info(i_mac):
