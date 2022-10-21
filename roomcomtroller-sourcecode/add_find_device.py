@@ -178,31 +178,6 @@ class AddFindDevices(threading.Thread):
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
 
-    @staticmethod
-    def read_device_info(i_mac):
-        try:
-            deviceList = []
-            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-            with open(device_info_file) as connected_devices_file:
-                for jsonObj in connected_devices_file:
-                    connected_devices_file_response = json.loads(jsonObj)
-                    deviceList.append(connected_devices_file_response)
-
-            for i in deviceList:
-                for devices in i.items():
-                    values = devices[1]
-                    if values["MacAddress"] == i_mac:
-                        print("Device record exists for : ", i_mac)
-                        return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values[
-                            "ReadSpeed"], values["InputTotal"], values["RelayTotal"]
-                        exit()
-                    else:
-                        pass
-
-        except Exception:
-            print(">>> add_find_device - device_info file does not exist or there is improperly formatted data")
-
-
 def main():
     if __name__ == "__main__":
         # add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222A0C')
