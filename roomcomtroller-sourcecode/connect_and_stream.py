@@ -58,7 +58,7 @@ class ConnectAndStream(threading.Thread):
                 connected = True
 
             except socket.error as e:
-                print(e)
+                print('>>> connect_and_stream - ' + str(e))
                 print('>>> connect_and_stream - The last known IP ' + str(
                     self.ip_address) + ' is no longer valid. Searching network for device... ')
                 self.ip_address = self.deviceDiscovery(self.device_mac)  # find new device IP Address
@@ -74,7 +74,7 @@ class ConnectAndStream(threading.Thread):
                 # to clear the buffer on NIC when first connect sends MAC.
                 data_response_init = client_socket.recvfrom(32)
             except Exception as e:
-                print(e)
+                print('>>> connect_and_stream - ' + str(e))
                 data_response_init = self.device_mac
             data_response_old = None
             print('>>> connect_and_stream - ' + str(self.device_mac) + ' DEVICE CONNECTED AND READY')
@@ -149,7 +149,7 @@ class ConnectAndStream(threading.Thread):
             # to clear the buffer on NIC when first connect sends MAC.
             data_response_init = client_socket.recvfrom(32)
         except Exception as e:
-            print(e)
+            print('>>> connect_and_stream - ' + str(e))
             data_response_init = self.device_mac
         client_socket.close()
         print('>>> connect_and_stream - connection lost... reconnecting')
@@ -163,7 +163,7 @@ class ConnectAndStream(threading.Thread):
                     # to clear the buffer on NIC when first connect sends MAC.
                     data_response_init = client_socket.recvfrom(32)
                 except Exception as e:
-                    print(e)
+                    print('>>> connect_and_stream - ' + str(e))
                     data_response_init = self.device_mac
                 connected = True
                 print('>>> connect_and_stream - re-connection successful to ' + str(self.device_mac))
@@ -180,7 +180,7 @@ class ConnectAndStream(threading.Thread):
                         # to clear the buffer on NIC when first connect sends MAC.
                         data_response_init = client_socket.recvfrom(32)
                     except Exception as e:
-                        print(e)
+                        print('>>> connect_and_stream - ' + str(e))
                         data_response_init = self.device_mac
                     client_socket.close()
                     try:
@@ -242,13 +242,14 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Type: ", discover_device_type)
                             print(">>> connect_and_stream - Discovered Device Firmware Version: ", discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
-                            self.save_device_info(ip=discover_ip, i_mac=discover_mac)
+                            self.save_device_info(discover_ip, discover_mac)
                             # Only update the IP and PORT used, keeping all other values the same using self._
                             # Need logic to update and safe file without looking other records in it.
                             UDPServerSocket.close()
                             break
-                        except Exception:
+                        except Exception as e:
                             print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
+                            print('>>> connect_and_stream - ' + str(e))
                     else:
                         print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - Device: " + str(
                             device_mac) + " not found on network. Continuing to search...")
@@ -271,7 +272,7 @@ class ConnectAndStream(threading.Thread):
         #                print(">>> connect_and_stream - Device not found on network.")
 
         except socket.error as e:
-            print(e)  # change to exception:
+            print('>>> connect_and_stream - ' + str(e))  # change to exception:
             print(">>> connect_and_stream - Error trying to open UDP discovery port")
             # set connection status and recreate socket
             self.connection_lost()
@@ -297,11 +298,11 @@ class ConnectAndStream(threading.Thread):
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
             try:
-                data_response_init = client_socket.recvfrom(
-                    32)  # to clear the buffer on NIC when first connect sends MAC.
+                data_response_init = client_socket.recvfrom(32)
+                ## to clear the buffer on NIC when first connect sends MAC.
             except Exception as e:
-                print(e)
-                data_response_init = self.device_mac
+                print('>>> connect_and_stream - ' + str(e))
+##                data_response_init = self.device_mac
             ncd.device_reboot()
             client_socket.close()
             print(">>> connect_and_stream - Device Rebooted")
@@ -317,7 +318,7 @@ class ConnectAndStream(threading.Thread):
             for device in connected_devices_file_response["Devices"]:
                 if device["MacAddress"] == i_mac:
                     print(f">>> connect_and_stream - Updating IP of {i_mac}")
-                    device["IP"] = ip
+                    device["IP"] = str(ip)
 
         with open(device_info_file, "w") as connected_devices_file:
             json.dump(connected_devices_file_response, connected_devices_file)
@@ -325,45 +326,19 @@ class ConnectAndStream(threading.Thread):
     @staticmethod
     def read_device_info(i_mac):
         try:
-            deviceList = []
             device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
             with open(device_info_file) as connected_devices_file:
-                for jsonObj in connected_devices_file:
-                    connected_devices_file_response = json.loads(jsonObj)
-                    deviceList.append(connected_devices_file_response)
-
-            for i in deviceList:
-                for devices in i.items():
-                    values = devices[1]
-                    if values["MacAddress"] == i_mac:
+                connected_devices_file_response = json.load(connected_devices_file)
+                for values in connected_devices_file_response["Devices"]:
+                    device_mac_address = values["MacAddress"]
+                    if device_mac_address == i_mac:
                         print(">>> connect_and_stream - Device record exists for : ", i_mac)
                         return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values[
                             "ReadSpeed"], values["InputTotal"], values["RelayTotal"]
                         exit()
 
-                    # deviceList = []
-                    # device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-                    # with open(device_info_file, "r") as device_info:
-                    #     for jsonObj in device_info:
-                    #         device_info_response = json.load(jsonObj)
-                    #         deviceList.append(device_info_response)
-                    # print(deviceList)
-                    #
-                    # for i in deviceList.items():
-                    #     values = i[1]
-                    #     if values["MacAddress"] == i_mac:
-                    #         print("Device record exists for : ", i_mac)
-                    #         return values["IP"], values["DeviceModel"], values["DeviceType"], values["ReadSpeed"]
-
-                    else:
-                        # print("Device record does not exist for : ", i_mac)
-                        # return ["127.0.0.1", "not_found"]
-                        # deviceDiscovery(i_mac)
-                        # print("discovery done")
-
-                        pass
-
-        except Exception:
+        except Exception as e:
+            print('>>> connect_and_stream - ' + str(e))
             print(">>> connect_and_stream - device_info file does not exist or there is improperly formatted data")
 
 # Comment out the function when testing from main.py

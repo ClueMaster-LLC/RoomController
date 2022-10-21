@@ -100,11 +100,11 @@ class RoomController:
                     break
                 else:
                     print(">>> room_controller - room_controller.py Not a API token invalid Error")
-                    print(request_error)
+                    print(">>> room_controller - " + str(request_error))
 
             except requests.exceptions.JSONDecodeError as json_error:
                 print(">>> room_controller - room_controller.py JsonDecodeError")
-                print(">>> room_controller - Error ", json_error)
+                print(">>> room_controller - Error ", str(json_error))
                 pass
 
             except KeyboardInterrupt:
