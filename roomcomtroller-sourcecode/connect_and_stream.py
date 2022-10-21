@@ -368,12 +368,11 @@ class ConnectAndStream(threading.Thread):
 
 # Comment out the function when testing from main.py
 
-# def start_thread():
-#  if __name__ == "__main__":
-#      # connect_and_stream_instance = ConnectAndStream(ip_address="192.168.1.10")  # enter hardcoded ip
-#      connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
-#      # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
-#      connect_and_stream_instance.start()
-#
-#
-# start_thread()
+##def start_thread():
+##    if __name__ == "__main__":
+##      connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
+##      # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
+##      connect_and_stream_instance.start()
+##
+##
+##start_thread()
