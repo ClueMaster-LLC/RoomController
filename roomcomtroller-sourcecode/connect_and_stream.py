@@ -240,7 +240,7 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Port: ", discover_port)
                             print(">>> connect_and_stream - Discovered Device Model: ", discover_model)
                             print(">>> connect_and_stream - Discovered Device Type: ", discover_device_type)
-                            print(">>> connect_and_stream - Discovered Device Firmware Version: ", discovery_version)
+                            print(">>> connect_and_stream - Discovered Device Network Card Firmware Version: ", discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
                             self.save_device_info(discover_ip, discover_mac)
                             # Only update the IP and PORT used, keeping all other values the same using self._

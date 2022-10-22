@@ -111,7 +111,7 @@ class AddFindDevices(threading.Thread):
                             print(">>> add_find_device - Discovered Device Port: ", discover_port)
                             # print(">>> Console Output - Discovered Device Model: ", discover_model)
                             # print(">>> Console Output - Discovered Device Type: ", discover_device_type)
-                            print(">>> add_find_device - Discovered Device Firmware Version: ", discovery_version)
+                            print(">>> add_find_device - Discovered Device Network Card Firmware Version: ", discovery_version)
                             # print(">>> Console Output - Saving updated device info to file.")
 
                             UDPServerSocket.close()
