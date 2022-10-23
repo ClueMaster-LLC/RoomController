@@ -84,7 +84,7 @@ class AddFindDevices(threading.Thread):
 
             print("add_find_device - UDP server up - Searching Network for Devices ")
             start_time = time.time()
-            devices_discovered = set()
+            devices_discovered = []
 
             # Listen for incoming datagrams
             while True:
@@ -119,7 +119,11 @@ class AddFindDevices(threading.Thread):
 
                             UDPServerSocket.close()
                             print(">>> add_find_device - Return Success to API")
-                            devices_discovered.add([discover_ip, discover_mac, discover_port])
+                            i_device_data = [discover_ip, discover_mac, discover_port]
+                            if i_device_data in devices_discovered:
+                                pass
+                            else:
+                                devices_discovered.append(i_device_data)
 
                             if time.time() - start_time < 15:
                                 time.sleep(1)
