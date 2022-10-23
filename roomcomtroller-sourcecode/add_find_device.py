@@ -147,6 +147,7 @@ class AddFindDevices(threading.Thread):
                     # self.connection_lost()
                     self.run()
 
+            print(">>> add_find_device - Devices Found ", devices_discovered)
             return devices_discovered  # return a set of discovered devices in a list [ip, mac, port]
 
         except socket.error as e:
