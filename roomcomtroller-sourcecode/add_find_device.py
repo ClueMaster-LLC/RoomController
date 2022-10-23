@@ -83,6 +83,8 @@ class AddFindDevices(threading.Thread):
                 UDPServerSocket.bind(("<broadcast>", localPort))
 
             print("add_find_device - UDP server up - Searching Network for Devices ")
+            start_time = time.time()
+            devices_discovered = set()
 
             # Listen for incoming datagrams
             while True:
@@ -101,7 +103,7 @@ class AddFindDevices(threading.Thread):
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
                     discovery_version = \
                         (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
-                    # iscover_model = self.device_model
+                    # discover_model = self.device_model
                     # discover_device_type = self.device_type
 
                     if bytes_address_pair is not None:
@@ -111,12 +113,19 @@ class AddFindDevices(threading.Thread):
                             print(">>> add_find_device - Discovered Device Port: ", discover_port)
                             # print(">>> Console Output - Discovered Device Model: ", discover_model)
                             # print(">>> Console Output - Discovered Device Type: ", discover_device_type)
-                            print(">>> add_find_device - Discovered Device Network Card Firmware Version: ", discovery_version)
+                            print(">>> add_find_device - Discovered Device Network Card Firmware Version: ",
+                                  discovery_version)
                             # print(">>> Console Output - Saving updated device info to file.")
 
                             UDPServerSocket.close()
-                            print(">>>add_find_device - Return Success to API")
-                            break
+                            print(">>> add_find_device - Return Success to API")
+                            devices_discovered.add([discover_ip, discover_mac, discover_port])
+
+                            if time.time() - start_time < 15:
+                                time.sleep(1)
+                                continue
+                            else:
+                                break
 
                         except Exception as e:
                             # print(">>> Console Output - Error: Unable to save updated device info to file.")
@@ -124,7 +133,12 @@ class AddFindDevices(threading.Thread):
                     else:
                         # timer = (timer - 1)
                         # print(timer)
-                        print(">>> add_find_device - No devices found on network. Continueing to search...")
+                        print(">>> add_find_device - No devices found on network. Continuing to search...")
+                        if time.time() - start_time < 15:
+                            time.sleep(1)
+                            continue
+                        else:
+                            break
 
                     # break
                 except socket.error:
@@ -133,14 +147,14 @@ class AddFindDevices(threading.Thread):
                     # self.connection_lost()
                     self.run()
 
+            return devices_discovered  # return a set of discovered devices in a list [ip, mac, port]
+
         except socket.error as e:
             print(e)
             print(">>> add_find_device - Error trying to open UDP discovery port")
             # set connection status and recreate socket
             # self.connection_lost()
             self.run()
-
-        return discover_mac, discover_ip, discover_port  # return IP, Mac addresses, and PORT found to API
 
     @staticmethod
     def extract_ip():
@@ -177,6 +191,7 @@ class AddFindDevices(threading.Thread):
 
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
+
 
 def main():
     if __name__ == "__main__":
