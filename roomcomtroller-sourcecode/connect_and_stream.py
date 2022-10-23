@@ -152,6 +152,7 @@ class ConnectAndStream(threading.Thread):
             print('>>> connect_and_stream - ' + str(e))
             data_response_init = self.device_mac
         client_socket.close()
+        time.sleep(1)
         print('>>> connect_and_stream - connection lost... reconnecting')
         while not connected:
             # attempt to reconnect, otherwise sleep for 30 seconds
@@ -168,7 +169,7 @@ class ConnectAndStream(threading.Thread):
                 connected = True
                 print('>>> connect_and_stream - re-connection successful to ' + str(self.device_mac))
                 client_socket.close()
-            # time.sleep(1)
+                time.sleep(1)
             except socket.error:
                 print('>>> connect_and_stream - searching...' + str(connect_retry))
                 connect_retry += 1
@@ -183,6 +184,7 @@ class ConnectAndStream(threading.Thread):
                         print('>>> connect_and_stream - ' + str(e))
                         data_response_init = self.device_mac
                     client_socket.close()
+                    time.sleep(1)
                     try:
                         self.run()
                     except SystemExit:
@@ -246,6 +248,7 @@ class ConnectAndStream(threading.Thread):
                             # Only update the IP and PORT used, keeping all other values the same using self._
                             # Need logic to update and safe file without looking other records in it.
                             UDPServerSocket.close()
+                            time.sleep(1)
                             break
                         except Exception as e:
                             print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
