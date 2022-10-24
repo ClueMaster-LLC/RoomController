@@ -18,7 +18,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 class RoomController:
     def __init__(self):
         super(RoomController, self).__init__()
-        print(">>> room_controller - ***********  STARTUP COMPLETE  ***********")
+        print(">>> room_controller - **********  STARTUP COMPLETE  **********")
 
         # global attributes
         self.device_unique_id = None
