@@ -117,13 +117,15 @@ class AddFindDevices(threading.Thread):
                                   discovery_version)
                             # print(">>> Console Output - Saving updated device info to file.")
 
-                            UDPServerSocket.close()
-                            print(">>> add_find_device - Return Success to API")
+##                            UDPServerSocket.close()
                             i_device_data = [discover_ip, discover_mac, discover_port]
+##                            print(">>> add_find_device - Return Success to API")
+##                            print(str(i_device_data))
                             if i_device_data in devices_discovered:
                                 pass
                             else:
                                 devices_discovered.append(i_device_data)
+                                print(str(devices_discovered))
 
                             if time.time() - start_time < 15:
                                 time.sleep(1)
@@ -143,6 +145,7 @@ class AddFindDevices(threading.Thread):
                             continue
                         else:
                             break
+                            UDPServerSocket.close()
 
                     # break
                 except socket.error:
