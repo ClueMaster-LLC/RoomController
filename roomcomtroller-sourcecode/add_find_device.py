@@ -69,8 +69,8 @@ class AddFindDevices(threading.Thread):
             localPort = 13000
             bufferSize = 1024
 
-            msgFromServer = "Connected"
-            bytesToSend = str.encode(msgFromServer)
+            #msgFromServer = "Connected"
+            #bytesToSend = str.encode(msgFromServer)
 
             # Create a datagram socket
             UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -82,6 +82,7 @@ class AddFindDevices(threading.Thread):
                 # Bind to address and ip
                 UDPServerSocket.bind(("<broadcast>", localPort))
 
+            UDPServerSocket.settimeout(30)
             print("add_find_device - UDP server up - Searching Network for Devices ")
             start_time = time.time()
             devices_discovered = []
@@ -108,13 +109,13 @@ class AddFindDevices(threading.Thread):
 
                     if bytes_address_pair is not None:
                         try:
-                            print(">>> add_find_device - Discovered Device IP:  ", discover_ip)
-                            print(">>> add_find_device - Discovered Device MAC: ", discover_mac)
-                            print(">>> add_find_device - Discovered Device Port: ", discover_port)
+                            #print(">>> add_find_device - Discovered Device IP:  ", discover_ip)
+                            #print(">>> add_find_device - Discovered Device MAC: ", discover_mac)
+                            #print(">>> add_find_device - Discovered Device Port: ", discover_port)
                             # print(">>> Console Output - Discovered Device Model: ", discover_model)
                             # print(">>> Console Output - Discovered Device Type: ", discover_device_type)
-                            print(">>> add_find_device - Discovered Device Network Card Firmware Version: ",
-                                  discovery_version)
+                            #print(">>> add_find_device - Discovered Device Network Card Firmware Version: ",
+                            #      discovery_version)
                             # print(">>> Console Output - Saving updated device info to file.")
 
 ##                            UDPServerSocket.close()
@@ -125,10 +126,10 @@ class AddFindDevices(threading.Thread):
                                 pass
                             else:
                                 devices_discovered.append(i_device_data)
-                                print(str(devices_discovered))
+                                print(">>> add_find_device - Building Memory Array: " + str(devices_discovered))
 
                             if time.time() - start_time < 15:
-                                time.sleep(1)
+                                #time.sleep(1)
                                 continue
                             else:
                                 break
@@ -139,30 +140,35 @@ class AddFindDevices(threading.Thread):
                     else:
                         # timer = (timer - 1)
                         # print(timer)
-                        print(">>> add_find_device - No devices found on network. Continuing to search...")
-                        if time.time() - start_time < 15:
-                            time.sleep(1)
-                            continue
-                        else:
-                            break
-                            UDPServerSocket.close()
+                        #print(">>> add_find_device - No devices found on network. Continuing to search...")
+                        #if time.time() - start_time < 15:
+                        #    time.sleep(1)
+                        #    continue
+                        #else:
+                        print(">>> add_find_device - No devices found. Closing UDP socket")
+                        UDPServerSocket.close()
+                        break
+
 
                     # break
+                except socket.timeout:
+                    print(">>> add_find_device - No devices found. Closing UDP socket")
+                    UDPServerSocket.close()
+                    break
                 except socket.error:
                     print(">>> add_find_device - Error trying discovery device")
                     # set connection status and recreate socket
                     # self.connection_lost()
-                    self.run()
+                    #self.run()
+                    #Report error to web error API
 
             print(">>> add_find_device - Devices Found ", devices_discovered)
             return devices_discovered  # return a set of discovered devices in a list [ip, mac, port]
 
-        except socket.error as e:
+        except Exception as e:
             print(e)
             print(">>> add_find_device - Error trying to open UDP discovery port")
-            # set connection status and recreate socket
-            # self.connection_lost()
-            self.run()
+            return "Error"
 
     @staticmethod
     def extract_ip():
