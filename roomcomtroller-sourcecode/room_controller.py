@@ -18,7 +18,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 class RoomController:
     def __init__(self):
         super(RoomController, self).__init__()
-        print(">>> room_controller - ***********STARTUP COMPLETE***********")
+        print(">>> room_controller - ***********  STARTUP COMPLETE  ***********")
 
         # global attributes
         self.device_unique_id = None
@@ -65,6 +65,7 @@ class RoomController:
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
+                    print(relays_discovery_request.text)
                     request_id = relays_discovery_request.json()["RequestID"]
 
                     if request_id == self.search_for_devices_id:
