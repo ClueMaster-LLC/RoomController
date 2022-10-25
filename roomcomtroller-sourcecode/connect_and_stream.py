@@ -65,8 +65,11 @@ class ConnectAndStream(threading.Thread):
                 print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
-                client_socket.connect((self.ip_address, self.server_port))
-                connected = True
+                try:
+                    client_socket.connect((self.ip_address, self.server_port))
+                    connected = True
+                except Exception as e:
+                    print(e)
 
         try:
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
