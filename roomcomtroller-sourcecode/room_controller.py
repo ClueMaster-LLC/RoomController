@@ -91,7 +91,7 @@ class RoomController:
 
             except requests.exceptions.ConnectionError:
                 # sleep for 1 sec before trying again
-                print(">>> room_controller - room_controller.py Connection Error")
+                print(">>> room_controller - room_controller.py API Connection Error")
                 time.sleep(1)
                 continue
 
