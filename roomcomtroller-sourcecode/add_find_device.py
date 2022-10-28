@@ -22,7 +22,7 @@ class AddFindDevices(threading.Thread):
         # global attributes
         self.active = None
         self.method = method
-        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY
+        self.post_input_relay_discovery_api = None
 
     def run(self):
         if self.method['method'] == 'add':
@@ -221,6 +221,8 @@ class AddFindDevices(threading.Thread):
         api_header = CaseInsensitiveDict()
         api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
         api_header['Content-Type'] = 'application/json'
+
+        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_unique_id)
 
         if type(devices) is list:
             print(">>> add_find_device : Uploading new found devices to web ...")
