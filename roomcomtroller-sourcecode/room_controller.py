@@ -29,6 +29,7 @@ class RoomController:
         self.search_for_devices_id = 12
         self.resetting_room_controller = False
         self.connect_and_stream_thread = None
+        self.add_find_device_thread = None
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
@@ -65,25 +66,15 @@ class RoomController:
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
-                    print(relays_discovery_request.text)
                     request_id = relays_discovery_request.json()["RequestID"]
 
                     if request_id == self.search_for_devices_id:
                         print(">>> room_controller - Acknowledging request for Input Relay with RequestId ", request_id)
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
-                                                                                       request_id=request_id)
+                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
-                        # AFTER API REQUEST TO START (add, find) process,
-                        # return results to API for display on ClueMaster selection page.
-                        # after user selects the devices to add, they will be saved to the sql database.
-                        print(">>> room_controller - Add or Find devices and return")
-                        # Then CALL new API to REQUEST ALL DEVICES FOR THIS ROOM CONTROLLER
-                        # THIS SHOULD INCLUDE THE NEW ONES ADDED TO THE DATABASE
-                        # WE MIGHT NEED A DELAY OR SOME CHECKS TO ENSURE ENOUGH TIME PASSED
-                        # TO ALLOW API TO REFRESH NEW DATA FROM THE SQL DATABASE
-                        print(">>> room_controller - IF ADD DEVICE SUCCESS > GET API for new list of devices")
-                        print(">>> room_controller - IF FIND DEVICES > GET API for new list of devices")
 
+                        # staring add_find_device thread
+                        self.start_add_find_device_thread(response=relays_discovery_request.json())
                     else:
                         print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
 
@@ -111,6 +102,18 @@ class RoomController:
             except KeyboardInterrupt:
                 print(">>> room_controller - room_controller.py Keyboard Interrupt")
                 break
+
+    def start_add_find_device_thread(self, response):
+        if response["IpAddress"] is not None:
+            ip_address = response["IpAddress"]
+            mac_address = response["MacAddress"]
+            server_port = response["ServerPort"]
+
+            self.add_find_device_thread = add_find_device.AddFindDevices(method='add', ip=ip_address, server_port=server_port, mac_address=mac_address)
+            self.add_find_device_thread.start()
+        else:
+            self.add_find_device_thread = add_find_device.AddFindDevices(method='find')
+            self.add_find_device_thread.start()
 
     @staticmethod
     def connect_and_stream_data():

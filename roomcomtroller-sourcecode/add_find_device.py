@@ -4,7 +4,9 @@ import platform
 import socket
 import threading
 import time
-import sys
+from apis import *
+import requests
+from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
 
 # BASE DIRECTORIES
@@ -20,6 +22,7 @@ class AddFindDevices(threading.Thread):
         # global attributes
         self.active = None
         self.method = method
+        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY
 
     def run(self):
         if self.method['method'] == 'add':
@@ -27,7 +30,10 @@ class AddFindDevices(threading.Thread):
             # int(self.method['device_type']), int(self.method['input_total']), int(self.method['relay_total']), float(self.method['read_speed']))
             self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'])
         else:
-            self.network_search()
+            devices_found = self.network_search()
+            self.update_webapp_with_new_found_devices(devices=devices_found)
+            print(">>> add_find_device - Exiting AddFindDevice thread ...")
+            return
 
     def ip_connect(self, ip_address, server_port, mac_address):
         try:
@@ -118,7 +124,7 @@ class AddFindDevices(threading.Thread):
                             # print(">>> Console Output - Saving updated device info to file.")
 
                             # UDPServerSocket.close()
-                            i_device_data = [discover_ip, discover_mac, discover_port]
+                            i_device_data = {"IP": discover_ip, "MacAddress": discover_mac, "ServerPort": discover_port}
                             # print(">>> add_find_device - Return Success to API")
                             # print(str(i_device_data))
                             if i_device_data in devices_discovered:
@@ -161,7 +167,7 @@ class AddFindDevices(threading.Thread):
                     # self.run()
                     # Report error to web error API
 
-            print(">>> add_find_device - Devices Found ", devices_discovered)
+            # print(">>> add_find_device - Devices Found ", devices_discovered)
             return devices_discovered  # return a set of discovered devices in a list [ip, mac, port]
 
         except Exception as e:
@@ -205,12 +211,32 @@ class AddFindDevices(threading.Thread):
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
 
+    def update_webapp_with_new_found_devices(self, devices):
+        with open(os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")) as unique_ids_file:
+            unique_ids_file_response = json.load(unique_ids_file)
 
-def main():
-    if __name__ == "__main__":
-        # add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222A0C')
-        add_find_device_thread = AddFindDevices(method='find', ip=None)
-        add_find_device_thread.start()
+        device_unique_id = unique_ids_file_response["device_id"]
+        api_bearer_key = unique_ids_file_response["api_token"]
 
+        api_header = CaseInsensitiveDict()
+        api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
+        api_header['Content-Type'] = 'application/json'
 
-main()
+        if type(devices) is list:
+            print(">>> add_find_device : Uploading new found devices to web ...")
+            print(">>> add_find_device : ", devices)
+
+            response = requests.post(self.post_input_relay_discovery_api, headers=api_header, data=json.dumps(devices))
+            print(">>> add_find_device - PostNewInputRelayDiscovery response : ", response.status_code, ", ", response.text)
+
+        else:
+            print(">>> add_find_device - DeviceDiscovery response : ", devices)
+
+# def main():
+#     if __name__ == "__main__":
+#         # add_find_device_thread = AddFindDevices(method='add', ip='192.168.1.21', server_port='2101', mac_address='0008DC222A0C')
+#         add_find_device_thread = AddFindDevices(method='find')
+#         add_find_device_thread.start()
+#
+#
+# main()
