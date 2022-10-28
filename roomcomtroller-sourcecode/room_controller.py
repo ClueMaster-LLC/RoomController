@@ -104,7 +104,7 @@ class RoomController:
                 break
 
     def start_add_find_device_thread(self, response):
-        if response["IpAddress"] is not None:
+        if response["IpAddress"] != '':
             ip_address = response["IpAddress"]
             mac_address = response["MacAddress"]
             server_port = response["ServerPort"]

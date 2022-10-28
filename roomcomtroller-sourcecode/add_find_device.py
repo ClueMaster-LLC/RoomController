@@ -28,8 +28,11 @@ class AddFindDevices(threading.Thread):
         if self.method['method'] == 'add':
             # self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'], self.method['device_model'],
             # int(self.method['device_type']), int(self.method['input_total']), int(self.method['relay_total']), float(self.method['read_speed']))
+            print(">>> add_find_device - Starting ADD DEVICE thread ...")
             self.ip_connect(self.method['ip'], int(self.method['server_port']), self.method['mac_address'])
+            print(">>> add_find_device - Exiting AddFindDevice thread ...")
         else:
+            print(">>> add_find_device - Starting SEARCH FOR DEVICES thread ...")
             devices_found = self.network_search()
             self.update_webapp_with_new_found_devices(devices=devices_found)
             print(">>> add_find_device - Exiting AddFindDevice thread ...")
