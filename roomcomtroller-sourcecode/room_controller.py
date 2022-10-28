@@ -25,8 +25,10 @@ class RoomController:
         self.api_token = None
         self.api_headers = None
         self.discover_new_relays_request_api = None
+        self.get_devicelist_api = None
         self.general_request_api = None
         self.search_for_devices_id = 12
+        self.update_device_list_id = 13
         self.resetting_room_controller = False
         self.connect_and_stream_thread = None
         self.add_find_device_thread = None
@@ -57,6 +59,8 @@ class RoomController:
             self.api_headers = CaseInsensitiveDict()
             self.api_headers["Authorization"] = f"Basic {device_unique_id}:{api_key}"
             self.discover_new_relays_request_api = NEW_RELAYS_DISCOVERY_REQUEST.format(device_id=device_unique_id)
+            self.get_devicelist_request_api = GET_NEW_INPUT_RELAY_LIST_REQUEST.format(device_id=device_unique_id)
+            self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_unique_id)
 
     def execution_environment(self):
         while True:
@@ -64,6 +68,10 @@ class RoomController:
                 # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
                 relays_discovery_request.raise_for_status()
+
+                get_devicelist_request = requests.get(self.get_devicelist_request_api, headers=self.api_headers)
+                get_devicelist_request.raise_for_status()
+                print(get_devicelist_request.raise_for_status())
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
                     request_id = relays_discovery_request.json()["RequestID"]
@@ -75,6 +83,22 @@ class RoomController:
 
                         # staring add_find_device thread
                         self.start_add_find_device_thread(response=relays_discovery_request.json())
+                    else:
+                        print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
+
+                if get_devicelist_request.text not in self.api_active_null_responses:
+                    request_id = get_devicelist_request.json()["RequestID"]
+
+                    if request_id == self.update_device_list_id:
+                        print(">>> room_controller - Acknowledging request to GET new updated list of devices with RequestId ", request_id)
+                        self.general_request_api = POST_INPUT_RELAY_REQUEST_UPDATE.format(device_id=self.device_unique_id, request_id=request_id)
+                        requests.post(self.general_request_api, headers=self.api_headers)
+                        print(requests.post(self.general_request_api, headers=self.api_headers))
+
+                        # download latest list of devices from ClueMaster to refresh list if request_id=13
+                        get_devicelist_responce = self.get_devicelist()
+                        if get_devicelist_responce != None:
+                            print("FUN TIMES WORKED.. lets download and save a new JSON file") 
                     else:
                         print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
 
@@ -114,6 +138,11 @@ class RoomController:
         else:
             self.add_find_device_thread = add_find_device.AddFindDevices(method='find')
             self.add_find_device_thread.start()
+
+    def get_devicelist(self):
+        print(">>> room_controller - API query to download new list of devices")                
+        get_devicelist = requests.get(self.get_devicelist_api, headers=self.api_headers)
+        return get_devicelist.raise_for_status()
 
     @staticmethod
     def connect_and_stream_data():
