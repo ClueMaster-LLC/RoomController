@@ -203,16 +203,16 @@ class AddFindDevices(threading.Thread):
         except Exception:
             print(">>> add_find_device - Error Sending Reboot Command")
 
-##    @staticmethod
-##    def save_device_info(ip, i_mac, server_port, device_model, device_type, read_speed, input_total, relay_total):
-##        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-##        device_info_dict = {
-##            "Devices": {"IP": ip, "ServerPort": server_port, "MacAddress": i_mac, "DeviceModel": device_model,
-##                        "DeviceType": device_type, "ReadSpeed": read_speed,
-##                        "InputTotal": input_total, "RelayTotal": relay_total}}
-##
-##        with open(device_info_file, "w") as device_info:
-##            json.dump(device_info_dict, device_info)
+    #    @staticmethod
+    #    def save_device_info(ip, i_mac, server_port, device_model, device_type, read_speed, input_total, relay_total):
+    #        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+    #        device_info_dict = {
+    #            "Devices": {"IP": ip, "ServerPort": server_port, "MacAddress": i_mac, "DeviceModel": device_model,
+    #                        "DeviceType": device_type, "ReadSpeed": read_speed,
+    #                        "InputTotal": input_total, "RelayTotal": relay_total}}
+    #
+    #        with open(device_info_file, "w") as device_info:
+    #            json.dump(device_info_dict, device_info)
 
     def update_webapp_with_new_found_devices(self, devices):
         with open(os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")) as unique_ids_file:
