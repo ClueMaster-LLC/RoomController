@@ -229,7 +229,11 @@ class AddFindDevices(threading.Thread):
             print(">>> add_find_device : ", devices)
 
             response = requests.post(self.post_input_relay_discovery_api, headers=api_header, data=json.dumps(devices))
-            print(">>> add_find_device - PostNewInputRelayDiscovery response : ", response.status_code, ", ", response.text)
+            print(">>> add_find_device - PostNewInputRelayDiscovery response : ", response.status_code)
+            if response.text == "no data found in inventory master":
+                print(">>> add_find_device - Devices found does not match with inventory master ...")
+            else:
+                pass
 
         else:
             print(">>> add_find_device - DeviceDiscovery response : ", devices)

@@ -24,14 +24,14 @@ def main():
 
     # api details ---
     post_new_input_relay_discovery = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_id)
-    devices_info = [{"IP": "192.168.0.1921", "ServerPort": 2101, "MacAddress": "MRITTUNJOY01"},
-                    {"IP": "192.168.2.21", "ServerPort": 2101, "MacAddress": "MRITTUNJOY01"}]
+    devices_info = [{"IP": "192.168.0.1921", "ServerPort": 2101, "MacAddress": "MRITTUNJOYSE"},
+                    {"IP": "192.168.2.21", "ServerPort": 2101, "MacAddress": "MRITTUNJOYED"}]
 
     # requests ---
     api_response = requests.post(post_new_input_relay_discovery, headers=api_bearer_data, data=json.dumps(devices_info))
     print("API Status Code - ", api_response.status_code)
     print("Url", api_response.url)
-    print("API Response - ", api_response.content)
+    print("API Response - ", api_response.text)
 
 
 main()
