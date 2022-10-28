@@ -92,7 +92,7 @@ class AddFindDevices(threading.Thread):
                 UDPServerSocket.bind(("<broadcast>", localPort))
 
             UDPServerSocket.settimeout(30)
-            print("add_find_device - UDP server up - Searching Network for Devices ")
+            print(">>> add_find_device - UDP server up - Searching Network for Devices ")
             start_time = time.time()
             devices_discovered = []
 
