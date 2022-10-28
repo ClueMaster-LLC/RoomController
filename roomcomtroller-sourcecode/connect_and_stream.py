@@ -6,6 +6,9 @@ import datetime
 import os
 import platform
 import sys
+import requests
+from apis import *
+from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
 
 # BASE DIRECTORIES
@@ -37,12 +40,13 @@ class ConnectAndStream(threading.Thread):
     def __init__(self, device_mac):
         super(ConnectAndStream, self).__init__()
         # the ConnectAndStream thread is started after the ip address is saved in a file
+
         # global attributes
         self.active = None
         self.device_mac = device_mac
-        self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(
-            self.device_mac)
+        self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
+        self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
 
     def run(self):
         connected = False
@@ -245,9 +249,11 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Port: ", discover_port)
                             print(">>> connect_and_stream - Discovered Device Model: ", discover_model)
                             print(">>> connect_and_stream - Discovered Device Type: ", discover_device_type)
-                            print(">>> connect_and_stream - Discovered Device Network Card Firmware Version: ", discovery_version)
+                            print(">>> connect_and_stream - Discovered Device Network Card Firmware Version: ",
+                                  discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
                             self.save_device_info(discover_ip, discover_mac)
+                            self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac, serverport=discover_port)
                             # Only update the IP and PORT used, keeping all other values the same using self._
                             # Need logic to update and safe file without looking other records in it.
                             UDPServerSocket.close()
@@ -305,10 +311,10 @@ class ConnectAndStream(threading.Thread):
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
             try:
                 data_response_init = client_socket.recvfrom(32)
-                ## to clear the buffer on NIC when first connect sends MAC.
+                # to clear the buffer on NIC when first connect sends MAC.
             except Exception as e:
                 print('>>> connect_and_stream - ' + str(e))
-##                data_response_init = self.device_mac
+                # data_response_init = self.device_mac
             ncd.device_reboot()
             client_socket.close()
             print(">>> connect_and_stream - Device Rebooted")
@@ -347,13 +353,29 @@ class ConnectAndStream(threading.Thread):
             print('>>> connect_and_stream - ' + str(e))
             print(">>> connect_and_stream - device_info file does not exist or there is improperly formatted data")
 
+    def update_webapp_with_new_details(self, ip_address, macaddress, serverport):
+        with open(os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")) as unique_ids_file:
+            unique_ids_file_response = json.load(unique_ids_file)
+
+        device_unique_id = unique_ids_file_response["device_id"]
+        api_bearer_key = unique_ids_file_response["api_token"]
+
+        api_header = CaseInsensitiveDict()
+        api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
+        api_header['Content-Type'] = 'application/json'
+        updated_data = [{"IP": ip_address, "ServerPort": serverport, "MacAddress": macaddress}]
+
+        response = requests.post(self.post_input_relay_request_update_api, headers=api_header, data=json.dumps(updated_data))
+        print(">>> add_find_device - PostNewInputRelayRequestUpdate response : ", response.status_code)
+        print(">>> add_find_device - PostNewInputRelayRequestUpdate response text : ", response.text)
+
 # Comment out the function when testing from main.py
 
-##def start_thread():
-##    if __name__ == "__main__":
-##      connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
-##      # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
-##      connect_and_stream_instance.start()
-##
-##
-##start_thread()
+# def start_thread():
+#     if __name__ == "__main__":
+#       connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
+#       # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
+#       connect_and_stream_instance.start()
+#
+#
+# start_thread()
