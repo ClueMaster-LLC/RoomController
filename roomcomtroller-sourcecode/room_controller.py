@@ -66,7 +66,7 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                #print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
                 relays_discovery_request.raise_for_status()
 
@@ -92,8 +92,9 @@ class RoomController:
 
                     if request_id == self.update_device_list_id:
                         print(">>> room_controller - Acknowledging request to GET new updated list of devices with RequestId ", request_id)
-##                        self.general_request_api = POST_INPUT_RELAY_REQUEST_UPDATE.format(device_id=self.device_unique_id, request_id=request_id)
-##                        requests.post(self.general_request_api, headers=self.api_headers)
+                        # self.general_request_api = POST_INPUT_RELAY_REQUEST_UPDATE.format(device_id=self.device_unique_id, request_id=request_id)
+                        # requests.post(self.general_request_api, headers=self.api_headers)
+
                         self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
                         # print(requests.post(self.general_request_api, headers=self.api_headers))
