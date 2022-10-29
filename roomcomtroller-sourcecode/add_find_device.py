@@ -23,6 +23,35 @@ class AddFindDevices(threading.Thread):
         self.active = None
         self.method = method
         self.post_input_relay_discovery_api = None
+        self.device_unique_id = None
+        self.api_token = None
+        self.api_headers = None
+
+        self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
+        self.known_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "known_devices.json")
+
+        # instance methods
+        self.configurations()
+
+    def configurations(self):
+        try:
+            with open(self.unique_ids_file) as unique_ids_file:
+                json_response_of_unique_ids_file = json.load(unique_ids_file)
+
+            device_unique_id = json_response_of_unique_ids_file["device_id"]
+            api_key = json_response_of_unique_ids_file["api_token"]
+
+        except FileNotFoundError:
+            print(">>> room_controller - Unique ids file not found")
+
+        else:
+            self.device_unique_id = device_unique_id
+            self.api_token = api_key
+
+            self.api_headers = CaseInsensitiveDict()
+            self.api_headers["Authorization"] = f"basic {device_unique_id}:{api_key}"
+            self.api_headers['Content-Type'] = 'application/json'
+            self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_unique_id)
 
     def run(self):
         if self.method['method'] == 'add':
@@ -215,24 +244,27 @@ class AddFindDevices(threading.Thread):
     #            json.dump(device_info_dict, device_info)
 
     def update_webapp_with_new_found_devices(self, devices):
-        with open(os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")) as unique_ids_file:
-            unique_ids_file_response = json.load(unique_ids_file)
-
-        device_unique_id = unique_ids_file_response["device_id"]
-        api_bearer_key = unique_ids_file_response["api_token"]
-
-        api_header = CaseInsensitiveDict()
-        api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
-        api_header['Content-Type'] = 'application/json'
-
-        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_unique_id)
+##        with open(os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")) as unique_ids_file:
+##            unique_ids_file_response = json.load(unique_ids_file)
+##
+##        device_unique_id = unique_ids_file_response["device_id"]
+##        api_bearer_key = unique_ids_file_response["api_token"]
+##
+##        api_header = CaseInsensitiveDict()
+##        api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
+##        api_header['Content-Type'] = 'application/json'
+##
+##        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_unique_id)
 
         if type(devices) is list:
             print(">>> add_find_device : Uploading new found devices to web ...")
             print(">>> add_find_device : ", devices)
 
-            response = requests.post(self.post_input_relay_discovery_api, headers=api_header, data=json.dumps(devices))
+            response = requests.post(self.post_input_relay_discovery_api, headers=self.api_headers, data=json.dumps(devices))
             print(">>> add_find_device - PostNewInputRelayDiscovery response : ", response.status_code)
+            print(self.post_input_relay_discovery_api)
+            print(self.api_headers)
+            print(json.dumps(devices))
             if response.text == "no data found in inventory master":
                 print(">>> add_find_device - Devices found does not match with inventory master ...")
             else:
