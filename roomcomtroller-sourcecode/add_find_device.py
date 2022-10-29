@@ -271,7 +271,7 @@ class AddFindDevices(threading.Thread):
                 pass
 
         else:
-            print(">>> add_find_device - DeviceDiscovery response : ", devices)
+            print(">>> add_find_device - Device Discovery devices are not in JSON list format for API : ", devices)
 
 # def main():
 #     if __name__ == "__main__":
