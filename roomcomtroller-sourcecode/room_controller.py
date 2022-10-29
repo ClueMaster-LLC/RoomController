@@ -32,6 +32,7 @@ class RoomController:
         self.resetting_room_controller = False
         self.connect_and_stream_thread = None
         self.add_find_device_thread = None
+        self.get_devicelist_request_api = None
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
@@ -65,13 +66,9 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
                 relays_discovery_request.raise_for_status()
-
-                get_devicelist_request = requests.get(self.get_devicelist_request_api, headers=self.api_headers)
-                get_devicelist_request.raise_for_status()
-                #print(get_devicelist_request.raise_for_status())
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
                     request_id = relays_discovery_request.json()["RequestID"]
@@ -86,6 +83,11 @@ class RoomController:
                     else:
                         print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
+                # looking for new request to download the latest devices' info, after AddFindDevice thread...
+                get_devicelist_request = requests.get(self.get_devicelist_request_api, headers=self.api_headers)
+                print(get_devicelist_request.text)
+                get_devicelist_request.raise_for_status()
+
                 if get_devicelist_request.text not in self.api_active_null_responses:
                     request_id = get_devicelist_request.json()["RequestID"]
 
@@ -93,14 +95,13 @@ class RoomController:
                         print(">>> room_controller - Acknowledging request to GET new updated list of devices with RequestId ", request_id)
                         self.general_request_api = POST_INPUT_RELAY_REQUEST_UPDATE.format(device_id=self.device_unique_id, request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
-                        print(requests.post(self.general_request_api, headers=self.api_headers))
+                        # print(requests.post(self.general_request_api, headers=self.api_headers))
 
                         # download latest list of devices from ClueMaster to refresh list if request_id=13
-                        print(">>> room_controller - Download new device list form ClueMaster") 
-                        get_devicelist_responce = self.get_devicelist()
-                        #print(get_devicelist_responce)
-                        print(">>> room_controller - Update Connected_Devices.JSON file") 
-                        self.save_device_info(get_devicelist_responce)
+                        print(">>> room_controller - Download new device list form ClueMaster")
+                        get_devicelist_response = self.get_devicelist()
+                        print(">>> room_controller - Update Connected_Devices.JSON file")
+                        self.save_device_info(get_devicelist_response)
                     else:
                         print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
@@ -135,22 +136,25 @@ class RoomController:
             mac_address = response["MacAddress"]
             server_port = response["ServerPort"]
 
-            self.add_find_device_thread = add_find_device.AddFindDevices(method='add', ip=ip_address, server_port=server_port, mac_address=mac_address)
+            self.add_find_device_thread = add_find_device.AddFindDevices(method='add', ip=ip_address,
+                                                                         server_port=server_port,
+                                                                         mac_address=mac_address)
             self.add_find_device_thread.start()
         else:
             self.add_find_device_thread = add_find_device.AddFindDevices(method='find')
             self.add_find_device_thread.start()
 
     def get_devicelist(self):
-        print(">>> room_controller - API query to download new list of devices")                
+        print(">>> room_controller - API query to download new list of devices")
         get_devicelist = requests.get(self.get_devicelist_api, headers=self.api_headers).json()
+        print(">>> room_controller - New devices info : ", get_devicelist)
         return get_devicelist
 
     @staticmethod
     def save_device_info(api_json_list):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
         device_info_dict = {"Devices": api_json_list}
-                            
+
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
 

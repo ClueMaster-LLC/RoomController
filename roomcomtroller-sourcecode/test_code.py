@@ -19,16 +19,17 @@ def main():
     # api bearer data ---
     api_bearer_data = CaseInsensitiveDict()
     api_bearer_data["Authorization"] = f"basic {device_id}:{api_token}"
-    api_bearer_data['Content-Type'] = 'application/json'
+    # api_bearer_data['Content-Type'] = 'application/json'
     print(api_bearer_data)
 
     # api details ---
+    get_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_id)
     post_new_input_relay_discovery = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_id)
-    devices_info = [{"IP": "192.168.0.1921", "ServerPort": 2101, "MacAddress": "MRITTUNJOYSE"},
+    devices_info = [{"IP": "192.168.0.1921", "ServerPort": 2101, "MacAddress": "MRITTUNJOY01"},
                     {"IP": "192.168.2.21", "ServerPort": 2101, "MacAddress": "MRITTUNJOYED"}]
 
     # requests ---
-    api_response = requests.post(post_new_input_relay_discovery, headers=api_bearer_data, data=json.dumps(devices_info))
+    api_response = requests.get(get_api, headers=api_bearer_data)
     print("API Status Code - ", api_response.status_code)
     print("Url", api_response.url)
     print("API Response - ", api_response.text)
