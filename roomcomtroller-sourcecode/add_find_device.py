@@ -257,7 +257,7 @@ class AddFindDevices(threading.Thread):
 ##        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_unique_id)
 
         if type(devices) is list:
-            print(">>> add_find_device : Uploading new found devices to web ...")
+            print(">>> add_find_device : Uploading newly found devices to web ...")
             print(">>> add_find_device : ", devices)
 
             response = requests.post(self.post_input_relay_discovery_api, headers=self.api_headers, data=json.dumps(devices))
