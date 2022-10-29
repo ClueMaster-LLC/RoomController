@@ -124,7 +124,7 @@ class AutoStartup:
     def fetch_active_network_interface_mac_address(ip_address):
 
         if platform.system() == "Windows":
-            print(platform.system())
+            print(">>> auto_startup - Platform in use : ", platform.system())
             for i in psutil.net_if_addrs().items():
                 interface_ip_address = i[1][1][1]
                 print(">>> auto_startup - Other IPs found " + interface_ip_address)
@@ -140,7 +140,7 @@ class AutoStartup:
                     return active_mac_address
 
         elif platform.system() == "Linux" or platform.system() == "Linux2":
-            print(platform.system())
+            print(">>> auto_startup - Platform in use :", platform.system())
             for i in psutil.net_if_addrs().items():
                 interface_ip_address = i[1][0][1]
                 print(">>> auto_startup - Other IPs found " + interface_ip_address)
