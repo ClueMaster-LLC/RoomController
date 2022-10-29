@@ -84,7 +84,7 @@ class RoomController:
                         # staring add_find_device thread
                         self.start_add_find_device_thread(response=relays_discovery_request.json())
                     else:
-                        print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
+                        print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
                 if get_devicelist_request.text not in self.api_active_null_responses:
                     request_id = get_devicelist_request.json()["RequestID"]
@@ -102,7 +102,7 @@ class RoomController:
                         print(">>> room_controller - Update Connected_Devices.JSON file") 
                         self.save_device_info(get_devicelist_responce)
                     else:
-                        print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
+                        print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
                 time.sleep(1)
 
