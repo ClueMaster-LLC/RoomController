@@ -71,7 +71,7 @@ class RoomController:
 
                 get_devicelist_request = requests.get(self.get_devicelist_request_api, headers=self.api_headers)
                 get_devicelist_request.raise_for_status()
-                print(get_devicelist_request.raise_for_status())
+                #print(get_devicelist_request.raise_for_status())
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
                     request_id = relays_discovery_request.json()["RequestID"]
@@ -96,9 +96,11 @@ class RoomController:
                         print(requests.post(self.general_request_api, headers=self.api_headers))
 
                         # download latest list of devices from ClueMaster to refresh list if request_id=13
+                        print(">>> room_controller - Download new device list form ClueMaster") 
                         get_devicelist_responce = self.get_devicelist()
-                        if get_devicelist_responce != None:
-                            print("FUN TIMES WORKED.. lets download and save a new JSON file") 
+                        #print(get_devicelist_responce)
+                        print(">>> room_controller - Update Connected_Devices.JSON file") 
+                        self.save_device_info(get_devicelist_responce)
                     else:
                         print(">>> room_controller - Request id ", relays_discovery_request.json()["RequestID"])
 
@@ -141,8 +143,16 @@ class RoomController:
 
     def get_devicelist(self):
         print(">>> room_controller - API query to download new list of devices")                
-        get_devicelist = requests.get(self.get_devicelist_api, headers=self.api_headers)
-        return get_devicelist.raise_for_status()
+        get_devicelist = requests.get(self.get_devicelist_api, headers=self.api_headers).json()
+        return get_devicelist
+
+    @staticmethod
+    def save_device_info(api_json_list):
+        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+        device_info_dict = {"Devices": api_json_list}
+                            
+        with open(device_info_file, "w") as device_info:
+            json.dump(device_info_dict, device_info)
 
     @staticmethod
     def connect_and_stream_data():
