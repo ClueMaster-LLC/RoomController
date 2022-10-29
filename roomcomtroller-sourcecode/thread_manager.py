@@ -73,6 +73,7 @@ class ThreadManager:
     def configurations(self):
         if os.path.isdir(APPLICATION_DATA_DIRECTORY) is False:
             os.makedirs(APPLICATION_DATA_DIRECTORY)
+            print(">>> thread_manager - Creating connected_devices.json file with default format ...")
             with open(self.previously_connected_devices_file, "w") as connected_devices_files:
                 i_dictionary = {"Devices": []}
                 json.dump(i_dictionary, connected_devices_files)
