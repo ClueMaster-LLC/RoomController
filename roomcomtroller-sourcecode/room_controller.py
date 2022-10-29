@@ -85,7 +85,6 @@ class RoomController:
 
                 # looking for new request to download the latest devices' info, after AddFindDevice thread...
                 get_devicelist_request = requests.get(self.get_devicelist_request_api, headers=self.api_headers)
-                print(get_devicelist_request.text)
                 get_devicelist_request.raise_for_status()
 
                 if get_devicelist_request.text not in self.api_active_null_responses:
