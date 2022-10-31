@@ -140,7 +140,7 @@ class RoomController:
                 print(">>> room_controller - room_controller.py Keyboard Interrupt")
                 break
 
-    def start_add_find_device_thread(self, response)
+    def start_add_find_device_thread(self, response):
         if response["IpAddress"] != '':
             ip_address = response["IpAddress"]
             mac_address = response["macaddress"]
