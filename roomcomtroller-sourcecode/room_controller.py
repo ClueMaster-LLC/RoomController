@@ -137,7 +137,7 @@ class RoomController:
         if response["IpAddress"] != '':
             ip_address = response["IpAddress"]
             mac_address = response["macaddress"]
-            server_port = response["ServerPort"]
+            server_port = response["server_port"]
             print(ip_address)
             print(mac_address)
             print(server_port)
