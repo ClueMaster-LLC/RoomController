@@ -70,7 +70,7 @@ class RoomController:
             try:
                 # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
-                print(relays_discovery_request.text)
+                print(">>> room_controller - " + relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
