@@ -141,7 +141,6 @@ class RoomController:
                 break
 
     def start_add_find_device_thread(self, response):
-        print(response)
         if response["IpAddress"] != '':
             ip_address = response["IpAddress"]
             mac_address = response["macaddress"]
