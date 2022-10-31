@@ -5,6 +5,7 @@ import time
 import requests
 from apis import *
 import thread_manager
+import connect_and_stream
 import add_find_device
 from requests.structures import CaseInsensitiveDict
 
@@ -33,10 +34,11 @@ class RoomController:
         self.connect_and_stream_thread = None
         self.add_find_device_thread = None
         self.get_devicelist_request_api = None
-        self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
+        self.api_active_null_responses = ["No room controller found", "No request found", "No record found", "No record found in inventory master"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
-        self.known_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "known_devices.json")
+        self.connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+        self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
 
         # instance methods
         self.configurations()
@@ -68,6 +70,7 @@ class RoomController:
             try:
                 # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
+                print(relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
@@ -104,6 +107,11 @@ class RoomController:
                         get_devicelist_response = self.get_devicelist()
                         print(">>> room_controller - Update Connected_Devices.JSON file")
                         self.save_device_info(get_devicelist_response)
+
+                        # handling devices info
+                        new_devices = self.handling_devices_info()
+                        for device in new_devices:
+                            self.connect_and_stream_data(device_mac_id=device)
                     else:
                         print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
@@ -164,10 +172,34 @@ class RoomController:
         with open(device_info_file, "w") as device_info:
             json.dump(device_info_dict, device_info)
 
-    @staticmethod
-    def connect_and_stream_data():
-        print(">>> room_controller - Starting threads...")
-        pass
+    def handling_devices_info(self):
+        # only handles creating of new individual threads and not explicitly termination of threads...
+        # termination of threading will be handled in ConnectAndStream thread class --- pending
+
+        devices_mac_ids = []
+        new_devices = []
+
+        with open(self.connected_devices_file) as connected_devices_file:
+            connected_devices_file_response = json.load(connected_devices_file)
+
+            for devices in connected_devices_file_response["Devices"]:
+                devices_mac_ids.append("device_" + devices["MacAddress"] + "_streaming")
+
+        with open(self.roomcontroller_configs_file) as room_controller_configs_file:
+            room_controller_configs_file_response = json.load(room_controller_configs_file)
+
+            for mac_ids in devices_mac_ids:
+                if mac_ids in room_controller_configs_file_response.keys():
+                    pass
+                else:
+                    new_devices.append(mac_ids.split("_")[1])
+
+        return new_devices
+
+    def connect_and_stream_data(self, device_mac_id):
+        print(">>> room_controller - Starting ConnectAndStream thread for device - ", device_mac_id)
+        self.connect_and_stream_thread = connect_and_stream.ConnectAndStream(device_mac=device_mac_id)
+        self.connect_and_stream_thread.start()
 
     def reset_room_controller(self):
         pass
