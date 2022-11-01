@@ -145,9 +145,6 @@ class RoomController:
             ip_address = response["IpAddress"]
             mac_address = response["macaddress"]
             server_port = response["server_port"]
-            print(ip_address)
-            print(mac_address)
-            print(server_port)
 
             self.add_find_device_thread = add_find_device.AddFindDevices(method='add', ip=ip_address,
                                                                          server_port=server_port,
