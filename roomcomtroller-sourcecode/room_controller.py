@@ -70,7 +70,6 @@ class RoomController:
             try:
                 # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
-                print(">>> room_controller - " + relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
@@ -145,9 +144,8 @@ class RoomController:
             ip_address = response["IpAddress"]
             mac_address = response["macaddress"]
             server_port = response["server_port"]
-            print(ip_address)
-            print(mac_address)
-            print(server_port)
+            print(f">>> room_controller - Adding device manually , ip address - {ip_address} "
+                  f" mac address - {mac_address} server_port - {server_port}")
 
             self.add_find_device_thread = add_find_device.AddFindDevices(method='add', ip=ip_address,
                                                                          server_port=server_port,

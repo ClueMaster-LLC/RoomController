@@ -244,23 +244,12 @@ class AddFindDevices(threading.Thread):
     #            json.dump(device_info_dict, device_info)
 
     def update_webapp_with_new_found_devices(self, devices):
-##        with open(os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")) as unique_ids_file:
-##            unique_ids_file_response = json.load(unique_ids_file)
-##
-##        device_unique_id = unique_ids_file_response["device_id"]
-##        api_bearer_key = unique_ids_file_response["api_token"]
-##
-##        api_header = CaseInsensitiveDict()
-##        api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
-##        api_header['Content-Type'] = 'application/json'
-##
-##        self.post_input_relay_discovery_api = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_unique_id)
-
         if type(devices) is list:
             print(">>> add_find_device : Uploading newly found devices to web ...")
             print(">>> add_find_device : ", devices)
 
-            response = requests.post(self.post_input_relay_discovery_api, headers=self.api_headers, data=json.dumps(devices))
+            response = requests.post(self.post_input_relay_discovery_api, headers=self.api_headers,
+                                     data=json.dumps(devices))
             print(">>> add_find_device - PostNewInputRelayDiscovery response : ", response.status_code)
             print(self.post_input_relay_discovery_api)
             print(self.api_headers)
