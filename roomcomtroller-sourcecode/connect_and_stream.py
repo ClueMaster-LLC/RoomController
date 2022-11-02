@@ -47,6 +47,7 @@ class ConnectAndStream(threading.Thread):
         self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
+        self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
 
     def run(self):
         connected = False
@@ -60,6 +61,15 @@ class ConnectAndStream(threading.Thread):
                 client_socket.connect((self.ip_address, self.server_port))
                 print('>>> connect_and_stream - Connected to ' + str(self.ip_address))
                 connected = True
+
+                # writing status update to room_controller_configs file
+                print(">>> connect_and_stream.py - Writing device thread status to configs file ...")
+                with open(self.roomcontroller_configs_file) as configs_file:
+                    initial_file_response = json.load(configs_file)
+                    initial_file_response[f"device_{self.device_mac}_streaming"] = True
+
+                with open(self.roomcontroller_configs_file, "w") as configs_file:
+                    json.dump(initial_file_response, configs_file)
 
             except socket.error as e:
                 print('>>> connect_and_stream - ' + str(e))

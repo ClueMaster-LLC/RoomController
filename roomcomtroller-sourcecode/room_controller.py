@@ -34,7 +34,8 @@ class RoomController:
         self.connect_and_stream_thread = None
         self.add_find_device_thread = None
         self.get_devicelist_request_api = None
-        self.api_active_null_responses = ["No room controller found", "No request found", "No record found", "No record found in inventory master"]
+        self.api_active_null_responses = ["No room controller found", "No request found", "No record found",
+                                          "No record found in inventory master"]
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
@@ -68,9 +69,9 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                #print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
-                #print(">>> room_controller - " + str(datetime.datetime.utcnow()) + "Waiting for code 12,13 : " + relays_discovery_request.text)
+                # print(">>> room_controller - " + str(datetime.datetime.utcnow()) + "Waiting for code 12,13 : " + relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
@@ -78,7 +79,8 @@ class RoomController:
 
                     if request_id == self.search_for_devices_id:
                         print(">>> room_controller - Acknowledging request for Input Relay with RequestId ", request_id)
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
+                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                       request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
 
                         # staring add_find_device thread
@@ -94,11 +96,14 @@ class RoomController:
                     request_id = get_devicelist_request.json()["RequestID"]
 
                     if request_id == self.update_device_list_id:
-                        print(">>> room_controller - Acknowledging request to GET new updated list of devices with RequestId ", request_id)
+                        print(
+                            ">>> room_controller - Acknowledging request to GET new updated list of devices with RequestId ",
+                            request_id)
                         # self.general_request_api = POST_INPUT_RELAY_REQUEST_UPDATE.format(device_id=self.device_unique_id, request_id=request_id)
                         # requests.post(self.general_request_api, headers=self.api_headers)
 
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id, request_id=request_id)
+                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                       request_id=request_id)
                         requests.post(self.general_request_api, headers=self.api_headers)
                         # print(requests.post(self.general_request_api, headers=self.api_headers))
 
