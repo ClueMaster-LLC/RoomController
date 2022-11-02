@@ -65,7 +65,7 @@ class ConnectAndStream(threading.Thread):
                 print('>>> connect_and_stream - ' + str(e))
                 print('>>> connect_and_stream - The last known IP ' + str(
                     self.ip_address) + ' is no longer valid. Searching network for device... ')
-                self.ip_address = self.deviceDiscovery(self.device_mac)  # find new device IP Address
+                self.ip_address, self.server_port = self.deviceDiscovery(self.device_mac)  # find new device IP Address
                 print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
@@ -235,7 +235,7 @@ class ConnectAndStream(threading.Thread):
 
                     discover_ip = ((bytes_address_pair[1])[0])
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
-                    discover_port = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2]
+                    discover_port = int((list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2])
                     discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
                     discovery_version = \
                         (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
@@ -252,7 +252,7 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Network Card Firmware Version: ",
                                   discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
-                            self.save_device_info(discover_ip, discover_mac)
+                            self.save_device_info(discover_ip, discover_mac, discover_port)
                             self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac, serverport=discover_port)
                             # Only update the IP and PORT used, keeping all other values the same using self._
                             # Need logic to update and safe file without looking other records in it.
@@ -290,7 +290,7 @@ class ConnectAndStream(threading.Thread):
             self.connection_lost()
             self.run()
 
-        return discover_ip
+        return discover_ip, discover_port
 
     @staticmethod
     def extract_ip():
@@ -323,14 +323,15 @@ class ConnectAndStream(threading.Thread):
             print(">>> connect_and_stream - Error Sending Reboot Command")
 
     @staticmethod
-    def save_device_info(ip, i_mac):
+    def save_device_info(ip, i_mac, port):
         device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
         with open(device_info_file) as connected_devices_file:
             connected_devices_file_response = json.load(connected_devices_file)
             for device in connected_devices_file_response["Devices"]:
                 if device["MacAddress"] == i_mac:
-                    print(f">>> connect_and_stream - Updating IP of {i_mac}")
+                    print(f">>> connect_and_stream - Updating IP and PORT of {i_mac} in JSON file.")
                     device["IP"] = str(ip)
+                    device["ServerPort"] = int(port)
 
         with open(device_info_file, "w") as connected_devices_file:
             json.dump(connected_devices_file_response, connected_devices_file)
@@ -363,7 +364,7 @@ class ConnectAndStream(threading.Thread):
         api_header = CaseInsensitiveDict()
         api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
         api_header['Content-Type'] = 'application/json'
-        updated_data = [{"IP": ip_address, "ServerPort": serverport, "MacAddress": macaddress}]
+        updated_data = [{"IP": ip_address, "ServerPort": server_port, "MacAddress": macaddress}]
 
         response = requests.post(self.post_input_relay_request_update_api, headers=api_header, data=json.dumps(updated_data))
         print(">>> add_find_device - PostNewInputRelayRequestUpdate response : ", response.status_code)
