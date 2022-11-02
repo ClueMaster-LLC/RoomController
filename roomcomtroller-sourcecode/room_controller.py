@@ -68,9 +68,9 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
-                # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                #print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
-                print(">>> room_controller - Waiting for code 12 : " + relays_discovery_request.text)
+                #print(">>> room_controller - " + str(datetime.datetime.utcnow()) + "Waiting for code 12,13 : " + relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:
