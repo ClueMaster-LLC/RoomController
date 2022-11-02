@@ -364,7 +364,9 @@ class ConnectAndStream(threading.Thread):
         api_header = CaseInsensitiveDict()
         api_header["Authorization"] = f"Basic {device_unique_id}:{api_bearer_key}"
         api_header['Content-Type'] = 'application/json'
-        updated_data = [{"IP": ip_address, "ServerPort": serverport, "MacAddress": macaddress}]
+        updated_data = [{"IP": ip_address, "ServerPort": str(serverport), "MacAddress": macaddress}]
+
+        print(updated_data)
 
         response = requests.post(self.post_input_relay_request_update_api, headers=api_header, data=json.dumps(updated_data))
         print(">>> add_find_device - PostNewInputRelayRequestUpdate response : ", response.status_code)
