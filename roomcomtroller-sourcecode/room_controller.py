@@ -87,6 +87,8 @@ class RoomController:
                         self.start_add_find_device_thread(response=relays_discovery_request.json())
                     else:
                         print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
+                #print("Sleep 3")
+                time.sleep(3)
 
                 # looking for new request to download the latest devices' info, after AddFindDevice thread...
                 get_devicelist_request = requests.get(self.get_devicelist_request_api, headers=self.api_headers)
@@ -120,12 +122,13 @@ class RoomController:
                     else:
                         print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
-                time.sleep(1)
+                #print("Sleep 3")
+                time.sleep(3)
 
             except requests.exceptions.ConnectionError:
-                # sleep for 1 sec before trying again
-                print(">>> room_controller - room_controller.py API Connection Error")
-                time.sleep(1)
+                # sleep for 5 sec before trying again
+                print(">>> room_controller - room_controller.py API Connection Error. Retrying in 5 seconds...")
+                time.sleep(5)
                 continue
 
             except requests.exceptions.HTTPError as request_error:
