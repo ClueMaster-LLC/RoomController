@@ -378,8 +378,11 @@ class ConnectAndStream(threading.Thread):
 
         print(">>> add_find_device - PostNewInputRelayRequestUpdate sending: " + str(updated_data))
 
-
-        response = requests.post(self.post_input_relay_request_update_api, headers=api_header, data=json.dumps(updated_data))
+        try:
+            response = requests.post(self.post_input_relay_request_update_api, headers=api_header, data=json.dumps(updated_data))
+        except Exception as api_error:
+            print(">>> connect_and_stream - Error: " + api_error)
+            
         print(">>> add_find_device - PostNewInputRelayRequestUpdate response : ", response.status_code)
         print(">>> add_find_device - PostNewInputRelayRequestUpdate response text : ", response.text)
 
