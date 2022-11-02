@@ -169,6 +169,8 @@ class AddFindDevices(threading.Thread):
                                 # time.sleep(1)
                                 continue
                             else:
+                                print(">>> add_find_device - Done Searching. Closing UDP socket")
+                                UDPServerSocket.close()
                                 break
 
                         except Exception as e:
