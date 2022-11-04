@@ -76,7 +76,7 @@ class ConnectAndStream(threading.Thread):
                 print('>>> connect_and_stream - ' + str(e))
                 print('>>> connect_and_stream - The last known IP ' + str(
                     self.ip_address) + ' is no longer valid. Searching network for device... ')
-                self.ip_address, self.server_port = self.deviceDiscovery(self.device_mac)  # find new device IP Address
+                self.ip_address, self.server_port = self.device_discovery(self.device_mac)  # find new device IP Address
                 print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
@@ -216,41 +216,46 @@ class ConnectAndStream(threading.Thread):
                         self.run()
                 continue
 
-    def deviceDiscovery(self, device_mac):
+    def device_discovery(self, device_mac):
         try:
-            localIP = self.extract_ip()
-            localPort = 13000
-            bufferSize = 1024
+            local_ip = self.extract_ip()
+            local_port = 13000
+            buffer_size = 1024
 
-            msgFromServer = "Connected"
-            bytesToSend = str.encode(msgFromServer)
+            # msgFromServer = "Connected"
+            # bytesToSend = str.encode(msgFromServer)
 
             # Create a datagram socket
-            UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-            UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            udp_server_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+            udp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # Bind to address and ip
             if platform.system() == "Windows":
-                UDPServerSocket.bind((localIP, localPort))
+                udp_server_socket.bind((local_ip, local_port))
             elif platform.system() == "Linux" or platform.system() == "Linux2":
                 # Bind to address and ip
-                UDPServerSocket.bind(("<broadcast>", localPort))
+                udp_server_socket.bind(("<broadcast>", local_port))
 
             print(">>> connect_and_stream - UDP server up. Searching Network for Device: " + str(device_mac))
 
             # Listen for incoming datagrams
             while True:
                 try:
-                    bytes_address_pair = UDPServerSocket.recvfrom(bufferSize)
+                    bytes_address_pair = udp_server_socket.recvfrom(buffer_size)
 
                     if log_level in (1, 3):
                         print(bytes_address_pair)
                         print(list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))
-                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4 (IP, PORT)\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00']
+                    # data returned# ['192.168.1.19', '0008DC21DDFD', '2101', 'NCD.IO', '2.4 (IP, PORT)
+                    # \\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00
+                    # \\x00\\x00\\x00\\x00\\x00']
 
                     discover_ip = ((bytes_address_pair[1])[0])
                     discover_mac = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[1]
-                    discover_port = int((list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2])
-                    discovery_mfr = (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
+                    discover_port = \
+                        int((list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[2])
+                    # We are using the model from the json file for now
+                    # discovery_model = \
+                    #     (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[3]
                     discovery_version = \
                         (list("{}".format(bytes_address_pair[0])[2:-1].replace("\\x00", "").split(",")))[4]
                     discover_model = self.device_model
@@ -270,7 +275,7 @@ class ConnectAndStream(threading.Thread):
                             self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac,
                                                                 serverport=discover_port)
 
-                            UDPServerSocket.close()
+                            udp_server_socket.close()
                             time.sleep(1)
                             break
                         except Exception as e:
@@ -302,6 +307,9 @@ class ConnectAndStream(threading.Thread):
         try:
             st.connect(('10.255.255.255', 1))
             ip_address = st.getsockname()[0]
+        except socket.error:
+            ip_address = '127.0.0.1'
+            print(">>> connect_and_stream - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
         except Exception:
             ip_address = '127.0.0.1'
             print(">>> connect_and_stream - Error trying to find Room Controller IP, Defaulting to 127.0.0.1")
@@ -309,12 +317,14 @@ class ConnectAndStream(threading.Thread):
             st.close()
         return ip_address
 
-    def reboot_device(self):
+    @staticmethod
+    def reboot_device():
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)
             try:
                 data_response_init = client_socket.recvfrom(32)
+                print(str(data_response_init))
                 # to clear the buffer on NIC when first connect sends MAC.
             except Exception as e:
                 print('>>> connect_and_stream - ' + str(e))
