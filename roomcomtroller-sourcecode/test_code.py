@@ -25,7 +25,7 @@ def main():
     # api details ---
     get_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_id)
     post_new_input_relay_discovery = POST_NEW_INPUT_RELAY_DISCOVERY.format(device_id=device_id)
-    devices_info = [{"IP": "192.168.0.1921", "ServerPort": 2101, "MacAddress": "MRITTUNJOY01"},
+    devices_info = [{"IP": "192.168.0.192", "ServerPort": 2101, "MacAddress": "MRITTUNJOY01"},
                     {"IP": "192.168.2.21", "ServerPort": 2101, "MacAddress": "MRITTUNJOYED"}]
 
     # requests ---
