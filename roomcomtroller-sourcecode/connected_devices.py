@@ -90,7 +90,7 @@ class ConnectedDevices:
     def get_devicelist(self):
         print(">>> connected_devices - API query to download new list of devices")
         get_devicelist = requests.get(self.get_devicelist_api, headers=self.api_headers).json()
-        print(">>> connected_devices - New devices info : ", get_devicelist)
+        print(">>> connected_devices - Update device info file : ", get_devicelist)
         return get_devicelist
 
     def reset_room_controller(self):
