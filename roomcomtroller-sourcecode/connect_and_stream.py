@@ -44,7 +44,8 @@ class ConnectAndStream(threading.Thread):
         # global attributes
         self.active = None
         self.device_mac = device_mac
-        self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total = self.read_device_info(self.device_mac)
+        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total,
+         self.relay_total] = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -107,8 +108,8 @@ class ConnectAndStream(threading.Thread):
 
                         # insert SignalR stream
                         print(
-                            '>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' + str(
-                                data_response))
+                            '>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' +
+                            str(data_response))
 
                         if log_level in (1, 2):
                             print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
@@ -150,6 +151,9 @@ class ConnectAndStream(threading.Thread):
                 # set connection status and recreate socket
                 self.connection_lost()
                 self.run()
+
+            except Exception as e:
+                print(e)
 
         except socket.error:
             # set connection status and recreate socket
@@ -252,7 +256,7 @@ class ConnectAndStream(threading.Thread):
                     discover_model = self.device_model
                     discover_device_type = self.device_type
 
-                    if discover_mac == self.device_mac:  # change logic to look inside array and if the MAC is found, then save that new data
+                    if discover_mac == self.device_mac:
                         try:
                             print(">>> connect_and_stream - Discovered Device IP:  ", discover_ip)
                             print(">>> connect_and_stream - Discovered Device MAC: ", discover_mac)
@@ -263,9 +267,9 @@ class ConnectAndStream(threading.Thread):
                                   discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
                             self.save_device_info(discover_ip, discover_mac, discover_port)
-                            self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac, serverport=discover_port)
-                            # Only update the IP and PORT used, keeping all other values the same using self._
-                            # Need logic to update and safe file without looking other records in it.
+                            self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac,
+                                                                serverport=discover_port)
+
                             UDPServerSocket.close()
                             time.sleep(1)
                             break
@@ -282,16 +286,6 @@ class ConnectAndStream(threading.Thread):
                     # set connection status and recreate socket
                     self.connection_lost()
                     self.run()
-
-        #            if discover_mac == self.device_mac:
-        #                try:
-        #                    print(">>> connect_and_stream - Saving updated device info to file.")
-        #                    self.save_device_info(discover_ip, discover_mac, discover_model, discover_device_type,self.read_speed)
-        #                except Exception:
-        #                    print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
-        #
-        #            else:
-        #                print(">>> connect_and_stream - Device not found on network.")
 
         except socket.error as e:
             print('>>> connect_and_stream - ' + str(e))  # change to exception:
@@ -379,7 +373,8 @@ class ConnectAndStream(threading.Thread):
         print(">>> add_find_device - PostNewInputRelayRequestUpdate sending: " + str(updated_data))
 
         try:
-            response = requests.post(self.post_input_relay_request_update_api, headers=api_header, data=json.dumps(updated_data))
+            response = requests.post(self.post_input_relay_request_update_api, headers=api_header,
+                                     data=json.dumps(updated_data))
         except Exception as api_error:
             print(">>> connect_and_stream - Error: " + str(api_error))
         else:
