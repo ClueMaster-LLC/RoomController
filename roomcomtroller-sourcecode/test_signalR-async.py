@@ -21,7 +21,7 @@ class MyHub(Hub):
         return await self.invoke("method", "arg1", 2)
 
 
-hub = MyHub("my-hub")
+hub = MyHub("chatHub")
 
 
 @hub.on("event_three")
@@ -46,7 +46,7 @@ async def main():
     token = "mytoken"
     headers = {"Authorization": f"Bearer {token}"}
     async with Client(
-        "https://localhost:9000",
+        "https://devapi.cluemaster.io:9000",
         hub,
         connection_options={
             "http_client_options": {"headers": headers},
