@@ -3,10 +3,10 @@ from signalr import Connection
 
 with Session() as session:
     #create a connection
-    connection = Connection("http://localhost:5000/signalr", session)
+    connection = Connection("https://devapi.cluemaster.io", session)
 
     #get chat hub
-    chat = connection.register_hub('chat')
+    chat = connection.register_hub('chatHub')
 
     #start a connection
     connection.start()
@@ -24,10 +24,9 @@ with Session() as session:
         print('error: ', error)
 
     #receive new chat messages from the hub
-    chat.client.on('newMessageReceived', print_received_message)
+    chat.client.on('Send2', print_received_message)
 
-    #change chat topic
-    chat.client.on('topicChanged', print_topic)
+    
 
     #process errors
     connection.error += print_error
@@ -36,16 +35,14 @@ with Session() as session:
     with connection:
 
         #post new message
-        chat.server.invoke('send', 'Python is here')
+        chat.server.invoke('Send2', 'Python is here')
 
         #change chat topic
-        chat.server.invoke('setTopic', 'Welcome python!')
+        chat.server.invoke('Send2', 'Welcome python!')
 
-        #invoke server method that throws error
-        chat.server.invoke('requestError')
-
+    
         #post another message
-        chat.server.invoke('send', 'Bye-bye!')
+        chat.server.invoke('Send2', 'Bye-bye!')
 
         #wait a second before exit
         connection.wait(1)
