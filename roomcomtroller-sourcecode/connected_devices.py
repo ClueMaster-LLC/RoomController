@@ -21,6 +21,7 @@ class ConnectedDevices:
         # global attributes
         self.active = None
         self.connect_and_stream_thread_instance = None
+        self.discover_new_relays_request_api = None
         self.previously_configured_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
 
         self.device_unique_id = None
@@ -61,31 +62,35 @@ class ConnectedDevices:
             self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_unique_id)
 
     def init_device_list(self):
-        try:
-            print(">>> connected_devices - Download new device list form ClueMaster")
-            get_devicelist_response = self.get_devicelist()
-            print(">>> connected_devices - Update Connected_Devices.JSON file")
-            self.save_device_info(get_devicelist_response)
+        while True:
+            try:
+                print(">>> connected_devices - Download new device list form ClueMaster")
+                get_devicelist_response = self.get_devicelist()
+                print(">>> connected_devices - Update Connected_Devices.JSON file")
+                self.save_device_info(api_json_list=get_devicelist_response)
 
-        except requests.exceptions.ConnectionError:
-            # sleep for 5 sec before trying again
-            print(">>> connected_devices - room_controller.py API Connection Error. Retrying in 5 seconds...")
-            time.sleep(5)
-            init_device_list()
-
-        except requests.exceptions.HTTPError as request_error:
-            if "401 Client Error" in str(request_error):
-                self.reset_room_controller()
+            except requests.exceptions.ConnectionError:
                 # sleep for 5 sec before trying again
+                print(">>> connected_devices - room_controller.py API Connection Error. Retrying in 5 seconds...")
                 time.sleep(5)
-                init_device_list()
-            else:
-                print(">>> connected_devices - room_controller.py Not a API token invalid Error")
-                print(">>> connected_devices - " + str(request_error))
+                continue
 
-        except requests.exceptions.JSONDecodeError as json_error:
-            print(">>> connected_devices - room_controller.py JsonDecodeError")
-            print(">>> connected_devices - Error ", str(json_error))
+            except requests.exceptions.HTTPError as request_error:
+                # this error arises when api token is invalid, meaning room controller removed from webapp
+                if "401 Client Error" in str(request_error):
+                    break
+
+                else:
+                    print(">>> connected_devices - room_controller.py Not a API token invalid Error")
+                    print(">>> connected_devices - " + str(request_error))
+
+            except requests.exceptions.JSONDecodeError as json_error:
+                print(">>> connected_devices - room_controller.py JsonDecodeError")
+                print(">>> connected_devices - Error ", str(json_error))
+
+            else:
+                # if no exceptions arises and then break
+                break
 
     def get_devicelist(self):
         print(">>> connected_devices - API query to download new list of devices")
@@ -93,24 +98,30 @@ class ConnectedDevices:
         print(">>> connected_devices - Update device info file : ", get_devicelist)
         return get_devicelist
 
-    def reset_room_controller(self):
-        pass
-
     @staticmethod
     def save_device_info(api_json_list):
-        device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-        device_info_dict = {"Devices": api_json_list}
+        if bool(api_json_list) is True:
+            device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+            device_info_dict = {"Devices": api_json_list}
 
-        with open(device_info_file, "w") as device_info:
-            json.dump(device_info_dict, device_info)
+            with open(device_info_file, "w") as device_info:
+                json.dump(device_info_dict, device_info)
+        else:
+            print(">>> connected_devices - Empty api_json_list")
+            pass
 
     def execution_environment(self):
-        with open(self.previously_configured_devices_file) as connected_devices_file:
-            connected_devices_file_response = json.load(connected_devices_file)
-            for devices in connected_devices_file_response["Devices"]:
-                device_mac_address = devices["MacAddress"]
-                print(">>> connected_devices - Load ", str(device_mac_address))
-                self.start_thread(mac_address=device_mac_address)
+        try:
+            with open(self.previously_configured_devices_file) as connected_devices_file:
+                connected_devices_file_response = json.load(connected_devices_file)
+                for devices in connected_devices_file_response["Devices"]:
+                    device_mac_address = devices["MacAddress"]
+                    print(">>> connected_devices - Load ", str(device_mac_address))
+                    self.start_thread(mac_address=device_mac_address)
+
+        except Exception as error:
+            print(">>> connected_devices - execution environment error - ", error)
+            return
 
     def start_thread(self, mac_address):
         print(f">>> connected_devices - Starting ConnectAndStream Thread for MacAddress {mac_address}")
