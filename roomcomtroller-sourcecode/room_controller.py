@@ -182,12 +182,17 @@ class RoomController:
 
         devices_mac_ids = []
         new_devices = []
+        all_mac_ids = []
 
         with open(self.connected_devices_file) as connected_devices_file:
             connected_devices_file_response = json.load(connected_devices_file)
 
             for devices in connected_devices_file_response["Devices"]:
+                all_mac_ids.append(devices["MacAddress"])
                 devices_mac_ids.append("device_" + devices["MacAddress"] + "_streaming")
+
+        print(">>> room_controller - Updating Environment Variables")
+        os.environ["Registered_Devices"] = ",".join(all_mac_ids)
 
         with open(self.roomcontroller_configs_file) as room_controller_configs_file:
             room_controller_configs_file_response = json.load(room_controller_configs_file)

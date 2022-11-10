@@ -99,53 +99,56 @@ class ConnectAndStream(threading.Thread):
 
             try:
                 while True:
+                    registered_devices_list = os.environ.get("Registered_Devices").split(",")
+                    print("connect_and_stream - Registered Devices - ", registered_devices_list)
 
-                    data_response = (ncd.get_dc_bank_status(0, self.bank_total))
-                    data_response_new = data_response
+                    if self.device_mac in registered_devices_list:
+                        data_response = (ncd.get_dc_bank_status(0, self.bank_total))
+                        data_response_new = data_response
 
-                    if data_response_old != data_response_new:
-                        data_response_old = data_response_new
+                        if data_response_old != data_response_new:
+                            data_response_old = data_response_new
 
-                        # insert SignalR stream
-                        print(
-                            '>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' +
-                            str(data_response))
+                            # insert SignalR stream
+                            print(
+                                '>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' +
+                                str(data_response))
 
-                        if log_level in (1, 2):
-                            print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
-                                bytes(data_response)))
-                            print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
+                            if log_level in (1, 2):
+                                print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
+                                    bytes(data_response)))
+                                print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
 
-                            # make a new array by ignoring the first two bytes and the last byte
-                            readings = bytes(data_response)
-                            counter = 0
-                            bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
-                            print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
+                                # make a new array by ignoring the first two bytes and the last byte
+                                readings = bytes(data_response)
+                                counter = 0
+                                bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
+                                print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
 
-                            # This code block is only for displaying the of/off of the inputs to the log for diagnostics                            
-                            for bank in readings:
-                                # increment through each input
-                                for i in range(0, self.input_total):
-                                    # << indicates a bit shift. Basically check corresponding bit in the reading
-                                    state = (bank & (1 << i))
-                                    if state != 0:
-                                        # print('Input '+ str(bank) +' is high')
-                                        print('>>> connect_and_stream - BANK Unknown: Input ' + str(i + 1) + ' is high')
-                                    else:
-                                        print('>>> connect_and_stream - BANK Unknown: Input ' + str(i + 1) + ' is low')
-                                    counter += 1
+                                # This code block is only for displaying the of/off of the inputs to the log for diagnostics
+                                for bank in readings:
+                                    # increment through each input
+                                    for i in range(0, self.input_total):
+                                        # << indicates a bit shift. Basically check corresponding bit in the reading
+                                        state = (bank & (1 << i))
+                                        if state != 0:
+                                            # print('Input '+ str(bank) +' is high')
+                                            print('>>> connect_and_stream - BANK Unknown: Input ' + str(
+                                                i + 1) + ' is high')
+                                        else:
+                                            print('>>> connect_and_stream - BANK Unknown: Input ' + str(
+                                                i + 1) + ' is low')
+                                        counter += 1
 
-                    # wait for a few defined seconds
-                    time.sleep(self.read_speed)
+                        # wait for a few defined seconds
+                        time.sleep(self.read_speed)
 
-            # except KeyboardInterrupt:
-            #     print('>>> connect_and_stream - Keyboard Interrupted')
-            #     try:
-            #         print(">>> connect_and_stream - Connection closed")
-            #         client_socket.close()
-            #         sys.exit(0)
-            #     except SystemExit:
-            #         pass
+                    else:
+                        # terminating thread
+                        # if just returning doesn't close the thread, try uncommenting client_socket.close()
+
+                        # client_socket.close()
+                        return
 
             except socket.error:
                 # set connection status and recreate socket
