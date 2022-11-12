@@ -247,15 +247,15 @@ class AddFindDevices(threading.Thread):
 
     def update_webapp_with_new_found_devices(self, devices):
         if type(devices) is list:
+            print(">>> add_find_device : Devices found - ", devices)
             print(">>> add_find_device : Uploading newly found devices to web ...")
-            print(">>> add_find_device : ", devices)
 
             response = requests.post(self.post_input_relay_discovery_api, headers=self.api_headers,
                                      data=json.dumps(devices))
             print(">>> add_find_device - PostNewInputRelayDiscovery response : ", response.status_code)
-            print(self.post_input_relay_discovery_api)
-            print(self.api_headers)
-            print(json.dumps(devices))
+            #print(self.post_input_relay_discovery_api)
+            #print(self.api_headers)
+            #print(json.dumps(devices))
             if response.text == "no data found in inventory master":
                 print(">>> add_find_device - Devices found does not match with inventory master ...")
             else:

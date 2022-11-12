@@ -10,6 +10,9 @@ import requests
 from apis import *
 from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
+import room_controller
+import global_var
+from importlib import reload
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -17,23 +20,8 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 # GLOBAL VARIABLES
-# SERVER_PORT = 2101
-# READ_SPEED = 0.05
 
 log_level = 0  # 0 for disabled | 1 for ALL details | 2 for device input/relay status | 3 for network connections
-
-
-# device hardware
-# cm_dc16_banks = 2
-# cm_dc16_inputs = 8
-# cm_dc32_banks = 4
-# cm_dc32_inputs = 32
-# cm_dc48_banks = 6
-# cm_dc48_inputs = 48
-
-# device_model = 'cm_dc16'  # set by API when scanning or from config file if connected prior
-# bank_total = cm_dc16_banks - 1
-# input_total = cm_dc16_inputs
 
 
 class ConnectAndStream(threading.Thread):
@@ -94,15 +82,22 @@ class ConnectAndStream(threading.Thread):
             except Exception as e:
                 print('>>> connect_and_stream - ' + str(e))
                 data_response_init = self.device_mac
+
             data_response_old = None
             print('>>> connect_and_stream - ' + str(self.device_mac) + ' DEVICE CONNECTED AND READY')
 
             try:
                 while True:
-                    registered_devices_list = os.environ.get("Registered_Devices").split(",")
-                    print("connect_and_stream - Registered Devices - ", registered_devices_list)
-
-                    if self.device_mac in registered_devices_list:
+                    registered_devices_list = self.evn_registered_devices_list()
+                    reload(sys.modules["global_var"])
+                    print("connect_and_stream - Registered Devices GV - ", global_var.MAC)
+                    print("connect_and_stream - Registered Devices EV - ", registered_devices_list)
+                    #room_controller.global_active_mac_ids
+                    print("connect_and_stream - Registered Devices GV - ", room_controller.global_active_mac_ids)
+                    
+                    
+                    if self.device_mac in room_controller.global_active_mac_ids:
+                    #if self.device_mac in registered_devices_list:
                         data_response = (ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = data_response
 
@@ -147,7 +142,8 @@ class ConnectAndStream(threading.Thread):
                         # terminating thread
                         # if just returning doesn't close the thread, try uncommenting client_socket.close()
 
-                        # client_socket.close()
+                        client_socket.close()
+                        print(">>> connect_and_stream - Closing Thread")
                         return
 
             except socket.error:
@@ -157,6 +153,8 @@ class ConnectAndStream(threading.Thread):
 
             except Exception as e:
                 print(e)
+                print(">>> connect_and_stream - Closing Thread")
+                return
 
         except socket.error:
             # set connection status and recreate socket
@@ -393,6 +391,10 @@ class ConnectAndStream(threading.Thread):
         else:
             print(">>> add_find_device - PostNewInputRelayRequestUpdate response : ", response.status_code)
             print(">>> add_find_device - PostNewInputRelayRequestUpdate response text : ", response.text)
+
+    def evn_registered_devices_list(self):
+        env = os.getenv('Registered_Devices')#.split(",")
+        return env
 
 # Comment out the function when testing from main.py
 
