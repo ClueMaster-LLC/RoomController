@@ -11,7 +11,7 @@ from apis import *
 from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
 import room_controller
-import global_var
+#import global_var
 from importlib import reload
 
 # BASE DIRECTORIES
