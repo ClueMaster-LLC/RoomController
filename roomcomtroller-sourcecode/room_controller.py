@@ -8,6 +8,7 @@ import thread_manager
 import connect_and_stream
 import add_find_device
 from requests.structures import CaseInsensitiveDict
+import connected_devices
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -15,8 +16,8 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 #global variables
-global global_active_mac_ids
 global_active_mac_ids = []
+
 
 # master class
 class RoomController:
@@ -234,6 +235,8 @@ class RoomController:
         print(">>> room_controller - Updating GV - In Memory Device List : " + str(self.active_mac_ids))
         os.environ['Registered_Devices'] = str(self.active_mac_ids)
         print(">>> room_controller - Updating ENV VAR - In Memory Device List", os.environ.get('Registered_Devices'))
+        global global_active_mac_ids
+        global_active_mac_ids = self.active_mac_ids
 
         return new_devices
 
@@ -246,6 +249,11 @@ class RoomController:
 
         print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(self.active_mac_ids))
         os.environ['Registered_Devices'] = str(self.active_mac_ids)
+
+        global global_active_mac_ids
+        global_active_mac_ids = self.active_mac_ids
+
+        connected_devices.ConnectedDevices()  #TESTING TO SEE IF THIS WORKS BETTER TO START FROM HERE.
 
     def connect_and_stream_data(self, device_mac_id):
         print(">>> room_controller - Starting ConnectAndStream thread for device - ", device_mac_id)

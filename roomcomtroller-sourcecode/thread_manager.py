@@ -87,8 +87,12 @@ class ThreadManager:
 
     def execution_environment(self):
         if os.path.isfile(self.previously_connected_devices_file):
-            self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
-            self.connect_to_previous_device_thread.start()
+## LETS START CONENCTED DEVICES() FROM THE ROOM CONTROLLER SO
+## GLOBAL VARIABLE AN LOAD PRIOR BUT KEEP ELSE LOGIC HERE TO
+## WRITE A FILE IF ITS MISSING AND REGISTRAION START
+##            self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
+##            self.connect_to_previous_device_thread.start()
+            pass
         else:
             with open(self.roomcontroller_configs_file) as configurations_file:
                 configurations_file_data = json.load(configurations_file)

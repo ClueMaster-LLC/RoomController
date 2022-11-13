@@ -23,7 +23,7 @@ class ConnectedDevices:
         self.connect_and_stream_thread_instance = None
         self.discover_new_relays_request_api = None
         self.previously_configured_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
-
+        self.active_mac_ids = []
         self.device_unique_id = None
         self.api_token = None
         self.api_headers = None
@@ -68,6 +68,17 @@ class ConnectedDevices:
                 get_devicelist_response = self.get_devicelist()
                 print(">>> connected_devices - Update Connected_Devices.JSON file")
                 self.save_device_info(api_json_list=get_devicelist_response)
+
+##                with open(self.connected_devices_file) as connected_devices_file:
+##                    connected_devices_file_response = json.load(connected_devices_file)
+##
+##                for devices in connected_devices_file_response["Devices"]:
+##                    self.active_mac_ids.append(devices["MacAddress"])
+##
+##                print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(self.active_mac_ids))
+##                os.environ['Registered_Devices'] = str(self.active_mac_ids)
+##                global global_active_mac_ids
+##                global_active_mac_ids = self.active_mac_ids
 
             except requests.exceptions.ConnectionError:
                 # sleep for 5 sec before trying again

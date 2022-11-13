@@ -11,8 +11,7 @@ from apis import *
 from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
 import room_controller
-#import global_var
-from importlib import reload
+##from importlib import reload
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +22,6 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 
 log_level = 0  # 0 for disabled | 1 for ALL details | 2 for device input/relay status | 3 for network connections
 
-
 class ConnectAndStream(threading.Thread):
     def __init__(self, device_mac):
         super(ConnectAndStream, self).__init__()
@@ -31,6 +29,7 @@ class ConnectAndStream(threading.Thread):
 
         # global attributes
         self.active = None
+        print(">>> connect_and_stream - GLOBAL MAC: ", room_controller.global_active_mac_ids)
         self.device_mac = device_mac
         [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total] = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
@@ -87,17 +86,9 @@ class ConnectAndStream(threading.Thread):
 
             try:
                 while True:
-                    registered_devices_list = self.evn_registered_devices_list()
-                    #reload(sys.modules["global_var"])
-                    #print("connect_and_stream - Registered Devices GV - ", global_var.MAC)
-                    #print("connect_and_stream - Registered Devices EV - ", registered_devices_list)
-                    #room_controller.global_active_mac_ids
-                    #print("connect_and_stream - Registered Devices GV - ", room_controller.global_active_mac_ids)
-                    
-                    
-                    #if self.device_mac in room_controller.global_active_mac_ids:
-                    #if self.device_mac in registered_devices_list:
-                    if "test" == "test":
+                    registered_devices_list = self.evn_registered_devices_list()            
+
+                    if self.device_mac in room_controller.global_active_mac_ids:
                         data_response = (ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = data_response
 
@@ -143,7 +134,7 @@ class ConnectAndStream(threading.Thread):
                         # if just returning doesn't close the thread, try uncommenting client_socket.close()
 
                         client_socket.close()
-                        print(">>> connect_and_stream - Closing Thread")
+                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                         return
 
             except socket.error:
