@@ -15,6 +15,7 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 #global variables
+global global_active_mac_ids
 global_active_mac_ids = []
 
 # master class
@@ -23,7 +24,8 @@ class RoomController:
         super(RoomController, self).__init__()
         print(">>> room_controller - **********  STARTUP COMPLETE  **********")
 
-        # global attributes
+        # local class attributes
+        self.active_mac_ids = []
         self.device_unique_id = None
         self.api_token = None
         self.api_headers = None
@@ -47,9 +49,6 @@ class RoomController:
         self.configurations()
         self.execution_environment()
 
-    def global_active_mac_id(self):
-        return global_active_mac_ids
-
     def configurations(self):
         try:
             with open(self.unique_ids_file) as unique_ids_file:
@@ -59,8 +58,8 @@ class RoomController:
             api_key = json_response_of_unique_ids_file["api_token"]
 
             #load all the devices on startup into memory array
-            self.active_devices()
-            self.handling_devices_info()
+            self.init_previous_devices()
+            #self.handling_devices_info()
 
         except FileNotFoundError:
             print(">>> room_controller - Unique ids file not found")
@@ -125,9 +124,10 @@ class RoomController:
                         self.save_device_info(get_devicelist_response)
 
                         # handling new devices added
-                        new_devices = self.handling_devices_info()
-                        if new_devices != None:
-                            for device in new_devices:
+                        new_devices_added = list(self.handling_devices_info())
+                        if new_devices_added != None:
+                            for device in new_devices_added:
+                                print(">>> room_controller -", str(device), "Starting up.....")
                                 self.connect_and_stream_data(device_mac_id=device)
                         else:
                             print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
@@ -219,30 +219,33 @@ class RoomController:
             for devices in connected_devices_file_response["Devices"]:
                 devices_mac_ids.append(devices["MacAddress"])
 
-        print(">>> room_controller - Updating GV - Previously Connected Devices : " + str(devices_mac_ids))
+        print(">>> room_controller - Current In Memory Device List : " + str(self.active_mac_ids))
+        print(">>> room_controller - Updated Connected Device File : " + str(devices_mac_ids))
 
-        for device in devices_mac_ids:
-            if device in global_active_mac_ids:
+        for device in list(devices_mac_ids):
+            if device in self.active_mac_ids:
+                print(">>> room_controller - Device ", str(device), " already loaded in memory, skiping")
                 pass
             else:
-                new_devices.append(devices_mac_ids)
-                print(">>> room_controller - Updating GV - New Connected Devices : " + str(new_devices))
-                os.environ['Registered_Devices'] = str(new_devices)
-                print(">>> room_controller - Updating ENV VAR - ", os.environ.get('Registered_Devices'))
+                new_devices.append(device)
+                print(">>> room_controller - Device ", str(device), "found and added")
+
+        self.active_mac_ids = devices_mac_ids
+        print(">>> room_controller - Updating GV - In Memory Device List : " + str(self.active_mac_ids))
+        os.environ['Registered_Devices'] = str(self.active_mac_ids)
+        print(">>> room_controller - Updating ENV VAR - In Memory Device List", os.environ.get('Registered_Devices'))
 
         return new_devices
 
-    def active_devices(self):
+    def init_previous_devices(self):
         with open(self.connected_devices_file) as connected_devices_file:
             connected_devices_file_response = json.load(connected_devices_file)
 
             for devices in connected_devices_file_response["Devices"]:
-                global_active_mac_ids.append(devices["MacAddress"])
+                self.active_mac_ids.append(devices["MacAddress"])
 
-        print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(global_active_mac_ids))
-        os.environ['Registered_Devices'] = str(global_active_mac_ids)
-        #print(global_active_mac_ids)
-
+        print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(self.active_mac_ids))
+        os.environ['Registered_Devices'] = str(self.active_mac_ids)
 
     def connect_and_stream_data(self, device_mac_id):
         print(">>> room_controller - Starting ConnectAndStream thread for device - ", device_mac_id)

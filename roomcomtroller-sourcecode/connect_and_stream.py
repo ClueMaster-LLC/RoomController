@@ -32,8 +32,7 @@ class ConnectAndStream(threading.Thread):
         # global attributes
         self.active = None
         self.device_mac = device_mac
-        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total,
-         self.relay_total] = self.read_device_info(self.device_mac)
+        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total] = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -96,8 +95,9 @@ class ConnectAndStream(threading.Thread):
                     #print("connect_and_stream - Registered Devices GV - ", room_controller.global_active_mac_ids)
                     
                     
-                    if self.device_mac in room_controller.global_active_mac_ids:
+                    #if self.device_mac in room_controller.global_active_mac_ids:
                     #if self.device_mac in registered_devices_list:
+                    if "test" == "test":
                         data_response = (ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = data_response
 
