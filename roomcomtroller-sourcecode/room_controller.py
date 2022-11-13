@@ -226,10 +226,9 @@ class RoomController:
                 pass
             else:
                 new_devices.append(devices_mac_ids)
-
-            print(">>> room_controller - Updating GV - New Connected Devices : " + str(new_devices))
-            os.environ['Registered_Devices'] = str(new_devices)
-            print(">>> room_controller - Updating ENV VAR - ", os.environ.get('Registered_Devices'))
+                print(">>> room_controller - Updating GV - New Connected Devices : " + str(new_devices))
+                os.environ['Registered_Devices'] = str(new_devices)
+                print(">>> room_controller - Updating ENV VAR - ", os.environ.get('Registered_Devices'))
 
         return new_devices
 

@@ -89,11 +89,11 @@ class ConnectAndStream(threading.Thread):
             try:
                 while True:
                     registered_devices_list = self.evn_registered_devices_list()
-                    reload(sys.modules["global_var"])
-                    print("connect_and_stream - Registered Devices GV - ", global_var.MAC)
-                    print("connect_and_stream - Registered Devices EV - ", registered_devices_list)
+                    #reload(sys.modules["global_var"])
+                    #print("connect_and_stream - Registered Devices GV - ", global_var.MAC)
+                    #print("connect_and_stream - Registered Devices EV - ", registered_devices_list)
                     #room_controller.global_active_mac_ids
-                    print("connect_and_stream - Registered Devices GV - ", room_controller.global_active_mac_ids)
+                    #print("connect_and_stream - Registered Devices GV - ", room_controller.global_active_mac_ids)
                     
                     
                     if self.device_mac in room_controller.global_active_mac_ids:
