@@ -40,6 +40,9 @@ class ConnectAndStream(threading.Thread):
         connected = False
         while not connected:
             try:
+                if self.device_mac not in room_controller.global_active_mac_ids:
+                    print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                    return
                 # print(">>> connect_and_stream - Room Controller IP Address: " + str(self.extract_ip()))
                 print('>>> connect_and_stream - Connecting to last known device IP: ' + str(
                     self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
@@ -59,6 +62,10 @@ class ConnectAndStream(threading.Thread):
                     json.dump(initial_file_response, configs_file)
 
             except socket.error as e:
+                if self.device_mac not in room_controller.global_active_mac_ids:
+                    client_socket.close()
+                    print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                    return
                 print('>>> connect_and_stream - ' + str(e))
                 print('>>> connect_and_stream - The last known IP ' + str(
                     self.ip_address) + ' is no longer valid. Searching network for device... ')
@@ -85,9 +92,7 @@ class ConnectAndStream(threading.Thread):
             print('>>> connect_and_stream - ' + str(self.device_mac) + ' DEVICE CONNECTED AND READY')
 
             try:
-                while True:
-                    registered_devices_list = self.evn_registered_devices_list()            
-
+                while True:       
                     if self.device_mac in room_controller.global_active_mac_ids:
                         data_response = (ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = data_response
@@ -132,23 +137,42 @@ class ConnectAndStream(threading.Thread):
                     else:
                         # terminating thread
                         # if just returning doesn't close the thread, try uncommenting client_socket.close()
-
                         client_socket.close()
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                         return
 
             except socket.error:
+                if self.device_mac not in room_controller.global_active_mac_ids:
+                    client_socket.close()
+                    print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                    return
                 # set connection status and recreate socket
                 self.connection_lost()
                 self.run()
 
             except Exception as e:
-                print(e)
-                print(">>> connect_and_stream - Closing Thread")
+                #print(">>> connect_and_stream -  Error: " + str(e))
+                if self.device_mac not in room_controller.global_active_mac_ids:
+                    client_socket.close()
+                    print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
 
         except socket.error:
+            if self.device_mac not in room_controller.global_active_mac_ids:
+                client_socket.close()
+                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                return
             # set connection status and recreate socket
+            self.connection_lost()
+            self.run()
+
+        except Exception as e:
+            # set connection status and recreate socket
+            print(">>> connect_and_stream -  Error: " + str(e))
+            if self.device_mac not in room_controller.global_active_mac_ids:
+                client_socket.close()
+                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                return
             self.connection_lost()
             self.run()
 
@@ -274,18 +298,30 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Error: Unable to save updated device info to file.")
                             print('>>> connect_and_stream - ' + str(e))
                     else:
+                        if self.device_mac not in room_controller.global_active_mac_ids:
+                            udp_server_socket.close()
+                            print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                            return
                         print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - Device: " + str(
                             device_mac) + " not found on network. Continuing to search...")
 
                     # break
                 except socket.error:  # change to exception:
+                    if self.device_mac not in room_controller.global_active_mac_ids:
+                        udp_server_socket.close()
+                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        return
                     print(">>> connect_and_stream - Error trying discovery device")
                     # set connection status and recreate socket
                     self.connection_lost()
                     self.run()
 
-        except socket.error as e:
-            print('>>> connect_and_stream - ' + str(e))  # change to exception:
+        except Exception as e:
+            if self.device_mac not in room_controller.global_active_mac_ids:
+                udp_server_socket.close()
+                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                return
+            print('>>> connect_and_stream - ' + str(e))
             print(">>> connect_and_stream - Error trying to open UDP discovery port")
             # set connection status and recreate socket
             self.connection_lost()
