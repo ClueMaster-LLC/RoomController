@@ -226,15 +226,16 @@ class ConnectAndStream(threading.Thread):
                         data_response_init = self.device_mac
                     client_socket.close()
                     time.sleep(1)
-                    try:
-                        self.run()
-                    except SystemExit:
-                        sys.exit(0)
-                    else:
-                        self.run()
-                    finally:
-                        self.run()
-                continue
+                    break
+##                    try:
+##                        self.run()
+##                    except SystemExit:
+##                        sys.exit(0)
+##                    else:
+##                        self.run()
+##                    finally:
+##                        self.run()
+##                continue
 
     def device_discovery(self, device_mac):
         try:
