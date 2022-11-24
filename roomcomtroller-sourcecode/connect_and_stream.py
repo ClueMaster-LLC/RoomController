@@ -167,12 +167,12 @@ class ConnectAndStream(threading.Thread):
             self.run()
 
         except Exception as e:
-            # set connection status and recreate socket
-            print(">>> connect_and_stream -  Error: " + str(e))
             if self.device_mac not in room_controller.global_active_mac_ids:
                 client_socket.close()
-                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                print(">>> connect_and_stream - Closing Main Thread for " + self.device_mac)
                 return
+            # set connection status and recreate socket
+            print(">>> connect_and_stream -  Error: " + str(e))
             self.connection_lost()
             self.run()
 
@@ -186,7 +186,7 @@ class ConnectAndStream(threading.Thread):
             # to clear the buffer on NIC when first connect sends MAC.
             data_response_init = client_socket.recvfrom(32)
         except Exception as e:
-            print('>>> connect_and_stream - ' + str(e))
+            print('>>> connect_and_stream - Connection Lost Error: ' + str(e))
             data_response_init = self.device_mac
         client_socket.close()
         time.sleep(1)
@@ -194,6 +194,10 @@ class ConnectAndStream(threading.Thread):
         while not connected:
             # attempt to reconnect, otherwise sleep for 30 seconds
             try:
+                if self.device_mac not in room_controller.global_active_mac_ids:
+                    udp_server_socket.close()
+                    print(">>> connect_and_stream - Closing Lost Connection Thread for " + self.device_mac)
+                    return
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(1.0)
                 client_socket.connect((self.ip_address, self.server_port))
@@ -208,7 +212,7 @@ class ConnectAndStream(threading.Thread):
                 client_socket.close()
                 time.sleep(1)
             except socket.error:
-                print('>>> connect_and_stream - searching...' + str(connect_retry))
+                print(">>> connect_and_stream - " + str(self.device_mac) + ": searching..." + str(connect_retry))
                 connect_retry += 1
                 if connect_retry == 30:
                     print('>>> connect_and_stream - Connection lost. Starting new search')
@@ -251,11 +255,15 @@ class ConnectAndStream(threading.Thread):
                 # Bind to address and ip
                 udp_server_socket.bind(("<broadcast>", local_port))
 
-            print(">>> connect_and_stream - UDP server up. Searching Network for Device: " + str(device_mac))
-
             # Listen for incoming datagrams
             while True:
                 try:
+                    if self.device_mac not in room_controller.global_active_mac_ids:
+                        udp_server_socket.close()
+                        print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
+                        return
+                    print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - UDP Network Search for: " + str(device_mac))
+                    udp_server_socket.settimeout(15)
                     bytes_address_pair = udp_server_socket.recvfrom(buffer_size)
 
                     if log_level in (1, 3):
@@ -300,7 +308,7 @@ class ConnectAndStream(threading.Thread):
                     else:
                         if self.device_mac not in room_controller.global_active_mac_ids:
                             udp_server_socket.close()
-                            print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                            print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
                             return
                         print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - Device: " + str(
                             device_mac) + " not found on network. Continuing to search...")
@@ -309,23 +317,23 @@ class ConnectAndStream(threading.Thread):
                 except socket.error:  # change to exception:
                     if self.device_mac not in room_controller.global_active_mac_ids:
                         udp_server_socket.close()
-                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
                         return
-                    print(">>> connect_and_stream - Error trying discovery device")
+                    print(">>> connect_and_stream - UDP Search Timeout Reached - Device not found")
                     # set connection status and recreate socket
-                    self.connection_lost()
-                    self.run()
+                    #self.device_discovery(device_mac)
+                    #self.run()
 
         except Exception as e:
             if self.device_mac not in room_controller.global_active_mac_ids:
                 udp_server_socket.close()
-                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
                 return
             print('>>> connect_and_stream - ' + str(e))
             print(">>> connect_and_stream - Error trying to open UDP discovery port")
             # set connection status and recreate socket
-            self.connection_lost()
-            self.run()
+            #self.connection_lost()
+            #self.run()
 
         return discover_ip, discover_port
 
