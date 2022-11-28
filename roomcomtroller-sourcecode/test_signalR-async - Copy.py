@@ -14,7 +14,6 @@ class MyHub(Hub):
 
     def on_event_one(self, x: bool, y: str) -> None:
         """Invoked by server synchronously on (event_one)"""
-        return print("Event 1 Fired")
 
     async def on_event_two(self, x: bool, y: str) -> None:
         """Invoked by server asynchronously on (event_two)"""
@@ -34,6 +33,7 @@ async def three(z: int) -> None:
 
 @hub.on
 async def event_four(z: int) -> None:
+    print("event 4 ran")
     pass
 
 
@@ -49,20 +49,17 @@ async def main():
     token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
     headers = {"Authorization": f"Bearer {token}"}
     async with Client(
-        "https://devapi.cluemaster.io/",
+        "https://cluesocket.azurewebsites.net",
         hub,
         connection_options={
-            "http_client_options": {"headers": headers},
-            "ws_client_options": {"headers": headers, "timeout": 1.0},
-##            "protocol": MessagePackProtocol(),
-            "protocol": JsonProtocol(),
-##            "logger": logging.Logger(),
+##            "http_client_options": {"headers": headers},
+##            "ws_client_options": {"headers": headers, "timeout": 1.0},
+            "protocol": MessagePackProtocol(),
+##            "protocol": JsonProtocol(),
+##            "logger": logging.Logger("Log"),
         },
     ) as client:
-        #return await hub.get_something(),
-##        return hub.on_event_one('Send1',"TEST"),
-##        print("humm")
-        return await hub.get_something(),
+        return await hub.get_something()
 
 
 asyncio.run(main())

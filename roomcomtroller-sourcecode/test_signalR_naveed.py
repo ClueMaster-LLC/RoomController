@@ -3,10 +3,10 @@ from signalr import Connection
 
 with Session() as session:
     #create a connection
-    connection = Connection("https://devapi.cluemaster.io", session)
+    connection = Connection("https://cluesocket.azurewebsites.net", session)
 
     #get chat hub
-    chat = connection.register_hub('chatHub')
+    chat = connection.register_hub('chathub')
 
     #start a connection
     connection.start()

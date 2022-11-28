@@ -53,13 +53,13 @@ class ConnectAndStream(threading.Thread):
                 connected = True
 
                 # writing status update to room_controller_configs file
-                print(">>> connect_and_stream.py - Writing device thread status to configs file ...")
-                with open(self.roomcontroller_configs_file) as configs_file:
-                    initial_file_response = json.load(configs_file)
-                    initial_file_response[f"device_{self.device_mac}_streaming"] = True
-
-                with open(self.roomcontroller_configs_file, "w") as configs_file:
-                    json.dump(initial_file_response, configs_file)
+##                print(">>> connect_and_stream.py - Writing device thread status to configs file ...")
+##                with open(self.roomcontroller_configs_file) as configs_file:
+##                    initial_file_response = json.load(configs_file)
+##                    initial_file_response[f"device_{self.device_mac}_streaming"] = True
+##
+##                with open(self.roomcontroller_configs_file, "w") as configs_file:
+##                    json.dump(initial_file_response, configs_file)
 
             except socket.error as e:
                 if self.device_mac not in room_controller.global_active_mac_ids:
@@ -77,7 +77,7 @@ class ConnectAndStream(threading.Thread):
                     client_socket.connect((self.ip_address, self.server_port))
                     connected = True
                 except Exception as e:
-                    print(e)
+                    print('>>> connect_and_stream - ' + str(e))
 
         try:
             ncd = ncd_industrial_devices.NCD_Controller(client_socket)

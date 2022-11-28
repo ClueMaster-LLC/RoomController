@@ -1,12 +1,19 @@
+import gevent.monkey
+gevent.monkey.patch_all()
+
+import socket
+import re
+import gevent
+
 from requests import Session
 from signalr import Connection
 
 with Session() as session:
     #create a connection
-    connection = Connection("http://localhost:5000/signalr", session)
+    connection = Connection("https://cluesocket.azurewebsites.net", session)
 
     #get chat hub
-    chat = connection.register_hub('chat')
+    chat = connection.register_hub('chathub')
 
     #start a connection
     connection.start()
@@ -36,16 +43,17 @@ with Session() as session:
     with connection:
 
         #post new message
-        chat.server.invoke('send', 'Python is here')
+        print("test2")
+        chat.server.invoke('Send2', 'Conn1', 'Python is here')
 
         #change chat topic
-        chat.server.invoke('setTopic', 'Welcome python!')
+##        chat.server.invoke('setTopic', 'Welcome python!')
 
         #invoke server method that throws error
-        chat.server.invoke('requestError')
+##        chat.server.invoke('requestError')
 
         #post another message
-        chat.server.invoke('send', 'Bye-bye!')
+##        chat.server.invoke('Send2', 'Bye-bye!')
 
         #wait a second before exit
         connection.wait(1)
