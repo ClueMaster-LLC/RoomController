@@ -91,15 +91,16 @@ class AutoStartup:
                     self.validate_device_status()
 
                 except requests.exceptions.ConnectionError:
-                    print(">>> auto_startup - auto_startup.py Connection Error")
+                    print(">>> auto_startup - Connection Error")
                     time.sleep(1)
                     continue
 
                 except json.decoder.JSONDecodeError as json_error:
-                    print(">>> auto_startup - auto_startup.py JsonDecodeError")
+                    print(">>> auto_startup - JsonDecodeError")
                     print(">>> auto_startup - Error ", json_error)
                     i_request = requests.get(get_rc_request_api, headers=api_header).text
-                    print(">>> Current General Request API Response - ", i_request)
+                    print(">>> auto_startup - Current General Request API Response - ", i_request)
+                    time.sleep(5)
                     pass
 
                 else:
@@ -177,7 +178,7 @@ class AutoStartup:
                 return response["apiKey"]
 
             except requests.exceptions.ConnectionError:
-                print(">>> auto_startup - auto_startup.py Connection Error")
+                print(">>> auto_startup - Connection Error")
                 time.sleep(1)
                 pass
 

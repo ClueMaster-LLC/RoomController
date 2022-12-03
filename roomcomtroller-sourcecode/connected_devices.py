@@ -82,22 +82,32 @@ class ConnectedDevices:
 
             except requests.exceptions.ConnectionError:
                 # sleep for 5 sec before trying again
-                print(">>> connected_devices - room_controller.py API Connection Error. Retrying in 5 seconds...")
+                print(">>> connected_devices - API Connection Error. Retrying in 5 seconds...")
                 time.sleep(5)
                 continue
 
             except requests.exceptions.HTTPError as request_error:
                 # this error arises when api token is invalid, meaning room controller removed from webapp
-                if "401 Client Error" in str(request_error):
-                    break
+##                if "401 Client Error" in str(request_error):
+##                    break
+                try:
+                    connected_devices_response = requests.get(self.get_devicelist_api, headers=self.api_headers)
+                    if connected_devices_response.status_code in [401, 404, 500, 501]:
+                        print(">>> connected_devices - API HTTP Error")
+                        break
+                except Exception as e:
+                    print(">>> connected_devices - " + str(e))
 
                 else:
-                    print(">>> connected_devices - room_controller.py Not a API token invalid Error")
+                    print(">>> connected_devices - Not a API token invalid Error")
                     print(">>> connected_devices - " + str(request_error))
+                    time.sleep(5)
 
             except requests.exceptions.JSONDecodeError as json_error:
-                print(">>> connected_devices - room_controller.py JsonDecodeError")
+                print(">>> connected_devices - JsonDecodeError")
                 print(">>> connected_devices - Error ", str(json_error))
+                time.sleep(5)
+                break
 
             else:
                 # if no exceptions arises and then break

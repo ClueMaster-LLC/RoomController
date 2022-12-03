@@ -29,7 +29,7 @@ class RegistrationThread(threading.Thread):
         self.auto_startup_instance = auto_startup.AutoStartup()
         self.auto_startup_instance.__int__()
 
-        print(">>> thread_manager - Stopped Base RegistrationThread ...")
+        print(">>> thread_manager - Stopped Base Registration Thread ...")
         print(">>> thread_manager - Restarting Room Controller ...")
         restart_room_controller()
         return

@@ -10,7 +10,7 @@ from signalr import Connection
 
 with Session() as session:
     #create a connection
-    connection = Connection("https://cluesocket.azurewebsites.net", session)
+    connection = Connection("https://devapi.cluemaster.io", session)
 
     #get chat hub
     chat = connection.register_hub('chathub')
@@ -31,7 +31,7 @@ with Session() as session:
         print('error: ', error)
 
     #receive new chat messages from the hub
-    chat.client.on('newMessageReceived', print_received_message)
+    chat.client.on('MessageReceived', print_received_message)
 
     #change chat topic
     chat.client.on('topicChanged', print_topic)
@@ -40,11 +40,11 @@ with Session() as session:
     connection.error += print_error
 
     #start connection, optionally can be connection.start()
-    with connection:
+with connection:
 
         #post new message
         print("test2")
-        chat.server.invoke('Send2', 'Conn1', 'Python is here')
+        chat.server.invoke("SendMessage", "Robert", "Hi3838833")
 
         #change chat topic
 ##        chat.server.invoke('setTopic', 'Welcome python!')

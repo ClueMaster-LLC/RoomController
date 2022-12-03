@@ -2,41 +2,41 @@ import asyncio
 import logging
 from signalr_async.netcore import Hub, Client
 from signalr_async.netcore.protocols import MessagePackProtocol, JsonProtocol
-
+from typing import Any, Dict, List
 
 class MyHub(Hub):
     async def on_connect(self, connection_id: str) -> None:
         """Will be awaited after connection established"""
-        return print("Connected ID: " + str(connection_id))
+        print("Connected ID: " + str(connection_id))
 
     async def on_disconnect(self) -> None:
         """Will be awaited after client disconnection"""
+        return print("Disconnected")
 
-    def on_event_one(self, x: bool, y: str) -> None:
+    def send_message(self, x: str, y: str) -> None:
         """Invoked by server synchronously on (event_one)"""
-        return print("Event 1 Fired")
+        return self.invoke('SendMessage', x, y)
 
-    async def on_event_two(self, x: bool, y: str) -> None:
+    async def send_message_async(self, x: str, y: str) -> None:
         """Invoked by server asynchronously on (event_two)"""
+        return await self.invoke('SendMessage', x, y)
 
-    async def get_something(self) -> bool:
-        """Invoke (method) on server"""
-        return await self.invoke("Send2", "Conn1", "Hi")
+    async def on_message(message: List[Dict[str, Any]]) -> None:
+        print(f'Received message: {message}')
+    
+##    async def on_receive(self) -> None:
+##        #receive new chat messages from the hub
+##        await self.invoke("ReceiveMessage", print)
 
 
 hub = MyHub("chathub")
 ##hub = "chatHub"
 
-@hub.on("event_three")
-async def three(z: int) -> None:
-    pass
-
+@hub.on("ReceiveMessage")
+async def ReceiveMessage(x: str, z: str,) -> None:
+    print(f'User: {x} , Message: {z}')
 
 @hub.on
-async def event_four(z: int) -> None:
-    pass
-
-
 async def multi_event(z: int) -> None:
     pass
 
@@ -53,16 +53,24 @@ async def main():
         hub,
         connection_options={
             "http_client_options": {"headers": headers},
-            "ws_client_options": {"headers": headers, "timeout": 1.0},
+            "ws_client_options": {"headers": headers, "timeout": 5.0},
 ##            "protocol": MessagePackProtocol(),
             "protocol": JsonProtocol(),
-##            "logger": logging.Logger(),
+            "logger": logging.DEBUG,
         },
     ) as client:
-        #return await hub.get_something(),
-##        return hub.on_event_one('Send1',"TEST"),
-##        print("humm")
-        return await hub.get_something(),
+        #await hub.on_message()
+        await hub.send_message_async("DEVICE1","Connected data sending")
+
+        message = None
+        username = "Robert"
+
+        while message != "exit()":
+            message = input(">> ")
+            if message is not None and message != "" and message != "exit()":
+                await hub.send_message("Robert", message)
+                await hub.send_message_async("Robert", message)
 
 
 asyncio.run(main())
+print("test")

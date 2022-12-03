@@ -84,21 +84,25 @@ class Authentication:
                 self.reset_room_controller()
 
             else:
-                print(">>> authentication - room_controller.py Not a API token invalid Error")
+                print(">>> authentication - Not a API token invalid Error")
                 print(request_error)
 
         except KeyboardInterrupt:
             print(">>> authentication - authentication.py Keyboard Interrupt")
+            return
 
         except json.decoder.JSONDecodeError as json_error:
-            print(">>> authentication - room_controller.py JsonDecodeError")
+            print(">>> authentication - JsonDecodeError")
             print(">>> authentication - Error ", json_error)
             i_request = requests.get(self.device_request_api_url, headers=self.api_headers).text
-            print(">>> Current General Request API Response - ", i_request)
+            print(">>> authentication - API Response Error - ", i_request)
+            time.sleep(5)
+            # forwarding application flow to room controller master environment to run offline
+            room_controller_window = room_controller.RoomController()
             pass
 
         except requests.exceptions.JSONDecodeError as json_error:
-            print(">>> authentication - room_controller.py JsonDecodeError")
+            print(">>> authentication - JsonDecodeError")
             print(">>> authentication - Error ", json_error)
             pass
 

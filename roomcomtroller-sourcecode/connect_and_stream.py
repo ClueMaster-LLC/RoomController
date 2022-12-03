@@ -11,6 +11,12 @@ from apis import *
 from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
 import room_controller
+
+## This import will be for signalR code##
+import logging
+from signalrcore.hub_connection_builder import HubConnectionBuilder
+##
+
 ##from importlib import reload
 
 # BASE DIRECTORIES
@@ -27,7 +33,7 @@ class ConnectAndStream(threading.Thread):
         super(ConnectAndStream, self).__init__()
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
-        # global attributes
+        # local attributes inside ConnectAndStream
         self.active = None
         print(">>> connect_and_stream - GLOBAL MAC: ", room_controller.global_active_mac_ids)
         self.device_mac = device_mac
@@ -36,6 +42,46 @@ class ConnectAndStream(threading.Thread):
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
 
+        # local attribues for signalR
+##                def input_with_default(input_text, default_value):
+##                    value = input(input_text.format(default_value))
+##                    return default_value if value is None or value.strip() == "" else value
+
+        self.server_url = "wss://devapi.cluemaster.io/chathub"
+        self.token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
+        self.headers = {"Authorization": f"Bearer {self.token}"}
+        self.handler = logging.StreamHandler()
+        self.handler.setLevel(logging.INFO)
+        self.hub_connection = HubConnectionBuilder()\
+            .with_url(self.server_url, options={
+                "verify_ssl": True,
+                "http_client_options": {"headers": self.headers},
+                "ws_client_options": {"headers": self.headers, "timeout": 1.0},
+                }) \
+            .configure_logging(logging.DEBUG , socket_trace=True, handler=self.handler) \
+            .with_automatic_reconnect({
+                    "type": "interval",
+                    "keep_alive_interval": 10,
+                    "intervals": [1, 3, 5, 6, 7, 87, 3]
+                }).build()
+
+        self.hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
+        self.hub_connection.on_close(lambda: print("connection closed"))
+        #self.hub_connection.on_error(print)
+        self.hub_connection.on("ReceiveMessage", print)
+        
+        try:
+            self.hub_connection.start()
+            print("SignalR Connection Started")
+            for i in range(5, 0, -1):
+                print(f'Starting in ... {i}')
+                time.sleep(1)
+        except Exception as e:
+            print(e)
+
+##                self.message = None
+        #end local signalR
+        
     def run(self):
         connected = False
         while not connected:
@@ -60,6 +106,8 @@ class ConnectAndStream(threading.Thread):
 ##
 ##                with open(self.roomcontroller_configs_file, "w") as configs_file:
 ##                    json.dump(initial_file_response, configs_file)
+
+
 
             except socket.error as e:
                 if self.device_mac not in room_controller.global_active_mac_ids:
@@ -101,9 +149,14 @@ class ConnectAndStream(threading.Thread):
                             data_response_old = data_response_new
 
                             # insert SignalR stream
-                            print(
-                                '>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > ' + self.device_mac + ' : ' +
-                                str(data_response))
+                            try:
+                                message = str(data_response)
+                                username = str(self.device_mac)
+                                print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
+                                      + self.device_mac + ' : ' + str(data_response))
+                                self.hub_connection.send('SendMessage', [username, message])
+                            except Exception as e:
+                                print(e)
 
                             if log_level in (1, 2):
                                 print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
@@ -138,12 +191,14 @@ class ConnectAndStream(threading.Thread):
                         # terminating thread
                         # if just returning doesn't close the thread, try uncommenting client_socket.close()
                         client_socket.close()
+                        hub_connection.stop()
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                         return
 
             except socket.error:
                 if self.device_mac not in room_controller.global_active_mac_ids:
                     client_socket.close()
+                    hub_connection.stop()
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                     return
                 # set connection status and recreate socket
@@ -154,12 +209,14 @@ class ConnectAndStream(threading.Thread):
                 #print(">>> connect_and_stream -  Error: " + str(e))
                 if self.device_mac not in room_controller.global_active_mac_ids:
                     client_socket.close()
+                    hub_connection.stop()
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
 
         except socket.error:
             if self.device_mac not in room_controller.global_active_mac_ids:
                 client_socket.close()
+                hub_connection.stop()
                 print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
             # set connection status and recreate socket
@@ -169,6 +226,7 @@ class ConnectAndStream(threading.Thread):
         except Exception as e:
             if self.device_mac not in room_controller.global_active_mac_ids:
                 client_socket.close()
+                hub_connection.stop()
                 print(">>> connect_and_stream - Closing Main Thread for " + self.device_mac)
                 return
             # set connection status and recreate socket
@@ -428,17 +486,13 @@ class ConnectAndStream(threading.Thread):
             print(">>> add_find_device - PostNewInputRelayRequestUpdate response : ", response.status_code)
             print(">>> add_find_device - PostNewInputRelayRequestUpdate response text : ", response.text)
 
-    def evn_registered_devices_list(self):
-        env = os.getenv('Registered_Devices')#.split(",")
-        return env
-
 # Comment out the function when testing from main.py
 
-# def start_thread():
-#     if __name__ == "__main__":
-#       connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
-#       # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
-#       connect_and_stream_instance.start()
-#
-#
-# start_thread()
+##def start_thread():
+##    if __name__ == "__main__":
+##        connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
+##        # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
+##        connect_and_stream_instance.start()
+##
+##
+##start_thread()

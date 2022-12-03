@@ -145,10 +145,11 @@ class RoomController:
             except requests.exceptions.HTTPError as request_error:
                 if "401 Client Error" in str(request_error):
                     self.reset_room_controller()
+                    time.sleep(5)
                     break
                 else:
-                    print(">>> room_controller - room_controller.py Not a API token invalid Error")
                     print(">>> room_controller - " + str(request_error))
+                    time.sleep(5)
 
             except requests.exceptions.JSONDecodeError as json_error:
                 print(">>> room_controller - room_controller.py JsonDecodeError")
