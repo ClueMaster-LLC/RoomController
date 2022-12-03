@@ -41,33 +41,48 @@ class ConnectAndStream(threading.Thread):
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
+        self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
 
-        # local attribues for signalR
-##                def input_with_default(input_text, default_value):
-##                    value = input(input_text.format(default_value))
-##                    return default_value if value is None or value.strip() == "" else value
+        # instance methods
+        self.configuration()
+        self.signalr_hub()
+        print("connect and stream startup completed")
+            
+    def configuration(self):
+        with open(self.unique_ids_file) as unique_ids_file:
+            json_response_of_unique_ids_file = json.load(unique_ids_file)
 
-        self.server_url = "wss://devapi.cluemaster.io/chathub"
-        self.token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
-        self.headers = {"Authorization": f"Bearer {self.token}"}
+        self.device_unique_id = json_response_of_unique_ids_file["device_id"]
+        self.api_bearer_key = json_response_of_unique_ids_file["api_token"]
+        self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
+
+        self.api_headers = CaseInsensitiveDict()
+        self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
+        #print(">>> connect_and_stream - RC Unique ID: " + str(self.device_unique_id))
+
+    def signalr_hub(self):
+        self.server_url = "https://devapi.cluemaster.io/chathub"
+##        self.token = self.api_bearer_key
+##        self.headers = {"Authorization": f"Bearer {self.token}"}
         self.handler = logging.StreamHandler()
-        self.handler.setLevel(logging.INFO)
+        self.handler.setLevel(logging.DEBUG)
         self.hub_connection = HubConnectionBuilder()\
             .with_url(self.server_url, options={
                 "verify_ssl": True,
-                "http_client_options": {"headers": self.headers},
-                "ws_client_options": {"headers": self.headers, "timeout": 1.0},
+                "http_client_options": {"headers": self.api_headers},
+                "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
                 }) \
             .configure_logging(logging.DEBUG , socket_trace=True, handler=self.handler) \
             .with_automatic_reconnect({
                     "type": "interval",
-                    "keep_alive_interval": 10,
+                    "keep_alive_interval": 5,
                     "intervals": [1, 3, 5, 6, 7, 87, 3]
                 }).build()
 
         self.hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
         self.hub_connection.on_close(lambda: print("connection closed"))
         #self.hub_connection.on_error(print)
+        self.hub_connection.on_reconnect(lambda: print("connection to hub re-established"))
         self.hub_connection.on("ReceiveMessage", print)
         
         try:
@@ -78,10 +93,7 @@ class ConnectAndStream(threading.Thread):
                 time.sleep(1)
         except Exception as e:
             print(e)
-
-##                self.message = None
-        #end local signalR
-        
+    
     def run(self):
         connected = False
         while not connected:
