@@ -17,8 +17,6 @@ import logging
 from signalrcore.hub_connection_builder import HubConnectionBuilder
 ##
 
-##from importlib import reload
-
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
@@ -65,23 +63,26 @@ class ConnectAndStream(threading.Thread):
 ##        self.token = self.api_bearer_key
 ##        self.headers = {"Authorization": f"Bearer {self.token}"}
         self.handler = logging.StreamHandler()
-        self.handler.setLevel(logging.DEBUG)
+        self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder()\
             .with_url(self.server_url, options={
                 "verify_ssl": True,
-                "http_client_options": {"headers": self.api_headers},
+                "skip_negotiation": False,
+                "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
                 "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
                 }) \
-            .configure_logging(logging.DEBUG , socket_trace=True, handler=self.handler) \
+            .configure_logging(logging.ERROR , socket_trace=True, handler=self.handler) \
             .with_automatic_reconnect({
                     "type": "interval",
-                    "keep_alive_interval": 5,
+                    "keep_alive_interval": 10,
+                    "reconnect_interval": 5,
+                    #"max_attempts": 2,
                     "intervals": [1, 3, 5, 6, 7, 87, 3]
                 }).build()
 
         self.hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
         self.hub_connection.on_close(lambda: print("connection closed"))
-        #self.hub_connection.on_error(print)
+        self.hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
         self.hub_connection.on_reconnect(lambda: print("connection to hub re-established"))
         self.hub_connection.on("ReceiveMessage", print)
         
