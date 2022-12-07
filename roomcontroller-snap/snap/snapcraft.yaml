@@ -25,7 +25,7 @@ plugs:
 parts:
   copy-source-code:
     plugin: dump
-    source: room_controllerX/
+    source: room_controller/
     stage-packages:
       - libass9
       - locales
@@ -35,7 +35,8 @@ parts:
       - python3-dbus
       - python3-dev
       - bash
-
+    organize:
+      usr/lib/*/samba/*: usr/lib/
     stage:
       - -usr/lib/x86_64-linux-gnu/libc_malloc_debug.so
 
