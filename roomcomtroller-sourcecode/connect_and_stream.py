@@ -71,7 +71,7 @@ class ConnectAndStream(threading.Thread):
                 "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
                 "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
                 }) \
-            .configure_logging(logging.ERROR , socket_trace=True, handler=self.handler) \
+            .configure_logging(logging.ERROR , socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
                     "type": "interval",
                     "keep_alive_interval": 10,
@@ -85,6 +85,7 @@ class ConnectAndStream(threading.Thread):
         self.hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
         self.hub_connection.on_reconnect(lambda: print("connection to hub re-established"))
         self.hub_connection.on("ReceiveMessage", print)
+        self.hub_connection.on("REQUEST_UPDATE", print)
         
         try:
             self.hub_connection.start()
