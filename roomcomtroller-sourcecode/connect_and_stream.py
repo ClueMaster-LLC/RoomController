@@ -35,7 +35,7 @@ class ConnectAndStream(threading.Thread):
         self.active = None
         print(">>> connect_and_stream - GLOBAL MAC: ", room_controller.global_active_mac_ids)
         self.device_mac = device_mac
-        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total] = self.read_device_info(self.device_mac)
+        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total, self.room_id] = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -93,6 +93,8 @@ class ConnectAndStream(threading.Thread):
             for i in range(5, 0, -1):
                 print(f'Starting in ... {i}')
                 time.sleep(1)
+            self.hub_connection.send('AddToGroup', [str(self.room_id)])
+            print(f'Joined signalR group # {self.room_id}')
         except Exception as e:
             print(e)
     
@@ -164,11 +166,10 @@ class ConnectAndStream(threading.Thread):
 
                             # insert SignalR stream
                             try:
-                                message = str(data_response)
-                                username = str(self.device_mac)
                                 print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
                                       + self.device_mac + ' : ' + str(data_response))
-                                self.hub_connection.send('SendMessage', [username, message])
+                                self.hub_connection.send('SendMessage', [str(self.device_mac), str(data_response)])
+                                self.hub_connection.send('sendtoroom', [str(self.room_id), str(data_response)])
                             except Exception as e:
                                 print(e)
 
@@ -470,7 +471,7 @@ class ConnectAndStream(threading.Thread):
                     if device_mac_address == i_mac:
                         print(">>> connect_and_stream - Device record exists for : ", i_mac)
                         return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values[
-                            "ReadSpeed"], values["InputTotal"], values["RelayTotal"]
+                            "ReadSpeed"], values["InputTotal"], values["RelayTotal"], values["RoomID"]
                         exit()
 
         except Exception as e:
