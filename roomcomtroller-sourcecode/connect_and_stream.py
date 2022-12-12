@@ -84,7 +84,8 @@ class ConnectAndStream(threading.Thread):
         self.hub_connection.on_close(lambda: print("connection closed"))
         self.hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
         self.hub_connection.on_reconnect(lambda: print("connection to hub re-established"))
-        self.hub_connection.on("ReceiveMessage", print)
+        #self.hub_connection.on("ReceiveMessage", print)
+        self.hub_connection.on(str(self.room_id), print)
         self.hub_connection.on("REQUEST_UPDATE", print)
         
         try:
@@ -166,10 +167,12 @@ class ConnectAndStream(threading.Thread):
 
                             # insert SignalR stream
                             try:
+                                #print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
+                                      #+ self.device_mac + ' : ' + str(data_response))
+                                #self.hub_connection.send('SendMessage', [str(self.device_mac), str(data_response)])
                                 print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
-                                      + self.device_mac + ' : ' + str(data_response))
-                                self.hub_connection.send('SendMessage', [str(self.device_mac), str(data_response)])
-                                self.hub_connection.send('sendtoroom', [str(self.room_id), str(data_response)])
+                                      , [str(self.room_id), str(self.device_mac), str(data_response)])
+                                self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(data_response)])
                             except Exception as e:
                                 print(e)
 
