@@ -40,6 +40,7 @@ class ConnectAndStream(threading.Thread):
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
+        self.signalr_connected = None
 
         # instance methods
         self.configuration()
@@ -60,8 +61,6 @@ class ConnectAndStream(threading.Thread):
 
     def signalr_hub(self):
         self.server_url = "https://devapi.cluemaster.io/chathub"
-##        self.token = self.api_bearer_key
-##        self.headers = {"Authorization": f"Bearer {self.token}"}
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder()\
@@ -86,7 +85,7 @@ class ConnectAndStream(threading.Thread):
         self.hub_connection.on_reconnect(lambda: print("connection to hub re-established"))
         #self.hub_connection.on("ReceiveMessage", print)
         self.hub_connection.on(str(self.room_id), print)
-        self.hub_connection.on("REQUEST_UPDATE", print)
+        self.hub_connection.on('syncdata', print)
         
         try:
             self.hub_connection.start()

@@ -10,8 +10,10 @@ def input_with_default(input_text, default_value):
     return default_value if value is None or value.strip() == "" else value
 
 
-server_url = input_with_default('Enter your server url(default: {0}): ', "https://devapi.cluemaster.io/chathub")
-username = input_with_default('Enter your username (default: {0}): ', "robert")
+##server_url = input_with_default('Enter your server url(default: {0}): ', "https://devapi.cluemaster.io/chathub")
+##username = input_with_default('Enter your username (default: {0}): ', "robert")
+server_url = "https://devapi.cluemaster.io/chathub"
+username = "DEVICEID1"
 token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
 headers = {"Authorization": f"Bearer {token}"}
 handler = logging.StreamHandler()
@@ -32,13 +34,15 @@ hub_connection = HubConnectionBuilder()\
 
 hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
 hub_connection.on_close(lambda: print("connection closed"))
+hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
 hub_connection.on_reconnect(lambda: print("re-connected"))
 hub_connection.on("ReceiveMessage", print)
+hub_connection.on('syncdata', print)
 
 try:
     hub_connection.start()
     print("SignalR Connection Started")
-    for i in range(5, 0, -1):
+    for i in range(2, 0, -1):
         print(f'Starting in ... {i}')
         time.sleep(1)
     hub_connection.send('AddToGroup', ["77"])
@@ -48,8 +52,10 @@ except Exception as e:
 
 ##while hub_connection.on:
 ##    print("hub is on")
-message = None
+message = ["1"]
 
+hub_connection.send('SyncRequestToRoom', message)
+print('SyncRequestToRoom', ["1"])
 # Do login
 
 ##while message != "exit()":
