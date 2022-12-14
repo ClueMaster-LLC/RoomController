@@ -12,6 +12,7 @@ ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
+
 # BASE VARIABLES
 
 
@@ -71,6 +72,7 @@ class ThreadManager:
         self.execution_environment()
 
     def configurations(self):
+        print(">>> Global - Master Home Directory - ", APPLICATION_DATA_DIRECTORY)
         if os.path.isdir(APPLICATION_DATA_DIRECTORY) is False:
             os.makedirs(APPLICATION_DATA_DIRECTORY)
             print(">>> thread_manager - Creating connected_devices.json file with default format ...")
@@ -87,11 +89,11 @@ class ThreadManager:
 
     def execution_environment(self):
         if os.path.isfile(self.previously_connected_devices_file):
-## LETS START CONENCTED DEVICES() FROM THE ROOM CONTROLLER SO
-## GLOBAL VARIABLE AN LOAD PRIOR BUT KEEP ELSE LOGIC HERE TO
-## WRITE A FILE IF ITS MISSING AND REGISTRAION START
-##            self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
-##            self.connect_to_previous_device_thread.start()
+            ## LETS START CONENCTED DEVICES() FROM THE ROOM CONTROLLER SO
+            ## GLOBAL VARIABLE AN LOAD PRIOR BUT KEEP ELSE LOGIC HERE TO
+            ## WRITE A FILE IF ITS MISSING AND REGISTRAION START
+            ##            self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
+            ##            self.connect_to_previous_device_thread.start()
             pass
         else:
             with open(self.roomcontroller_configs_file) as configurations_file:
