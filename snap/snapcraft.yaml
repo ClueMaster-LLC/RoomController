@@ -13,7 +13,7 @@ apps:
   room-controller:
     daemon: simple
     restart-condition: always
-    command: bin/prepare-launch python3 $SNAP/roomcontroller-sourcecode/main.py
+    command: python3 $SNAP/roomcontroller-sourcecode/main.py
 
 plugs:
   home:
