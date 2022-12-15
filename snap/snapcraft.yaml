@@ -1,6 +1,6 @@
 name: cluemaster-roomcontroller-core
 base: core22
-version: '0.1'
+version: '0.2'
 summary: ClueMaster Room Controller
 description: |
   Room Controller is a Linux Python appliation that connects physical devices to the escape room.
@@ -13,7 +13,7 @@ apps:
   room-controller:
     daemon: simple
     restart-condition: always
-    command: main.py
+    command: bin/prepare-launch python3 $SNAP/roomcontroller-sourcecode/main.py
 
 plugs:
   home:
@@ -26,12 +26,18 @@ parts:
   copy-source-code:
     plugin: dump
     source: .
+    organize:
+      "static/prepare-launch": "bin/"
+
   room-controller:
     plugin: python
     source: .
+
     python-packages:
       - psutil
       - signalrcore
+      - requests
+
     stage-packages:
       - libass9
       - locales
@@ -39,13 +45,9 @@ parts:
       - git
       - python3
       - bash
+      
     organize:
       usr/lib/*/samba/*: usr/lib/
+
     stage:
       - -usr/lib/x86_64-linux-gnu/libc_malloc_debug.so
-
-  extras:
-    plugin: dump
-    source: static/
-    organize:
-      "prepare-launch": "bin/"
