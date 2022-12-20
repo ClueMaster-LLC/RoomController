@@ -207,7 +207,7 @@ class ConnectAndStream(threading.Thread):
                                         counter += 1
 
                         # wait for a few defined seconds
-                        time.sleep(self.read_speed//1000)
+                        time.sleep(self.read_speed/1000)
 
                     else:
                         # terminating thread
