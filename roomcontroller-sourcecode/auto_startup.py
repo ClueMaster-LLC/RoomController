@@ -88,6 +88,7 @@ class AutoStartup:
                     with open(self.unique_ids_file, "w") as unique_code_json_file:
                         json.dump(json_response_of_unique_ids_file, unique_code_json_file)
 
+                    print(">>> auto_startup - MAC ADDRESS ", str(device_unique_id))
                     self.validate_device_status()
 
                 except requests.exceptions.ConnectionError:

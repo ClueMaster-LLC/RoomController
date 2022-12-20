@@ -73,7 +73,7 @@ class ConnectAndStream(threading.Thread):
             .configure_logging(logging.ERROR , socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
                     "type": "interval",
-                    "keep_alive_interval": 10,
+                    "keep_alive_interval": 5,
                     "reconnect_interval": 5,
                     #"max_attempts": 2,
                     "intervals": [1, 3, 5, 6, 7, 87, 3]
@@ -202,20 +202,20 @@ class ConnectAndStream(threading.Thread):
                                         counter += 1
 
                         # wait for a few defined seconds
-                        time.sleep(self.read_speed)
+                        time.sleep(self.read_speed//1000)
 
                     else:
                         # terminating thread
                         # if just returning doesn't close the thread, try uncommenting client_socket.close()
                         client_socket.close()
-                        hub_connection.stop()
+                        self.hub_connection.stop()
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                         return
 
             except socket.error:
                 if self.device_mac not in room_controller.global_active_mac_ids:
                     client_socket.close()
-                    hub_connection.stop()
+                    self.hub_connection.stop()
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                     return
                 # set connection status and recreate socket
@@ -226,7 +226,7 @@ class ConnectAndStream(threading.Thread):
                 #print(">>> connect_and_stream -  Error: " + str(e))
                 if self.device_mac not in room_controller.global_active_mac_ids:
                     client_socket.close()
-                    hub_connection.stop()
+                    self.hub_connection.stop()
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
 
