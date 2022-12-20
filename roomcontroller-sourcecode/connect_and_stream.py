@@ -72,20 +72,25 @@ class ConnectAndStream(threading.Thread):
                 }) \
             .configure_logging(logging.ERROR , socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
-                    "type": "interval",
+                    "type": "raw",
                     "keep_alive_interval": 5,
                     "reconnect_interval": 5,
-                    #"max_attempts": 2,
-                    "intervals": [1, 3, 5, 6, 7, 87, 3]
+                    "max_attempts": 99999999
+##                    "type": "interval",
+##                    "keep_alive_interval": 5,
+##                    "reconnect_interval": 5,
+##                    "max_attempts": 99999999,
+##                    "intervals": [1, 3, 5, 6, 7, 87, 3]
                 }).build()
 
-        self.hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
-        self.hub_connection.on_close(lambda: print("connection closed"))
+        #self.hub_connection.on_open(lambda: print("Connection opened and handshake received. Ready to send messages."))
+        self.hub_connection.on_close(lambda: print("SignalR Connection Closed"))
         self.hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
-        self.hub_connection.on_reconnect(lambda: print("connection to hub re-established"))
-        #self.hub_connection.on("ReceiveMessage", print)
+        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]), print("Connection opened and handshake received. Ready to send messages.")))
+        self.hub_connection.on_reconnect(lambda: print("Trying to re-connect to comhub.cluemaster.io"))
         self.hub_connection.on(str(self.room_id), print)
-        self.hub_connection.on('syncdata', print)
+        self.hub_connection.on('syncdata', (lambda data: self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])))
+        self.hub_connection.on('syncdata', (lambda data: print("Re-Sync Data command recieved")))
         
         try:
             self.hub_connection.start()
@@ -93,8 +98,8 @@ class ConnectAndStream(threading.Thread):
             for i in range(5, 0, -1):
                 print(f'Starting in ... {i}')
                 time.sleep(1)
-            self.hub_connection.send('AddToGroup', [str(self.room_id)])
-            print(f'Joined signalR group # {self.room_id}')
+            #self.hub_connection.send('AddToGroup', [str(self.room_id)])
+            #print(f'Joined signalR group # {self.room_id}')
         except Exception as e:
             print(e)
     
@@ -158,8 +163,8 @@ class ConnectAndStream(threading.Thread):
             try:
                 while True:       
                     if self.device_mac in room_controller.global_active_mac_ids:
-                        data_response = (ncd.get_dc_bank_status(0, self.bank_total))
-                        data_response_new = data_response
+                        self.data_response = (ncd.get_dc_bank_status(0, self.bank_total))
+                        data_response_new = self.data_response
 
                         if data_response_old != data_response_new:
                             data_response_old = data_response_new
@@ -170,18 +175,18 @@ class ConnectAndStream(threading.Thread):
                                       #+ self.device_mac + ' : ' + str(data_response))
                                 #self.hub_connection.send('SendMessage', [str(self.device_mac), str(data_response)])
                                 print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
-                                      , [str(self.room_id), str(self.device_mac), str(data_response)])
-                                self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(data_response)])
+                                      , [str(self.room_id), str(self.device_mac), str(self.data_response)])
+                                self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
                             except Exception as e:
                                 print(e)
 
                             if log_level in (1, 2):
                                 print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
-                                    bytes(data_response)))
-                                print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(data_response))
+                                    bytes(self.data_response)))
+                                print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(self.data_response))
 
                                 # make a new array by ignoring the first two bytes and the last byte
-                                readings = bytes(data_response)
+                                readings = bytes(self.data_response)
                                 counter = 0
                                 bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
                                 print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
