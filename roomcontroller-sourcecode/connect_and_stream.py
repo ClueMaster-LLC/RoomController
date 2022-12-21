@@ -212,15 +212,21 @@ class ConnectAndStream(threading.Thread):
                     else:
                         # terminating thread
                         # if just returning doesn't close the thread, try uncommenting client_socket.close()
-                        client_socket.close()
-                        self.hub_connection.stop()
+                        try:
+                            client_socket.close()
+                            self.hub_connection.stop()
+                        except Exception as error:
+                            print(error)
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                         return
 
             except socket.error:
                 if self.device_mac not in room_controller.global_active_mac_ids:
-                    client_socket.close()
-                    self.hub_connection.stop()
+                    try:
+                        client_socket.close()
+                        self.hub_connection.stop()
+                    except Exception as error:
+                        print(error)
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                     return
                 # set connection status and recreate socket
@@ -230,15 +236,21 @@ class ConnectAndStream(threading.Thread):
             except Exception as e:
                 #print(">>> connect_and_stream -  Error: " + str(e))
                 if self.device_mac not in room_controller.global_active_mac_ids:
-                    client_socket.close()
-                    self.hub_connection.stop()
+                    try:
+                        client_socket.close()
+                        self.hub_connection.stop()
+                    except Exception as error:
+                        print(error)
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
 
         except socket.error:
             if self.device_mac not in room_controller.global_active_mac_ids:
-                client_socket.close()
-                hub_connection.stop()
+                try:
+                    client_socket.close()
+                    self.hub_connection.stop()
+                except Exception as error:
+                    print(error)
                 print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
             # set connection status and recreate socket
@@ -247,8 +259,11 @@ class ConnectAndStream(threading.Thread):
 
         except Exception as e:
             if self.device_mac not in room_controller.global_active_mac_ids:
-                client_socket.close()
-                hub_connection.stop()
+                try:
+                    client_socket.close()
+                    self.hub_connection.stop()
+                except Exception as error:
+                    print(error)
                 print(">>> connect_and_stream - Closing Main Thread for " + self.device_mac)
                 return
             # set connection status and recreate socket
