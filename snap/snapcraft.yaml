@@ -1,5 +1,5 @@
 name: cluemaster-roomcontroller-core
-base: core20
+base: core22
 version: '2022.12.20'
 summary: ClueMaster Room Controller
 description: |
