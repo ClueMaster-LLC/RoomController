@@ -58,14 +58,6 @@ class RoomController:
             device_unique_id = json_response_of_unique_ids_file["device_id"]
             api_key = json_response_of_unique_ids_file["api_token"]
 
-            #load all the devices on startup into memory array
-            self.init_previous_devices()
-            #self.handling_devices_info()
-
-        except FileNotFoundError:
-            print(">>> room_controller - Unique ids file not found")
-
-        else:
             self.device_unique_id = device_unique_id
             self.api_token = api_key
 
@@ -74,6 +66,13 @@ class RoomController:
             self.discover_new_relays_request_api = NEW_RELAYS_DISCOVERY_REQUEST.format(device_id=device_unique_id)
             self.get_devicelist_request_api = GET_NEW_INPUT_RELAY_LIST_REQUEST.format(device_id=device_unique_id)
             self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_unique_id)
+
+            #load all the devices on startup into memory array
+            self.init_previous_devices()
+            #self.handling_devices_info()
+
+        except Exception as FileNotFoundError:
+            print(f'>>> room_controller - Error: {FileNotFoundError}')
 
     def execution_environment(self):
         while True:
@@ -219,14 +218,28 @@ class RoomController:
         return new_devices
 
     def init_previous_devices(self):
-        with open(self.connected_devices_file) as connected_devices_file:
-            connected_devices_file_response = json.load(connected_devices_file)
+        try:
+            with open(self.connected_devices_file) as connected_devices_file:
+                connected_devices_file_response = json.load(connected_devices_file)
 
-            for devices in connected_devices_file_response["Devices"]:
-                self.active_mac_ids.append(devices["MacAddress"])
+                for devices in connected_devices_file_response["Devices"]:
+                    self.active_mac_ids.append(devices["MacAddress"])
+                    
+        except Exception as FileNotFoundError:
+            print(f'>>> room_controller - Error: {FileNotFoundError}')
+            api_json_list = self.get_devicelist()
+            self.save_device_info(api_json_list)
+            
+            with open(self.connected_devices_file) as connected_devices_file:
+                connected_devices_file_response = json.load(connected_devices_file)
+
+                for devices in connected_devices_file_response["Devices"]:
+                    self.active_mac_ids.append(devices["MacAddress"])
+                    
+            print(">>> room_controller - connected_devices.json file created and loaded into memory")
 
         print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(self.active_mac_ids))
-        os.environ['Registered_Devices'] = str(self.active_mac_ids)
+        #os.environ['Registered_Devices'] = str(self.active_mac_ids)
 
         global global_active_mac_ids
         global_active_mac_ids = self.active_mac_ids
