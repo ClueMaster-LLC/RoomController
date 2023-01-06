@@ -1,5 +1,5 @@
 name: cluemaster-roomcontroller-core
-base: core22
+base: core20
 version: '2023.1.6'
 summary: Room Controller for Cluemaster TV
 description: |
