@@ -5,7 +5,7 @@ import time
 import datetime
 import os
 import platform
-import sys
+#import sys
 import requests
 from apis import *
 from requests.structures import CaseInsensitiveDict
@@ -35,7 +35,8 @@ class ConnectAndStream(threading.Thread):
         self.active = None
         print(">>> connect_and_stream - GLOBAL MAC: ", room_controller.global_active_mac_ids)
         self.device_mac = device_mac
-        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total, self.relay_total, self.room_id] = self.read_device_info(self.device_mac)
+        [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total,
+         self.relay_total, self.room_id] = self.read_device_info(self.device_mac)
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -45,7 +46,7 @@ class ConnectAndStream(threading.Thread):
         # instance methods
         self.configuration()
         self.signalr_hub()
-        print("connect and stream startup completed")
+        print(">>> connect_and_stream - STARTUP COMPLETED")
             
     def configuration(self):
         with open(self.unique_ids_file) as unique_ids_file:
@@ -60,7 +61,7 @@ class ConnectAndStream(threading.Thread):
         #print(">>> connect_and_stream - RC Unique ID: " + str(self.device_unique_id))
 
     def signalr_hub(self):
-        self.server_url = "https://devapi.cluemaster.io/chathub"
+        self.server_url = API_SIGNALR #"https://devapi.cluemaster.io/chathub"
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder()\
@@ -76,30 +77,35 @@ class ConnectAndStream(threading.Thread):
                     "keep_alive_interval": 5,
                     "reconnect_interval": 5,
                     "max_attempts": 99999999
-##                    "type": "interval",
-##                    "keep_alive_interval": 5,
-##                    "reconnect_interval": 5,
-##                    "max_attempts": 99999999,
-##                    "intervals": [1, 3, 5, 6, 7, 87, 3]
+            # "type": "interval",
+            # "keep_alive_interval": 5,
+            # "reconnect_interval": 5,
+            # "max_attempts": 99999999,
+            # "intervals": [1, 3, 5, 6, 7, 87, 3]
                 }).build()
 
-        #self.hub_connection.on_open(lambda: print("Connection opened and handshake received. Ready to send messages."))
-        self.hub_connection.on_close(lambda: print("SignalR Connection Closed"))
-        self.hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
-        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]), print("Connection opened and handshake received. Ready to send messages.")))
-        self.hub_connection.on_reconnect(lambda: print("Trying to re-connect to comhub.cluemaster.io"))
+        # self.hub_connection.on_open(lambda: print("Connection opened and handshake received. Ready to send
+        # messages."))
+        self.hub_connection.on_close(lambda: (print(">>> connect_and_stream - SignalR Connection Closed")))
+        self.hub_connection.on_error(lambda data: print(f">>> connect_and_stream - An exception was thrown:"
+                                                        f"{data.error}"))
+        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]), print(
+            ">>> connect_and_stream - SignalR connected and handshake received. Ready to send messages.")))
+        self.hub_connection.on_reconnect(lambda: (print(">>> connect_and_stream - Trying to re-connect to "
+                                                       "comhub.cluemaster.io")))
         self.hub_connection.on(str(self.room_id), print)
-        self.hub_connection.on('syncdata', (lambda data: self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])))
-        self.hub_connection.on('syncdata', (lambda data: print("Re-Sync Data command recieved")))
+        self.hub_connection.on('syncdata', (lambda data: self.hub_connection.send(
+            'sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])))
+        self.hub_connection.on('syncdata', (lambda data: print(">>> connect_and_stream - "
+                                                               "Re-Sync Data command received")))
         
         try:
             self.hub_connection.start()
-            print("SignalR Connection Started")
             for i in range(5, 0, -1):
                 print(f'Starting in ... {i}')
                 time.sleep(1)
-            #self.hub_connection.send('AddToGroup', [str(self.room_id)])
-            #print(f'Joined signalR group # {self.room_id}')
+                # self.hub_connection.send('AddToGroup', [str(self.room_id)])
+                # print(f'Joined signalR group # {self.room_id}')
         except Exception as e:
             print(e)
     
@@ -111,12 +117,12 @@ class ConnectAndStream(threading.Thread):
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                     return
                 # print(">>> connect_and_stream - Room Controller IP Address: " + str(self.extract_ip()))
-                print('>>> connect_and_stream - Connecting to last known device IP: ' + str(
-                    self.ip_address) + '  MAC: ' + str(self.device_mac) + '  Device Model: ' + str(self.device_model))
+                print('>>> connect_and_stream - Connecting to last known device IP: ', self.ip_address, '  MAC: ',
+                      self.device_mac, '  Device Model: ', self.device_model)
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(5.0)
                 client_socket.connect((self.ip_address, self.server_port))
-                print('>>> connect_and_stream - Connected to ' + str(self.ip_address))
+                print('>>> connect_and_stream - Connected to IP:', self.ip_address, 'MAC:', self.device_mac,)
                 connected = True
 
                 # writing status update to room_controller_configs file
@@ -158,7 +164,7 @@ class ConnectAndStream(threading.Thread):
                 data_response_init = self.device_mac
 
             data_response_old = None
-            print('>>> connect_and_stream - ' + str(self.device_mac) + ' DEVICE CONNECTED AND READY')
+            print('>>> connect_and_stream - ', self.device_mac, ' DEVICE CONNECTED AND READY')
 
             try:
                 while True:       
@@ -207,7 +213,7 @@ class ConnectAndStream(threading.Thread):
                                         counter += 1
 
                         # wait for a few defined seconds
-                        time.sleep(self.read_speed/1000)
+                        time.sleep(self.read_speed*0.001)
 
                     else:
                         # terminating thread
@@ -290,7 +296,7 @@ class ConnectAndStream(threading.Thread):
             # attempt to reconnect, otherwise sleep for 30 seconds
             try:
                 if self.device_mac not in room_controller.global_active_mac_ids:
-                    udp_server_socket.close()
+                    client_socket.close()
                     print(">>> connect_and_stream - Closing Lost Connection Thread for " + self.device_mac)
                     return
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

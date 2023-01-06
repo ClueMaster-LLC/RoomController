@@ -2,15 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="30cdf677-a2a7-471e-9674-ecf1ff57afd5" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/authentication.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/authentication.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/auto_startup.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/auto_startup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/connect_and_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/connect_and_stream.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/connected_devices.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/connected_devices.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/room_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/room_controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/test_signalR-async - Copy.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/test_signalR-async - Copy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/test_signalR-async.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/test_signalR-async.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/test_signalR-client.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/test_signalR-client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcomtroller-sourcecode/thread_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcomtroller-sourcecode/thread_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/apis.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/apis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/room_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/room_controller.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,9 +15,6 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/roomcomtroller-sourcecode/connect_and_stream.py" root0="FORCE_HIGHLIGHTING" />
-  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -31,14 +23,14 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/GIThubFiles/RoomController&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "D:/GIThubFiles/RoomController/roomcontroller-sourcecode/main.py",
+    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="RoomController" />
@@ -48,11 +40,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/roomcomtroller-sourcecode" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/roomcontroller-sourcecode" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/roomcomtroller-sourcecode/main.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/roomcontroller-sourcecode/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />

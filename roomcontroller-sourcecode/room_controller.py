@@ -1,14 +1,18 @@
 import os
-import datetime
+#import datetime
 import json
 import time
 import requests
 from apis import *
-import thread_manager
+#import thread_manager
 import connect_and_stream
 import add_find_device
 from requests.structures import CaseInsensitiveDict
 import connected_devices
+
+## This import will be for signalR code##
+import logging
+from signalrcore.hub_connection_builder import HubConnectionBuilder
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +52,7 @@ class RoomController:
 
         # instance methods
         self.configurations()
+        self.signalr_hub()
         self.execution_environment()
 
     def configurations(self):
@@ -71,8 +76,46 @@ class RoomController:
             self.init_previous_devices()
             #self.handling_devices_info()
 
-        except Exception as FileNotFoundError:
-            print(f'>>> room_controller - Error: {FileNotFoundError}')
+        except Exception as ErrorFileNotFound:
+            print(f'>>> room_controller - Error: {ErrorFileNotFound}')
+
+    def signalr_hub(self):
+        self.server_url = API_SIGNALR  # "https://devapi.cluemaster.io/chathub"
+        self.handler = logging.StreamHandler()
+        self.handler.setLevel(logging.ERROR)
+        self.hub_connection = HubConnectionBuilder() \
+            .with_url(self.server_url, options={
+            "verify_ssl": True,
+            "skip_negotiation": False,
+            "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
+            "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
+        }) \
+            .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
+            .with_automatic_reconnect({
+            "type": "raw",
+            "keep_alive_interval": 5,
+            "reconnect_interval": 5,
+            "max_attempts": 99999999
+        }).build()
+
+        # self.hub_connection.on_open(lambda: print("Connection opened and handshake received. Ready to send
+        # messages."))
+        self.hub_connection.on_close(lambda: print(">>> room_controller - SignalR Connection Closed"))
+        self.hub_connection.on_error(lambda data: print(f">>> room_controller - An exception was thrown: {data.error}"))
+        self.hub_connection.on_open(lambda: (print(
+            ">>> room_controller - Connection opened and handshake received. Ready to send messages.")))
+        self.hub_connection.on_reconnect(lambda: print(">>> room_controller - Trying to re-connect to "
+                                                       "comhub.cluemaster.io"))
+
+        # use lambda to process commands for the RC
+        self.hub_connection.on(str(self.device_unique_id), print)
+
+        try:
+            self.hub_connection.start()
+            print(">>> room_controller - SignalR Connection. Listening for Room Controller Commands")
+
+        except Exception as e:
+            print(e)
 
     def execution_environment(self):
         while True:

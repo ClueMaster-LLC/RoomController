@@ -1,4 +1,5 @@
 master_base_url = "https://devapi.cluemaster.io/"
+signalr_hub_url = "https://devapi.cluemaster.io/"
 # apis available to cluemaster room controller
 
 # GETs
@@ -12,3 +13,6 @@ GET_NEW_INPUT_RELAY_LIST = master_base_url + "api/roomcontroller/GetLatestInputR
 POST_ROOM_CONTROLLER_REQUEST = master_base_url + "api/roomcontroller/PostRoomControllerRequest/{device_id}/{request_id}"
 POST_NEW_INPUT_RELAY_DISCOVERY = master_base_url + "api/roomcontroller/PostNewInputRelayDiscovery?devicekey={device_id}"
 POST_INPUT_RELAY_REQUEST_UPDATE = master_base_url + "api/roomcontroller/PostInputRelayRequestUpdate"
+
+# SIGNALR
+API_SIGNALR = signalr_hub_url + "chathub"
