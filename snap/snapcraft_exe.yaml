@@ -1,6 +1,6 @@
 name: cluemaster-roomcontroller-core
-base: core20
-version: '2023.1.6'
+base: core22
+version: '2023.1.17'
 summary: Room Controller for Cluemaster TV
 description: |
   Room Controller is a Linux Python application that connects physical devices to the escape room.
