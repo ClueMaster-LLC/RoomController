@@ -32,6 +32,14 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.api_headers = None
+        self.device_request_api_url = None
+        self.api_bearer_key = None
+        self.device_unique_id = None
+        self.handler = None
+        self.server_url = None
+        self.hub_connection = None
+        self.data_response = None
         self.active = None
         print(">>> connect_and_stream - GLOBAL MAC: ", room_controller.global_active_mac_ids)
         self.device_mac = device_mac
@@ -58,10 +66,10 @@ class ConnectAndStream(threading.Thread):
 
         self.api_headers = CaseInsensitiveDict()
         self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
-        #print(">>> connect_and_stream - RC Unique ID: " + str(self.device_unique_id))
+        # print(">>> connect_and_stream - RC Unique ID: " + str(self.device_unique_id))
 
     def signalr_hub(self):
-        self.server_url = API_SIGNALR #"https://devapi.cluemaster.io/chathub"
+        self.server_url = API_SIGNALR
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder()\
@@ -77,11 +85,11 @@ class ConnectAndStream(threading.Thread):
                     "keep_alive_interval": 5,
                     "reconnect_interval": 5,
                     "max_attempts": 99999999
-            # "type": "interval",
-            # "keep_alive_interval": 5,
-            # "reconnect_interval": 5,
-            # "max_attempts": 99999999,
-            # "intervals": [1, 3, 5, 6, 7, 87, 3]
+                    # "type": "interval",
+                    # "keep_alive_interval": 5,
+                    # "reconnect_interval": 5,
+                    # "max_attempts": 99999999,
+                    # "intervals": [1, 3, 5, 6, 7, 87, 3]
                 }).build()
 
         self.hub_connection.on_close(lambda: (print(">>> connect_and_stream - SignalR Connection Closed")))
@@ -116,7 +124,6 @@ class ConnectAndStream(threading.Thread):
 
     def signalr_connected(self):
         self.signalr_status = True
-        # print(">>> connect_and_stream - STATUS IS ", self.signalr_status)
 
     def run(self):
         connected = False
@@ -133,17 +140,6 @@ class ConnectAndStream(threading.Thread):
                 client_socket.connect((self.ip_address, self.server_port))
                 print('>>> connect_and_stream - Connected to IP:', self.ip_address, 'MAC:', self.device_mac,)
                 connected = True
-
-                # writing status update to room_controller_configs file
-##                print(">>> connect_and_stream.py - Writing device thread status to configs file ...")
-##                with open(self.roomcontroller_configs_file) as configs_file:
-##                    initial_file_response = json.load(configs_file)
-##                    initial_file_response[f"device_{self.device_mac}_streaming"] = True
-##
-##                with open(self.roomcontroller_configs_file, "w") as configs_file:
-##                    json.dump(initial_file_response, configs_file)
-
-
 
             except socket.error as e:
                 if self.device_mac not in room_controller.global_active_mac_ids:
@@ -184,21 +180,24 @@ class ConnectAndStream(threading.Thread):
                         if data_response_old != data_response_new:
                             data_response_old = data_response_new
 
-                            # insert SignalR stream
-                            try:
-                                #print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
-                                      #+ self.device_mac + ' : ' + str(data_response))
-                                #self.hub_connection.send('SendMessage', [str(self.device_mac), str(data_response)])
-                                print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '\
+                            if self.signalr_status:
+                                # insert SignalR stream
+                                try:
+                                    print('>>> connect_and_stream - SEND VALUES TO CLUEMASTER SignalR > '
+                                          , [str(self.room_id), str(self.device_mac), str(self.data_response)])
+                                    self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
+                                                                            str(self.data_response)])
+                                except Exception as e:
+                                    print(e)
+                            else:
+                                print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
                                       , [str(self.room_id), str(self.device_mac), str(self.data_response)])
-                                self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
-                            except Exception as e:
-                                print(e)
 
                             if log_level in (1, 2):
-                                print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ' + str(
-                                    bytes(self.data_response)))
-                                print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ' + str(self.data_response))
+                                print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ',
+                                      str(bytes(self.data_response)))
+                                print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ',
+                                      str(self.data_response))
 
                                 # make a new array by ignoring the first two bytes and the last byte
                                 readings = bytes(self.data_response)
@@ -206,7 +205,8 @@ class ConnectAndStream(threading.Thread):
                                 bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
                                 print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
 
-                                # This code block is only for displaying the of/off of the inputs to the log for diagnostics
+                                # This code block is only for displaying the of/off of the inputs to the log for
+                                # diagnostics
                                 for bank in readings:
                                     # increment through each input
                                     for i in range(0, self.input_total):
@@ -249,7 +249,7 @@ class ConnectAndStream(threading.Thread):
                 self.run()
 
             except Exception as e:
-                #print(">>> connect_and_stream -  Error: " + str(e))
+                # print(">>> connect_and_stream -  Error: " + str(e))
                 if self.device_mac not in room_controller.global_active_mac_ids:
                     try:
                         client_socket.close()
@@ -337,15 +337,15 @@ class ConnectAndStream(threading.Thread):
                     client_socket.close()
                     time.sleep(1)
                     break
-##                    try:
-##                        self.run()
-##                    except SystemExit:
-##                        sys.exit(0)
-##                    else:
-##                        self.run()
-##                    finally:
-##                        self.run()
-##                continue
+#                    try:
+#                        self.run()
+#                    except SystemExit:
+#                        sys.exit(0)
+#                    else:
+#                        self.run()
+#                    finally:
+#                        self.run()
+#                continue
 
     def device_discovery(self, device_mac):
         try:
