@@ -41,7 +41,7 @@ class ConnectAndStream(threading.Thread):
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
-        self.signalr_connected = None
+        self.signalr_status = None
 
         # instance methods
         self.configuration()
@@ -84,31 +84,40 @@ class ConnectAndStream(threading.Thread):
             # "intervals": [1, 3, 5, 6, 7, 87, 3]
                 }).build()
 
-        # self.hub_connection.on_open(lambda: print("Connection opened and handshake received. Ready to send
-        # messages."))
         self.hub_connection.on_close(lambda: (print(">>> connect_and_stream - SignalR Connection Closed")))
         self.hub_connection.on_error(lambda data: print(f">>> connect_and_stream - An exception was thrown:"
                                                         f"{data.error}"))
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]), print(
-            ">>> connect_and_stream - SignalR connected and handshake received. Ready to send messages.")))
+            ">>> connect_and_stream - signalR handshake received. Ready to send/receive messages."),
+                                             self.signalr_connected()))
         self.hub_connection.on_reconnect(lambda: (print(">>> connect_and_stream - Trying to re-connect to "
-                                                       "comhub.cluemaster.io")))
+                                                        "comhub.cluemaster.io")))
         self.hub_connection.on(str(self.room_id), print)
         self.hub_connection.on('syncdata', (lambda data: self.hub_connection.send(
             'sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])))
         self.hub_connection.on('syncdata', (lambda data: print(">>> connect_and_stream - "
                                                                "Re-Sync Data command received")))
-        
-        try:
-            self.hub_connection.start()
-            for i in range(5, 0, -1):
-                print(f'Starting in ... {i}')
+        self.hub_connection.on(str(self.device_mac), print)
+
+        self.hub_connection.start()
+
+        while self.signalr_status is not True:
+            for i in range(5, -1, -1):
+                if self.signalr_status is True:
+                    break
+                if i == 0:
+                    print(f'>>> connect_and_stream - timeout exceeded. SignalR not connected.')
+                    break
+                print(f'>>> connect_and_stream - waiting for signalR handshake ... {i}')
                 time.sleep(1)
-                # self.hub_connection.send('AddToGroup', [str(self.room_id)])
-                # print(f'Joined signalR group # {self.room_id}')
-        except Exception as e:
-            print(e)
-    
+            break
+        else:
+            print(">>> connect_and_stream - signalr connected")
+
+    def signalr_connected(self):
+        self.signalr_status = True
+        # print(">>> connect_and_stream - STATUS IS ", self.signalr_status)
+
     def run(self):
         connected = False
         while not connected:

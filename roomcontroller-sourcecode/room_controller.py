@@ -43,6 +43,7 @@ class RoomController:
         self.connect_and_stream_thread = None
         self.add_find_device_thread = None
         self.get_devicelist_request_api = None
+        self.signalr_status = None
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found",
                                           "No record found in inventory master"]
 
@@ -103,26 +104,41 @@ class RoomController:
         self.hub_connection.on_close(lambda: print(">>> room_controller - SignalR Connection Closed"))
         self.hub_connection.on_error(lambda data: print(f">>> room_controller - An exception was thrown: {data.error}"))
         self.hub_connection.on_open(lambda: (print(
-            ">>> room_controller - Connection opened and handshake received. Ready to send messages.")))
+            ">>> room_controller - signalR handshake received. Ready to send/receive messages."),
+                                             self.signalr_connected()))
         self.hub_connection.on_reconnect(lambda: print(">>> room_controller - Trying to re-connect to "
                                                        "comhub.cluemaster.io"))
 
         # use lambda to process commands for the RC
         self.hub_connection.on(str(self.device_unique_id), print)
 
-        try:
-            self.hub_connection.start()
-            print(">>> room_controller - SignalR Connection. Listening for Room Controller Commands")
+        self.hub_connection.start()
 
-        except Exception as e:
-            print(e)
+        while self.signalr_status is not True:
+            for i in range(5, -1, -1):
+                if self.signalr_status is True:
+                    break
+                if i == 0:
+                    print(f'>>> room_controller - timeout exceeded. SignalR not connected.')
+                    break
+                print(f'>>> room_controller - waiting for signalR handshake ... {i}')
+                time.sleep(1)
+            break
+        else:
+            print(">>> room_controller - signalr connected")
+
+    def signalr_connected(self):
+        self.signalr_status = True
+        # print(">>> connect_and_stream - STATUS IS ", self.signalr_status)
 
     def execution_environment(self):
         while True:
             try:
-                # print(">>> Console Output " + str(datetime.datetime.utcnow()) + " - Searching for new input relays request ...")
+                # print(">>> Console Output " + str(datetime.datetime.utcnow()) +
+                # " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
-                # print(">>> room_controller - " + str(datetime.datetime.utcnow()) + "Waiting for code 12,13 : " + relays_discovery_request.text)
+                # print(">>> room_controller - " + str(datetime.datetime.utcnow()) +
+                # "Waiting for code 12,13 : " + relays_discovery_request.text)
                 relays_discovery_request.raise_for_status()
 
                 if relays_discovery_request.text not in self.api_active_null_responses:

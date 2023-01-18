@@ -147,16 +147,16 @@ class NCD_Controller:
 		return data
 
 	def send_command(self, command, bytes_back):
-# 		The following line is causing problems and has been commented out until further study.
-# 		command = self.convert_data(command)
-		if self.combus_type == 'serial':
-			self.combus.write(command)
-			return self.combus.read(bytes_back)
-		else:
-			# print command
-			# print bytearray(command)
-			self.combus.send(bytearray(command))
-			return self.combus.recv(32)
+# 	        The following line is causing problems and has been commented out until further study.
+                        # command = self.convert_data(command)
+                        if self.combus_type == 'serial':
+                                self.combus.write(command)
+                                return self.combus.read(bytes_back)
+                        else:
+                                # print(command)
+                                # print(bytearray(command))
+                                self.combus.send(bytearray(command))
+                                return self.combus.recv(32)
 
 	def process_control_command_return(self, data):
 		# print(data).encode('hex');
