@@ -5,7 +5,6 @@ import time
 import datetime
 import os
 import platform
-#import sys
 import requests
 from apis import *
 from requests.structures import CaseInsensitiveDict
@@ -15,6 +14,7 @@ import room_controller
 ## This import will be for signalR code##
 import logging
 from signalrcore.hub_connection_builder import HubConnectionBuilder
+
 ##
 
 # BASE DIRECTORIES
@@ -25,6 +25,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 # GLOBAL VARIABLES
 
 log_level = 0  # 0 for disabled | 1 for ALL details | 2 for device input/relay status | 3 for network connections
+
 
 class ConnectAndStream(threading.Thread):
     def __init__(self, device_mac):
@@ -50,12 +51,14 @@ class ConnectAndStream(threading.Thread):
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.signalr_status = None
+        self.client_socket = None
+        self.ncd = None
 
         # instance methods
         self.configuration()
         self.signalr_hub()
         print(">>> connect_and_stream - STARTUP COMPLETED")
-            
+
     def configuration(self):
         with open(self.unique_ids_file) as unique_ids_file:
             json_response_of_unique_ids_file = json.load(unique_ids_file)
@@ -66,31 +69,30 @@ class ConnectAndStream(threading.Thread):
 
         self.api_headers = CaseInsensitiveDict()
         self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
-        # print(">>> connect_and_stream - RC Unique ID: " + str(self.device_unique_id))
 
     def signalr_hub(self):
         self.server_url = API_SIGNALR
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
-        self.hub_connection = HubConnectionBuilder()\
+        self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
                 "verify_ssl": True,
                 "skip_negotiation": False,
                 "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
                 "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
-                }) \
-            .configure_logging(logging.ERROR , socket_trace=False, handler=self.handler) \
+            }) \
+            .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
-                    "type": "raw",
-                    "keep_alive_interval": 5,
-                    "reconnect_interval": 5,
-                    "max_attempts": 99999999
-                    # "type": "interval",
-                    # "keep_alive_interval": 5,
-                    # "reconnect_interval": 5,
-                    # "max_attempts": 99999999,
-                    # "intervals": [1, 3, 5, 6, 7, 87, 3]
-                }).build()
+                "type": "raw",
+                "keep_alive_interval": 5,
+                "reconnect_interval": 5,
+                "max_attempts": 99999999
+                # "type": "interval",
+                # "keep_alive_interval": 5,
+                # "reconnect_interval": 5,
+                # "max_attempts": 99999999,
+                # "intervals": [1, 3, 5, 6, 7, 87, 3]
+            }).build()
 
         self.hub_connection.on_close(lambda: (print(">>> connect_and_stream - SignalR Connection Closed")))
         self.hub_connection.on_error(lambda data: print(f">>> connect_and_stream - An exception was thrown:"
@@ -105,12 +107,11 @@ class ConnectAndStream(threading.Thread):
             'sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])))
         self.hub_connection.on('syncdata', (lambda data: print(">>> connect_and_stream - "
                                                                "Re-Sync Data command received")))
-        self.hub_connection.on(str(self.device_mac), print)
 
         self.hub_connection.start()
 
         while self.signalr_status is not True:
-            for i in range(5, -1, -1):
+            for i in range(15, -1, -1):
                 if self.signalr_status is True:
                     break
                 if i == 0:
@@ -135,47 +136,71 @@ class ConnectAndStream(threading.Thread):
                 # print(">>> connect_and_stream - Room Controller IP Address: " + str(self.extract_ip()))
                 print('>>> connect_and_stream - Connecting to last known device IP: ', self.ip_address, '  MAC: ',
                       self.device_mac, '  Device Model: ', self.device_model)
-                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client_socket.settimeout(5.0)
-                client_socket.connect((self.ip_address, self.server_port))
-                print('>>> connect_and_stream - Connected to IP:', self.ip_address, 'MAC:', self.device_mac,)
+                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.client_socket.settimeout(1.0)
+                self.client_socket.connect((self.ip_address, self.server_port))
+                print('>>> connect_and_stream - Connected to IP:', self.ip_address, ' MAC:', self.device_mac)
                 connected = True
 
             except socket.error as e:
                 if self.device_mac not in room_controller.global_active_mac_ids:
-                    client_socket.close()
+                    self.client_socket.close()
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                     return
-                print('>>> connect_and_stream - ' + str(e))
+                print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
                 print('>>> connect_and_stream - The last known IP ' + str(
                     self.ip_address) + ' is no longer valid. Searching network for device... ')
                 self.ip_address, self.server_port = self.device_discovery(self.device_mac)  # find new device IP Address
                 print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
-                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client_socket.settimeout(5.0)
+                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.client_socket.settimeout(1.0)
                 try:
-                    client_socket.connect((self.ip_address, self.server_port))
+                    self.client_socket.connect((self.ip_address, self.server_port))
                     connected = True
                 except Exception as e:
-                    print('>>> connect_and_stream - ' + str(e))
+                    print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
+
+            self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
+            # self.hub_connection.on('device_reboot', str(self.device_mac),
+            #                        (lambda relay_num: (self.ncd.device_reboot())))
+            # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_bank(1, 2))))
+            # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_bank(1, 2))))
 
         try:
-            ncd = ncd_industrial_devices.NCD_Controller(client_socket)
+            self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
             try:
                 # to clear the buffer on NIC when first connect sends MAC.
-                data_response_init = client_socket.recvfrom(32)
+                data_response_init = self.client_socket.recvfrom(32)
             except Exception as e:
-                print('>>> connect_and_stream - ' + str(e))
+                print('>>> connect_and_stream - init ERROR: ' + str(e))
                 data_response_init = self.device_mac
 
             data_response_old = None
+
             print('>>> connect_and_stream - ', self.device_mac, ' DEVICE CONNECTED AND READY')
 
-            try:
-                while True:       
-                    if self.device_mac in room_controller.global_active_mac_ids:
-                        self.data_response = (ncd.get_dc_bank_status(0, self.bank_total))
+            while self.device_mac in room_controller.global_active_mac_ids:
+                # print("start processing loop")
+                try:
+                    # while self.device_mac in room_controller.global_active_mac_ids:
+
+                    if self.device_type == 2:
+                        # print("IM WAITING FORE RELAY COMMANDS")
+                        # loop here and do nothing but check for connection to the relay board.
+                        # signalR will fire in the background when needed.
+                        # while self.device_mac in room_controller.global_active_mac_ids:
+                        # try:
+                        #     self.ncd.test_comms()
+                        # except Exception as e:
+                        #     print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
+                        self.ncd.test_comms()
+                        time.sleep(1)
+
+                    elif self.device_type == 1:
+                        self.data_response = (self.ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = self.data_response
+                        if not self.data_response:
+                            print(f'DATA RESPONCE IS: {self.data_response}')
 
                         if data_response_old != data_response_new:
                             data_response_old = data_response_new
@@ -188,7 +213,7 @@ class ConnectAndStream(threading.Thread):
                                     self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
                                                                             str(self.data_response)])
                                 except Exception as e:
-                                    print(e)
+                                    print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {e}')
                             else:
                                 print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
                                       , [str(self.room_id), str(self.device_mac), str(self.data_response)])
@@ -222,130 +247,177 @@ class ConnectAndStream(threading.Thread):
                                         counter += 1
 
                         # wait for a few defined seconds
-                        time.sleep(self.read_speed*0.001)
+                        time.sleep(self.read_speed * 0.001)
 
                     else:
                         # terminating thread
-                        # if just returning doesn't close the thread, try uncommenting client_socket.close()
                         try:
-                            client_socket.close()
+                            self.client_socket.close()
                             self.hub_connection.stop()
                         except Exception as error:
-                            print(error)
+                            print('>>> connect_and_stream - ', self.device_mac, ' Error: ', str(error))
+                        print(">>> connect_and_stream - Device Type Not Compatible")
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                         return
 
-            except socket.error:
-                if self.device_mac not in room_controller.global_active_mac_ids:
-                    try:
-                        client_socket.close()
-                        self.hub_connection.stop()
-                    except Exception as error:
-                        print(error)
-                    print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
-                    return
-                # set connection status and recreate socket
-                self.connection_lost()
-                self.run()
+                except socket.error:
+                    if self.device_mac not in room_controller.global_active_mac_ids:
+                        try:
+                            self.client_socket.close()
+                            self.hub_connection.stop()
+                        except Exception as error:
+                            print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(error))
+                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        return
+                    # set connection status and recreate socket
+                    connected = False
+                    while not connected:
+                        try:
+                            if self.device_mac not in room_controller.global_active_mac_ids:
+                                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                                return
+                            self.client_socket.close()
+                            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            self.client_socket.settimeout(1.0)
+                            self.client_socket.connect((self.ip_address, self.server_port))
 
-            except Exception as e:
-                # print(">>> connect_and_stream -  Error: " + str(e))
-                if self.device_mac not in room_controller.global_active_mac_ids:
-                    try:
-                        client_socket.close()
-                        self.hub_connection.stop()
-                    except Exception as error:
-                        print(error)
-                    print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
-                return
+                            # Verify communication and clear nic buffer to get rid of FALSE response
+                            self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
+
+                            try:
+                                # to clear the buffer on NIC when first connect sends MAC.
+                                self.client_socket.recvfrom(32)
+                            except Exception as e:
+                                print('>>> connect_and_stream - ', self.device_mac, ' Socket Buffer Error: ', str(e))
+
+                            self.ncd.test_comms()
+                            print('>>> connect_and_stream - Connected to IP:', self.ip_address, ' MAC:',
+                                  self.device_mac)
+                            connected = True
+
+                        except socket.error as e:
+                            if self.device_mac not in room_controller.global_active_mac_ids:
+                                self.client_socket.close()
+                                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                                return
+                            print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
+                            self.connection_lost()
+
+                except Exception as e:
+                    if self.device_mac not in room_controller.global_active_mac_ids:
+                        try:
+                            self.client_socket.close()
+                            self.hub_connection.stop()
+                        except Exception as error:
+                            print(f'>>> connect_and_stream - {error}')
+                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                    print(">>> connect_and_stream -  Error: " + str(e))
+                    return
+
+            try:
+                self.client_socket.close()
+                self.hub_connection.stop()
+            except Exception as error:
+                print(f'>>> connect_and_stream - {error}')
+            print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+            return
 
         except socket.error:
             if self.device_mac not in room_controller.global_active_mac_ids:
                 try:
-                    client_socket.close()
+                    self.client_socket.close()
+                    self.hub_connection.stop()
+                except Exception as error:
+                    print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(error))
+                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                return
+            # set connection status and recreate socket
+            connected = False
+            while not connected:
+                try:
+                    if self.device_mac not in room_controller.global_active_mac_ids:
+                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        return
+                    self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.client_socket.settimeout(1.0)
+                    self.client_socket.connect((self.ip_address, self.server_port))
+
+                    # Verify communication and clear nic buffer to get rid of FALSE response
+                    self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
+
+                    try:
+                        # to clear the buffer on NIC when first connect sends MAC.
+                        self.client_socket.recvfrom(32)
+                    except Exception as e:
+                        print('>>> connect_and_stream - ', self.device_mac, ' Socket Buffer Error: ', str(e))
+
+                    self.ncd.test_comms()
+                    print('>>> connect_and_stream - Connected to IP:', self.ip_address, ' MAC:',
+                          self.device_mac)
+                    connected = True
+
+                except socket.error as e:
+                    if self.device_mac not in room_controller.global_active_mac_ids:
+                        self.client_socket.close()
+                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        return
+                    print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
+                    self.connection_lost()
+
+        except Exception as e:
+            if self.device_mac not in room_controller.global_active_mac_ids:
+                try:
+                    self.client_socket.close()
                     self.hub_connection.stop()
                 except Exception as error:
                     print(error)
                 print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                 return
-            # set connection status and recreate socket
-            self.connection_lost()
-            self.run()
-
-        except Exception as e:
-            if self.device_mac not in room_controller.global_active_mac_ids:
-                try:
-                    client_socket.close()
-                    self.hub_connection.stop()
-                except Exception as error:
-                    print(error)
-                print(">>> connect_and_stream - Closing Main Thread for " + self.device_mac)
-                return
-            # set connection status and recreate socket
-            print(">>> connect_and_stream -  Error: " + str(e))
-            self.connection_lost()
-            self.run()
 
     def connection_lost(self):
         # set connection status and recreate socket
         connected = False
-        connect_retry = 0
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.settimeout(1.0)
-        try:
-            # to clear the buffer on NIC when first connect sends MAC.
-            data_response_init = client_socket.recvfrom(32)
-        except Exception as e:
-            print('>>> connect_and_stream - Connection Lost Error: ' + str(e))
-            data_response_init = self.device_mac
-        client_socket.close()
-        time.sleep(1)
+        connect_retry = 15
+        # self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.client_socket.settimeout(1.0)
+        # try:
+        #     # to clear the buffer on NIC when first connect sends MAC.
+        #     self.client_socket.recvfrom(32)
+        # except Exception as e:
+        #     print('>>> connect_and_stream - Connection Lost Error: ' + str(e))
+        #     # data_response_init = self.device_mac
+        # self.client_socket.close()
+        # time.sleep(1)
         print('>>> connect_and_stream - connection lost... reconnecting')
         while not connected:
-            # attempt to reconnect, otherwise sleep for 30 seconds
+            # attempt to reconnect, otherwise loop for 15 seconds
             try:
                 if self.device_mac not in room_controller.global_active_mac_ids:
-                    client_socket.close()
+                    self.client_socket.close()
                     print(">>> connect_and_stream - Closing Lost Connection Thread for " + self.device_mac)
                     return
-                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client_socket.settimeout(1.0)
-                client_socket.connect((self.ip_address, self.server_port))
-                try:
-                    # to clear the buffer on NIC when first connect sends MAC.
-                    data_response_init = client_socket.recvfrom(32)
-                except Exception as e:
-                    print('>>> connect_and_stream - ' + str(e))
-                    data_response_init = self.device_mac
+                self.client_socket.close()
+                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.client_socket.settimeout(1.0)
+                self.client_socket.connect((self.ip_address, self.server_port))
+                # try:
+                #     # to clear the buffer on NIC when first connect sends MAC.
+                #     self.client_socket.recvfrom(32)
+                # except Exception as e:
+                #     print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
+
                 connected = True
                 print('>>> connect_and_stream - re-connection successful to ' + str(self.device_mac))
-                client_socket.close()
+                self.client_socket.close()
                 time.sleep(1)
             except socket.error:
                 print(">>> connect_and_stream - " + str(self.device_mac) + ": searching..." + str(connect_retry))
-                connect_retry += 1
-                if connect_retry == 30:
-                    print('>>> connect_and_stream - Connection lost. Starting new search')
-                    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    client_socket.settimeout(1.0)
-                    try:
-                        # to clear the buffer on NIC when first connect sends MAC.
-                        data_response_init = client_socket.recvfrom(32)
-                    except Exception as e:
-                        print('>>> connect_and_stream - ' + str(e))
-                        data_response_init = self.device_mac
-                    client_socket.close()
+                connect_retry -= 1
+                if connect_retry == 0:
+                    print('>>> connect_and_stream - Connection Lost. Starting Network Discovery Search')
+                    self.device_discovery(self.device_mac)
                     time.sleep(1)
                     break
-#                    try:
-#                        self.run()
-#                    except SystemExit:
-#                        sys.exit(0)
-#                    else:
-#                        self.run()
-#                    finally:
-#                        self.run()
-#                continue
 
     def device_discovery(self, device_mac):
         try:
@@ -373,7 +445,8 @@ class ConnectAndStream(threading.Thread):
                         udp_server_socket.close()
                         print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
                         return
-                    print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - UDP Network Search for: " + str(device_mac))
+                    print(">>> connect_and_stream - " + str(
+                        datetime.datetime.utcnow()) + " - UDP Network Search for: " + str(device_mac))
                     udp_server_socket.settimeout(15)
                     bytes_address_pair = udp_server_socket.recvfrom(buffer_size)
 
@@ -432,8 +505,10 @@ class ConnectAndStream(threading.Thread):
                         return
                     print(">>> connect_and_stream - UDP Search Timeout Reached - Device not found")
                     # set connection status and recreate socket
-                    #self.device_discovery(device_mac)
-                    #self.run()
+                    # self.device_discovery(device_mac)
+                    # self.run()
+
+            # print("done with discovery loop")
 
         except Exception as e:
             if self.device_mac not in room_controller.global_active_mac_ids:
@@ -443,8 +518,7 @@ class ConnectAndStream(threading.Thread):
             print('>>> connect_and_stream - ' + str(e))
             print(">>> connect_and_stream - Error trying to open UDP discovery port")
             # set connection status and recreate socket
-            #self.connection_lost()
-            #self.run()
+            # self.connection_lost()
 
         return discover_ip, discover_port
 
@@ -480,7 +554,7 @@ class ConnectAndStream(threading.Thread):
             client_socket.close()
             print(">>> connect_and_stream - Device Rebooted")
 
-        except Exception:
+        except socket.error:
             print(">>> connect_and_stream - Error Sending Reboot Command")
 
     @staticmethod
@@ -509,7 +583,7 @@ class ConnectAndStream(threading.Thread):
                         print(">>> connect_and_stream - Device record exists for : ", i_mac)
                         return values["IP"], values["ServerPort"], values["DeviceModel"], values["DeviceType"], values[
                             "ReadSpeed"], values["InputTotal"], values["RelayTotal"], values["RoomID"]
-                        exit()
+                        # exit()
 
         except Exception as e:
             print('>>> connect_and_stream - ' + str(e))

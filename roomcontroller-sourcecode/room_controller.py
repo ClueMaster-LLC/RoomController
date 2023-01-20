@@ -1,10 +1,8 @@
 import os
-#import datetime
 import json
 import time
 import requests
 from apis import *
-#import thread_manager
 import connect_and_stream
 import add_find_device
 from requests.structures import CaseInsensitiveDict
@@ -19,7 +17,7 @@ ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
-#global variables
+# global variables
 global_active_mac_ids = []
 
 
@@ -27,9 +25,11 @@ global_active_mac_ids = []
 class RoomController:
     def __init__(self):
         super(RoomController, self).__init__()
-        print(">>> room_controller - **********  STARTUP COMPLETE  **********")
 
         # local class attributes
+        self.hub_connection = None
+        self.handler = None
+        self.server_url = None
         self.active_mac_ids = []
         self.device_unique_id = None
         self.api_token = None
@@ -54,7 +54,9 @@ class RoomController:
         # instance methods
         self.configurations()
         self.signalr_hub()
+        print(">>> room_controller - **********  STARTUP COMPLETE  **********")
         self.execution_environment()
+        print(">>> room_controller - **********  ROOM CONTROLLER SHUTTING DOWN  **********")
 
     def configurations(self):
         try:
@@ -73,9 +75,9 @@ class RoomController:
             self.get_devicelist_request_api = GET_NEW_INPUT_RELAY_LIST_REQUEST.format(device_id=device_unique_id)
             self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_unique_id)
 
-            #load all the devices on startup into memory array
+            # load all the devices on startup into memory array
             self.init_previous_devices()
-            #self.handling_devices_info()
+            # self.handling_devices_info()
 
         except Exception as ErrorFileNotFound:
             print(f'>>> room_controller - Error: {ErrorFileNotFound}')
@@ -86,18 +88,18 @@ class RoomController:
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
-            "verify_ssl": True,
-            "skip_negotiation": False,
-            "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
-            "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
-        }) \
+                "verify_ssl": True,
+                "skip_negotiation": False,
+                "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
+                "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
+            }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
-            "type": "raw",
-            "keep_alive_interval": 5,
-            "reconnect_interval": 5,
-            "max_attempts": 99999999
-        }).build()
+                "type": "raw",
+                "keep_alive_interval": 5,
+                "reconnect_interval": 5,
+                "max_attempts": 99999999
+            }).build()
 
         # self.hub_connection.on_open(lambda: print("Connection opened and handshake received. Ready to send
         # messages."))
@@ -115,7 +117,7 @@ class RoomController:
         self.hub_connection.start()
 
         while self.signalr_status is not True:
-            for i in range(5, -1, -1):
+            for i in range(15, -1, -1):
                 if self.signalr_status is True:
                     break
                 if i == 0:
@@ -184,7 +186,7 @@ class RoomController:
 
                         # handling new devices added
                         new_devices_added = list(self.handling_devices_info())
-                        if new_devices_added != None:
+                        if new_devices_added is not None:
                             for device in new_devices_added:
                                 print(">>> room_controller -", str(device), "Starting up.....")
                                 self.connect_and_stream_data(device_mac_id=device)
@@ -238,9 +240,9 @@ class RoomController:
         print(">>> room_controller - New devices info : ", get_devicelist)
         return get_devicelist
 
-    #@staticmethod
+    # @staticmethod
     def save_device_info(self, api_json_list):
-        #device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
+        # device_info_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
         device_info_dict = {"Devices": api_json_list}
 
         with open(self.connected_devices_file, "w") as device_info:
@@ -261,7 +263,7 @@ class RoomController:
 
         for device in list(devices_mac_ids):
             if device in self.active_mac_ids:
-                print(">>> room_controller - Device ", str(device), " already loaded in memory, skiping")
+                print(">>> room_controller - Device ", str(device), " already loaded in memory, skipping")
                 pass
             else:
                 new_devices.append(device)
@@ -283,27 +285,26 @@ class RoomController:
 
                 for devices in connected_devices_file_response["Devices"]:
                     self.active_mac_ids.append(devices["MacAddress"])
-                    
-        except Exception as FileNotFoundError:
-            print(f'>>> room_controller - Error: {FileNotFoundError}')
+
+        except Exception as ErrorFileNotFound:
+            print(f'>>> room_controller - Error: {ErrorFileNotFound}')
             api_json_list = self.get_devicelist()
             self.save_device_info(api_json_list)
-            
+
             with open(self.connected_devices_file) as connected_devices_file:
                 connected_devices_file_response = json.load(connected_devices_file)
 
                 for devices in connected_devices_file_response["Devices"]:
                     self.active_mac_ids.append(devices["MacAddress"])
-                    
+
             print(">>> room_controller - connected_devices.json file created and loaded into memory")
 
         print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(self.active_mac_ids))
-        #os.environ['Registered_Devices'] = str(self.active_mac_ids)
 
         global global_active_mac_ids
         global_active_mac_ids = self.active_mac_ids
 
-        connected_devices.ConnectedDevices()  #TESTING TO SEE IF THIS WORKS BETTER TO START FROM HERE.
+        connected_devices.ConnectedDevices()
 
     def connect_and_stream_data(self, device_mac_id):
         print(">>> room_controller - Starting ConnectAndStream thread for device - ", device_mac_id)

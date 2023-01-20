@@ -1,6 +1,5 @@
 import os
 import time
-import datetime
 import json
 import requests
 import connect_and_stream
@@ -88,8 +87,8 @@ class ConnectedDevices:
 
             except requests.exceptions.HTTPError as request_error:
                 # this error arises when api token is invalid, meaning room controller removed from webapp
-##                if "401 Client Error" in str(request_error):
-##                    break
+                # if "401 Client Error" in str(request_error):
+                # break
                 try:
                     connected_devices_response = requests.get(self.get_devicelist_api, headers=self.api_headers)
                     if connected_devices_response.status_code in [401, 404, 500, 501]:

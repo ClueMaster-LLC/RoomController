@@ -12,7 +12,7 @@ PORT = 2101
 sock.connect((IP_ADDRESS, PORT))
 sock.settimeout(0.5)
 
-#print(board1.test_comms())
+# print(board1.test_comms())
 
 # pass these methods a number between 1 and 512 to set the current status of the relay
 print(board1.turn_on_relay_by_index(2))
@@ -43,12 +43,12 @@ print(board1.turn_on_relay_by_index(2))
 ##
 ### set the status of a bank, 255 is all relays on, 3 is relay one and two etc. The value is based on an 8 bit value so 3 = 00000011 = relays one and two will be on.
 ### the first arg is the relay value. The second arg is the bank number.
-#print(board1.set_relay_bank_status(255, 1))
+# print(board1.set_relay_bank_status(255, 1))
 ##
 ### get a relay status value for the board in a byte value The value is based on an 8 bit value so 3 = 00000011 = relays one and two are on.
 ### The argument is the relay bank
-#print(board1.get_relay_status_by_bank(1))
-#print(board1.get_relay_bank_status(1))
+# print(board1.get_relay_status_by_bank(1))
+# print(board1.get_relay_bank_status(1))
 print(board1.get_relay_bank_status(1))
 print(board1.get_relay_bank_status(2))
 ##
@@ -117,4 +117,4 @@ print(board1.get_relay_bank_status(2))
 ##
 ### close the socket after we are done with it. Its good practice to close a TCP socket when you are no longer using it.
 ### no one wants to walk over to a board and unplug it if comms get stuck open on one end and not the other.
-#sock.close()
+# sock.close()
