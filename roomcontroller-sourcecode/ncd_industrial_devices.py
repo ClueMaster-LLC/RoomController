@@ -80,13 +80,12 @@ class NCD_Controller:
 
 	def get_relay_bank_status(self, bank=1):
 		command = self.wrap_in_api([254, 124, bank])
-		print((self.send_command(command, 4)))
 		return self.process_read_command_return(self.send_command(command, 4))
 
 	def get_relay_all_bank_status(self, bank=0):
 		command = self.wrap_in_api([254, 124, bank])
-		print((self.send_command(command, 35)))
-		return self.process_read_command_return(self.send_command(command, 35))
+		print((self.send_command(command, 32)))
+		return self.process_read_command_return(self.send_command(command, 32))
 
 	def get_relay_status_by_index(self, relay):
 		lsb = relay-1 & 255

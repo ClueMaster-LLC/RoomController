@@ -86,7 +86,8 @@ class ConnectAndStream(threading.Thread):
                 "type": "raw",
                 "keep_alive_interval": 5,
                 "reconnect_interval": 5,
-                "max_attempts": 99999999
+                "max_attempts": 99999999,
+                "serialnumber": str(self.device_mac)
                 # "type": "interval",
                 # "keep_alive_interval": 5,
                 # "reconnect_interval": 5,
@@ -95,16 +96,15 @@ class ConnectAndStream(threading.Thread):
             }).build()
 
         self.hub_connection.on_close(lambda: (print(">>> connect_and_stream - SignalR Connection Closed")))
-        self.hub_connection.on_error(lambda data: print(f">>> connect_and_stream - An exception was thrown:"
-                                                        f"{data.error}"))
+        self.hub_connection.on_error(lambda data: (print(f">>> connect_and_stream - An exception was thrown: "
+                                                         f"{data.error}"), self.signalr_connected(False)))
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]), print(
             ">>> connect_and_stream - signalR handshake received. Ready to send/receive messages."),
-                                             self.signalr_connected()))
+                                             self.signalr_connected(True)))
         self.hub_connection.on_reconnect(lambda: (print(">>> connect_and_stream - Trying to re-connect to "
                                                         "comhub.cluemaster.io")))
         self.hub_connection.on(str(self.room_id), print)
-        self.hub_connection.on('syncdata', (lambda data: self.hub_connection.send(
-            'sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])))
+        self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
         self.hub_connection.on('syncdata', (lambda data: print(">>> connect_and_stream - "
                                                                "Re-Sync Data command received")))
 
@@ -123,8 +123,14 @@ class ConnectAndStream(threading.Thread):
         else:
             print(">>> connect_and_stream - signalr connected")
 
-    def signalr_connected(self):
-        self.signalr_status = True
+    def signalr_connected(self, status):
+        if status is True:
+            self.signalr_status = True
+        elif not status:
+            self.signalr_status = False
+
+    def sync_data(self):
+        self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
 
     def run(self):
         connected = False
@@ -165,6 +171,8 @@ class ConnectAndStream(threading.Thread):
             #                        (lambda relay_num: (self.ncd.device_reboot())))
             # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_bank(1, 2))))
             # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_bank(1, 2))))
+            self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(relay_num))))
+            self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(relay_num))))
 
         try:
             self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)

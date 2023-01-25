@@ -1,5 +1,6 @@
 # import the pyserial module
 import socket
+import time
 import ncd_industrial_devices
 
 # set up your socket with the desired settings.
@@ -17,17 +18,19 @@ sock.settimeout(0.5)
 # pass these methods a number between 1 and 512 to set the current status of the relay.
 ##print(board1.turn_on_relay_by_index(3))
 ##print(board1.fusion_turn_on_relay_by_index(2))
-print(board1.turn_on_relay_by_index(16))
-print(board1.turn_on_relay_by_index(15))
-##print(board1.turn_off_relay_by_index (16))
-##print(board1.turn_off_relay_by_index (15))
-##
-### pass these methods a number between 1 and 512 to get the current status of the relay
+##print(board1.turn_on_relay_by_index(16))
+##print(board1.turn_on_relay_by_index(15))
+##time.sleep(3)
+print(board1.turn_off_relay_by_index (16))
+print(board1.turn_off_relay_by_index (15))
+
+# pass these methods a number between 1 and 512 to get the current status of the relay
 ##print(board1.get_relay_status_by_index(1))
 ##print(board1.get_relay_status_by_index(2))
 ##
 ### close the interface, not necessary here but you may need to in your application
 ##sock.close()
+##print(str(b'\xaa\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'))
 ##
 ### you can renew or replace your communication interface with new settings if desired.
 ### serial_port = serial.Serial('COM27', baudrate=115200, bytesize=8, stopbits=1, timeout=.5)
