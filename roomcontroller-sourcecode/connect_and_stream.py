@@ -197,6 +197,7 @@ class ConnectAndStream(threading.Thread):
                         time.sleep(1)
 
                     elif self.device_type == 1:
+
                         self.data_response = (self.ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = self.data_response
                         if not self.data_response:
@@ -218,33 +219,33 @@ class ConnectAndStream(threading.Thread):
                                 print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
                                       , [str(self.room_id), str(self.device_mac), str(self.data_response)])
 
-                            if log_level in (1, 2):
-                                print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ',
-                                      str(bytes(self.data_response)))
-                                print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ',
-                                      str(self.data_response))
-
-                                # make a new array by ignoring the first two bytes and the last byte
-                                readings = bytes(self.data_response)
-                                counter = 0
-                                bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
-                                print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
-
-                                # This code block is only for displaying the of/off of the inputs to the log for
-                                # diagnostics
-                                for bank in readings:
-                                    # increment through each input
-                                    for i in range(0, self.input_total):
-                                        # << indicates a bit shift. Basically check corresponding bit in the reading
-                                        state = (bank & (1 << i))
-                                        if state != 0:
-                                            # print('Input '+ str(bank) +' is high')
-                                            print('>>> connect_and_stream - BANK Unknown: Input ' + str(
-                                                i + 1) + ' is high')
-                                        else:
-                                            print('>>> connect_and_stream - BANK Unknown: Input ' + str(
-                                                i + 1) + ' is low')
-                                        counter += 1
+                            # if log_level in (1, 2):
+                            #     print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ',
+                            #           str(bytes(self.data_response)))
+                            #     print('>>> connect_and_stream - LIST VALUES RETURNED FROM DEVICE ',
+                            #           str(self.data_response))
+                            #
+                            #     # make a new array by ignoring the first two bytes and the last byte
+                            #     readings = bytes(self.data_response)
+                            #     counter = 0
+                            #     bytes_as_bits = ''.join(format(byte, '08b') for byte in readings)
+                            #     print('>>> connect_and_stream - Binary Response Values : ', bytes_as_bits)
+                            #
+                            #     # This code block is only for displaying the of/off of the inputs to the log for
+                            #     # diagnostics
+                            #     for bank in readings:
+                            #         # increment through each input
+                            #         for i in range(0, self.input_total):
+                            #             # << indicates a bit shift. Basically check corresponding bit in the reading
+                            #             state = (bank & (1 << i))
+                            #             if state != 0:
+                            #                 # print('Input '+ str(bank) +' is high')
+                            #                 print('>>> connect_and_stream - BANK Unknown: Input ' + str(
+                            #                     i + 1) + ' is high')
+                            #             else:
+                            #                 print('>>> connect_and_stream - BANK Unknown: Input ' + str(
+                            #                     i + 1) + ' is low')
+                            #             counter += 1
 
                         # wait for a few defined seconds
                         time.sleep(self.read_speed * 0.001)
@@ -311,8 +312,8 @@ class ConnectAndStream(threading.Thread):
                         except Exception as error:
                             print(f'>>> connect_and_stream - {error}')
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        return
                     print(">>> connect_and_stream -  Error: " + str(e))
-                    return
 
             try:
                 self.client_socket.close()

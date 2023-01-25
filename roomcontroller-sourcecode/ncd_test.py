@@ -7,7 +7,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # instantiate the board object and pass it the network socket
 ncd = ncd_industrial_devices.NCD_Controller(sock)
 # connect the socket using desired IP and Port
-IP_ADDRESS = "192.168.1.19"
+IP_ADDRESS = "192.168.1.27"
 PORT = 2101
 sock.connect((IP_ADDRESS, PORT))
 sock.settimeout(1.5)

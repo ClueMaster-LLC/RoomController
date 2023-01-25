@@ -78,14 +78,24 @@ class NCD_Controller:
 		command = self.wrap_in_api([254, 50, 49+timer, hours, minutes, seconds, relay-1])
 		return self.process_control_command_return(self.send_command(command, 4))
 
-	def get_relay_bank_status(self, bank = 1):
-		command = self.wrap_in_api([254,124, bank])
+	def get_relay_bank_status(self, bank=1):
+		command = self.wrap_in_api([254, 124, bank])
+		print((self.send_command(command, 4)))
 		return self.process_read_command_return(self.send_command(command, 4))
+
+	def get_relay_all_bank_status(self, bank=0):
+		command = self.wrap_in_api([254, 124, bank])
+		print((self.send_command(command, 35)))
+		return self.process_read_command_return(self.send_command(command, 35))
 
 	def get_relay_status_by_index(self, relay):
 		lsb = relay-1 & 255
 		msb = relay >> 8
 		command = self.wrap_in_api([254, 44, lsb, msb])
+		return self.process_read_command_return(self.send_command(command, 4))
+
+	def get_relay_status_by_bank(self, relay, bank = 1):
+		command = self.wrap_in_api([254, 115+relay, bank])
 		return self.process_read_command_return(self.send_command(command, 4))
 
 	def get_relay_status_by_index_fusion(self, relay):
@@ -111,10 +121,6 @@ class NCD_Controller:
 		command = self.wrap_in_api([254, 167])
 		return self.translate_ad(self.process_read_command_return(self.send_command(command, 19)), 10)
 
-	def get_relay_status_by_bank(self, relay, bank = 1):
-		command = self.wrap_in_api([254,115+relay, bank])
-		return self.process_read_command_return(self.send_command(command, 4))
-
 	def convert_data(self, data):
 		command_string = ''
 		for character in data:
@@ -130,7 +136,7 @@ class NCD_Controller:
 	# 	data.insert(0, bytes_in_packet)
 	# 	data.insert(0, 170)
 	# 	data = self.add_checksum(data)
-	# 	# futzing with thier code. moving to hex.decode
+	# 	# futzing with their code. moving to hex.decode
 	# 	# print data
 	# 	hexData = ''
 	# 	for byte in data:
@@ -295,15 +301,15 @@ class NCD_Controller:
 		command = self.wrap_in_api([254, 149+channel])
 		return self.process_control_command_return(self.send_command(command, 32))
 
-	def get_dc_all_inputs(self): #dry Contact Commands
+	# dry Contact Commands
+	def get_dc_all_inputs(self):
 		command = self.wrap_in_api([254, 175, 0, 24])
 		return self.process_control_command_return(self.send_command(command, 32))
-	
+
 	def get_dc_input_status_by_bank(self, relay, bank = 1):
-		command = self.wrap_in_api([254,115+relay, bank])
+		command = self.wrap_in_api([254, 115+relay, bank])
 		return self.process_control_command_return(self.send_command(command, 32))
 
-	
 	def get_dc_bank_status(self, bank_start = 1, band_end = 2):
 		command = self.wrap_in_api([254, 175, bank_start, band_end])
 		return self.process_read_command_return(self.send_command(command, 32))
