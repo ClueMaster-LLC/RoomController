@@ -2,16 +2,29 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="30cdf677-a2a7-471e-9674-ecf1ff57afd5" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/automation.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/heartbeat.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SECURITY.md" beforeDir="false" afterPath="$PROJECT_DIR$/SECURITY.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/Network-Relay-Example.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/Network-Relay-Example.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/ncd_industrial_devices.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/ncd_industrial_devices.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/room_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/room_controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/thread_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/thread_manager.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />

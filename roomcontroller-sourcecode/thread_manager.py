@@ -1,11 +1,10 @@
 import os
 import json
 import threading
-import time
-import sys
 import auto_startup
 import connected_devices
-import socket
+import automation
+import heartbeat
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -53,15 +52,50 @@ class ConnectPreviousDevicesThread(threading.Thread):
         return
 
 
+# AutomationThread connect to run special automations in a separate process
+class HeartbeatThread(threading.Thread):
+    def __init__(self):
+        super(HeartbeatThread, self).__init__()
+        print(">>> thread_manager - AutomationThread active ....")
+
+        # global attributes
+        self.active = None
+        self.heartbeat_instance = None
+
+    def run(self):
+        self.heartbeat_instance = heartbeat.Heartbeat()
+        print(">>> thread_manager - Stopped Base ConnectPreviousDevicesThread ...")
+        return
+
+
+# AutomationThread connect to run special automations in a separate process
+class AutomationThread(threading.Thread):
+    def __init__(self):
+        super(AutomationThread, self).__init__()
+        print(">>> thread_manager - AutomationThread active ....")
+
+        # global attributes
+        self.active = None
+        self.automation_instance = None
+
+    def run(self):
+        self.automation_instance = automation.Automation()
+        print(">>> thread_manager - Stopped Base ConnectPreviousDevicesThread ...")
+        return
+
+
 # master thread manager
 class ThreadManager:
     def __init__(self):
         super(ThreadManager, self).__init__()
+
         print(">>> thread_manager - Starting Thread Manager ....")
 
         # global attributes
         self.active = None
         self.registration_thread = None
+        self.heartbeat_thread = None
+        self.automation_thread = None
         self.connect_to_previous_device_thread = None
         self.controller_status_thread = None
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -89,9 +123,9 @@ class ThreadManager:
 
     def execution_environment(self):
         if os.path.isfile(self.previously_connected_devices_file):
-            ## LETS START CONENCTED DEVICES() FROM THE ROOM CONTROLLER SO
+            ## LETS START CONNECTED DEVICES() FROM THE ROOM CONTROLLER SO
             ## GLOBAL VARIABLE AN LOAD PRIOR BUT KEEP ELSE LOGIC HERE TO
-            ## WRITE A FILE IF ITS MISSING AND REGISTRAION START
+            ## WRITE A FILE IF ITS MISSING AND REGISTRATION START
             ##            self.connect_to_previous_device_thread = ConnectPreviousDevicesThread()
             ##            self.connect_to_previous_device_thread.start()
             pass
@@ -107,7 +141,14 @@ class ThreadManager:
         self.registration_thread = RegistrationThread()
         self.registration_thread.start()
 
+        # self.heartbeat_thread = HeartbeatThread()
+        # self.heartbeat_thread.start()
+
+        # self.automation_thread = AutomationThread()
+        # self.automation_thread.start()
+
 
 def restart_room_controller():
     # triggering main function from main.py
     thread_manager = ThreadManager()
+    pass

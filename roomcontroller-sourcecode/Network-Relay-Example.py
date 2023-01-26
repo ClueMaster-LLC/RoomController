@@ -61,7 +61,7 @@ print(board1.get_relay_bank_status(2))
 ##print(board1.get_relay_status_by_bank(2))
 
 ### monitor relays and return 8-bit value of what relay is on/off in all banks.
-print(board1.get_relay_all_bank_status())
+print(board1.get_relay_all_bank_status(2))
 ##
 ### control relays by number and by bank. The first argument is the relay number from 1-8. The second argument is the bank number.
 ##print(board1.turn_on_relay_by_bank(1, 1))

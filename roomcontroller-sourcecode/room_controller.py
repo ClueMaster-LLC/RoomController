@@ -110,6 +110,7 @@ class RoomController:
     #     self.hub_connection.on_reconnect(lambda: print(">>> room_controller - Trying to re-connect to "
     #                                                    "comhub.cluemaster.io"))
     #
+    #     self.hub_connection.on(str(self.device_unique_id), print)
     #     # use lambda to process commands for the RC
     #     self.hub_connection.on('rc_command', print)
     #

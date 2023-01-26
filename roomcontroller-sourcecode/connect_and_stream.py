@@ -57,7 +57,7 @@ class ConnectAndStream(threading.Thread):
         # instance methods
         self.configuration()
         self.signalr_hub()
-        print(">>> connect_and_stream - STARTUP COMPLETED")
+        print(f">>> connect_and_stream - {self.device_mac} - STARTUP COMPLETED")
 
     def configuration(self):
         with open(self.unique_ids_file) as unique_ids_file:
@@ -95,18 +95,17 @@ class ConnectAndStream(threading.Thread):
                 # "intervals": [1, 3, 5, 6, 7, 87, 3]
             }).build()
 
-        self.hub_connection.on_close(lambda: (print(">>> connect_and_stream - SignalR Connection Closed")))
-        self.hub_connection.on_error(lambda data: (print(f">>> connect_and_stream - An exception was thrown: "
-                                                         f"{data.error}"), self.signalr_connected(False)))
-        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]), print(
-            ">>> connect_and_stream - signalR handshake received. Ready to send/receive messages."),
+        self.hub_connection.on_close(lambda: (print(f">>> connect_and_stream - {self.device_mac} - "
+                                                    f"SignalR Connection Closed")))
+        self.hub_connection.on_error(lambda data: (print(f">>> connect_and_stream - {self.device_mac} - "
+                                                         f"An exception was thrown: {data.error}"),
+                                                   self.signalr_connected(False)))
+        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
+                                             print(f">>> connect_and_stream - {self.device_mac} - signalR handshake "
+                                                   f"received. Ready to send/receive messages."),
                                              self.signalr_connected(True)))
         self.hub_connection.on_reconnect(lambda: (print(">>> connect_and_stream - Trying to re-connect to "
                                                         "comhub.cluemaster.io")))
-        self.hub_connection.on(str(self.room_id), print)
-        self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
-        self.hub_connection.on('syncdata', (lambda data: print(">>> connect_and_stream - "
-                                                               "Re-Sync Data command received")))
 
         self.hub_connection.start()
 
@@ -115,9 +114,9 @@ class ConnectAndStream(threading.Thread):
                 if self.signalr_status is True:
                     break
                 if i == 0:
-                    print(f'>>> connect_and_stream - timeout exceeded. SignalR not connected.')
+                    print(f'>>> connect_and_stream - {self.device_mac} - Timeout exceeded. SignalR not connected.')
                     break
-                print(f'>>> connect_and_stream - waiting for signalR handshake ... {i}')
+                print(f'>>> connect_and_stream - {self.device_mac} - waiting for signalR handshake ... {i}')
                 time.sleep(1)
             break
         else:
@@ -169,10 +168,19 @@ class ConnectAndStream(threading.Thread):
             self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
             # self.hub_connection.on('device_reboot', str(self.device_mac),
             #                        (lambda relay_num: (self.ncd.device_reboot())))
-            # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_bank(1, 2))))
-            # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_bank(1, 2))))
-            self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(relay_num))))
-            self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(relay_num))))
+
+            # device_type 1 = Dry Contacts
+            if self.device_type == 1:
+                self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
+                self.hub_connection.on('syncdata', (lambda data: print(">>> connect_and_stream - ", self.device_mac,
+                                                                       " Re-Sync Data command received")))
+
+            # device_type 2 = Relays
+            if self.device_type == 2:
+                # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_index(16))))
+                # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_index(16))))
+                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(relay_num))))
+                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(relay_num))))
 
         try:
             self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
@@ -209,7 +217,7 @@ class ConnectAndStream(threading.Thread):
                         self.data_response = (self.ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = self.data_response
                         if not self.data_response:
-                            print(f'DATA RESPONCE IS: {self.data_response}')
+                            print(f'DATA RESPONSE IS: {self.data_response}')
 
                         if data_response_old != data_response_new:
                             data_response_old = data_response_new
@@ -623,11 +631,11 @@ class ConnectAndStream(threading.Thread):
 
 # Comment out the function when testing from main.py
 
-##def start_thread():
-##    if __name__ == "__main__":
-##        connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
-##        # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
-##        connect_and_stream_instance.start()
-##
-##
-##start_thread()
+# def start_thread():
+#    if __name__ == "__main__":
+#        connect_and_stream_instance = ConnectAndStream(device_mac="0008DC21DDF0")
+#        # enter hardcoded MAC  and enter sped in milliseconds to query data from the device
+#        connect_and_stream_instance.start()
+#
+#
+#start_thread()
