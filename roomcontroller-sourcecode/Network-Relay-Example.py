@@ -3,6 +3,8 @@ import socket
 import time
 import ncd_industrial_devices
 
+
+
 # set up your socket with the desired settings.
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # instantiate the board object and pass it the network socket
@@ -13,7 +15,7 @@ PORT = 2101
 sock.connect((IP_ADDRESS, PORT))
 sock.settimeout(0.5)
 
-# print(board1.test_comms())
+print(board1.test_comms())
 
 # pass these methods a number between 1 and 512 to set the current status of the relay.
 ##print(board1.turn_on_relay_by_index(3))
@@ -21,8 +23,8 @@ sock.settimeout(0.5)
 ##print(board1.turn_on_relay_by_index(16))
 ##print(board1.turn_on_relay_by_index(15))
 ##time.sleep(3)
-print(board1.turn_off_relay_by_index (16))
-print(board1.turn_off_relay_by_index (15))
+print(board1.turn_off_relay_by_index(16))
+print(board1.turn_off_relay_by_index(15))
 
 # pass these methods a number between 1 and 512 to get the current status of the relay
 ##print(board1.get_relay_status_by_index(1))
@@ -126,4 +128,4 @@ print(board1.get_relay_all_bank_status(2))
 ##
 ### close the socket after we are done with it. Its good practice to close a TCP socket when you are no longer using it.
 ### no one wants to walk over to a board and unplug it if comms get stuck open on one end and not the other.
-# sock.close()
+sock.close()

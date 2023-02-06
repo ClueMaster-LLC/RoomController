@@ -18,7 +18,11 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 # global variables
+global global_active_mac_ids
 global_active_mac_ids = []
+
+global ACTIVE_INPUT_VALUES
+ACTIVE_INPUT_VALUES = []
 
 
 # master class
@@ -112,7 +116,7 @@ class RoomController:
     #
     #     self.hub_connection.on(str(self.device_unique_id), print)
     #     # use lambda to process commands for the RC
-    #     self.hub_connection.on('rc_command', print)
+    #     self.hub_connection.on('rc_command_restart', print)
     #
     #     self.hub_connection.start()
     #
@@ -301,7 +305,8 @@ class RoomController:
 
             print(">>> room_controller - connected_devices.json file created and loaded into memory")
 
-        print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(self.active_mac_ids))
+        print(">>> room_controller - Loading Previously Connected Devices into Global Variable: " + str(
+            self.active_mac_ids))
 
         global global_active_mac_ids
         global_active_mac_ids = self.active_mac_ids
