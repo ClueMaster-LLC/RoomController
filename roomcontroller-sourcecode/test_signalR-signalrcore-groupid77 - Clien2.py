@@ -19,9 +19,9 @@ def input_with_default(input_text, default_value):
 ##server_url = input_with_default('Enter your server url(default: {0}): ', "https://devapi.cluemaster.io/chathub")
 ##username = input_with_default('Enter your username (default: {0}): ', "robert")
 ##server_url = "https://devapi.cluemaster.io/chathub"
-device_mac = '0008DC22545X'
+device_mac = '0008DC225455'
 #server_url = f"https://cluemaster-signalr-win.azurewebsites.net/chathub?{device_mac}"
-##server_url = f"https://comhub.cluemaster.io/chathub?serialnumber={device_mac}"
+##server_url = f"wss://comhub.cluemaster.io/chathub?serialnumber={device_mac}"
 #server_url = f"https://comhub.cluemaster.io/chathub?{device_mac}"
 server_url = f"https://comhub.cluemaster.io/chathub"
 print(server_url)
@@ -36,7 +36,7 @@ hub_connection = HubConnectionBuilder()\
                 "skip_negotiation": False,
  #               "http_client_options": {"headers": headers, "timeout": 5.0},
  #               "ws_client_options": {"headers": headers, "timeout": 5.0},
-##                "serialnumber": str(device_mac)
+                #"user": str(device_mac)
         }) \
     .configure_logging(logging.ERROR, socket_trace=True, handler=handler) \
     .with_automatic_reconnect({
@@ -57,11 +57,10 @@ hub_connection.on_reconnect(lambda: print("re-connected"))
 hub_connection.on('syncdata', (lambda data: print(f"syncdata command received: {data}")))
 hub_connection.on("relay_on", (lambda data: print(f"RELAY ON {data}")))
 hub_connection.on('relay_off', (lambda data: print(f"RELAY OFF {data}")))
-hub_connection.on(str(device_mac), print)
-hub_connection.on(str(room_id), (lambda data: print(f"GROUP ID DATA {data}")))
-hub_connection.on('ReceiveMessage', (lambda data: print(f"syncdata command received: {data}")))
-
-hub_connection.on('relay_off_TEST', (lambda data: print(f"TEST RELAY OFF {data}")))
+##hub_connection.on(str(device_mac), print)
+##hub_connection.on(str(room_id), (lambda data: print(f"GROUP ID DATA {data}")))
+##hub_connection.on('relay_off_TEST', (lambda data: print(f"TEST RELAY OFF {data}")))
+hub_connection.on('ReceiveMessage', (lambda data: print(f"Message received: {data}")))
 
 
 try:
