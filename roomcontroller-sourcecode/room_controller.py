@@ -277,8 +277,8 @@ class RoomController:
 
         self.active_mac_ids = devices_mac_ids
         print(">>> room_controller - Updating GV - In Memory Device List : " + str(self.active_mac_ids))
-        os.environ['Registered_Devices'] = str(self.active_mac_ids)
-        print(">>> room_controller - Updating ENV VAR - In Memory Device List", os.environ.get('Registered_Devices'))
+        # os.environ['Registered_Devices'] = str(self.active_mac_ids)
+        # print(">>> room_controller - Updating ENV VAR - In Memory Device List", os.environ.get('Registered_Devices'))
         global global_active_mac_ids
         global_active_mac_ids = self.active_mac_ids
 

@@ -29,7 +29,7 @@ print(server_url)
 #token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
 #headers = {"Authorization": f"Bearer {token}"}
 handler = logging.StreamHandler()
-handler.setLevel(logging.ERROR)
+handler.setLevel(logging.INFO)
 hub_connection = HubConnectionBuilder()\
     .with_url(server_url, options={
                 "verify_ssl": True,
@@ -39,6 +39,7 @@ hub_connection = HubConnectionBuilder()\
                 #"user": str(device_mac)
         }) \
     .configure_logging(logging.ERROR, socket_trace=True, handler=handler) \
+    .with_hub_protocol(MessagePackHubProtocol()) \
     .with_automatic_reconnect({
             "type": "raw",
             "keep_alive_interval": 10,

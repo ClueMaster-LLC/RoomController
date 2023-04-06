@@ -101,22 +101,21 @@ class ConnectAndStream(threading.Thread):
                 "verify_ssl": True,
                 "skip_negotiation": False,
                 "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
-                "ws_client_options": {"headers": self.api_headers, "timeout": 5.0},
-                # "serialnumber": str(self.device_mac)
+                "ws_client_options": {"headers": self.api_headers, "timeout": 5.0}
             }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
                 "type": "raw",
                 "keep_alive_interval": 5,
                 "reconnect_interval": 5,
-                "max_attempts": 99999999,
-                # "type": "interval",
-                # "keep_alive_interval": 5,
-                # "reconnect_interval": 5,
-                # "max_attempts": 99999999,
-                # "intervals": [1, 3, 5, 6, 7, 87, 3]
+                "max_attempts": 99999999
                 }).build()
 
+        # "type": "interval",
+        # "keep_alive_interval": 5,
+        # "reconnect_interval": 5,
+        # "max_attempts": 99999999,
+        # "intervals": [1, 3, 5, 6, 7, 87, 3]
         # .with_hub_protocol(MessagePackHubProtocol()) \
 
         self.hub_connection.on_close(lambda: (print(f">>> connect_and_stream - {self.device_mac} - "
@@ -166,11 +165,12 @@ class ConnectAndStream(threading.Thread):
                     return
                 # print(">>> connect_and_stream - Room Controller IP Address: " + str(self.extract_ip()))
                 print(f'>>> connect_and_stream - {self.device_mac} - Connecting to last known device IP: ',
-                      self.ip_address, '  MAC: ', self.device_mac, '  Device Model: ', self.device_model)
+                      self.ip_address, '  MAC: ', self.device_mac, '  Device Model: ', self.device_model,
+                      '  Device Type: ', self.device_type)
                 self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.client_socket.settimeout(1.0)
                 self.client_socket.connect((self.ip_address, self.server_port))
-                print('>>> connect_and_stream - Connected to IP:', self.ip_address, ' MAC:', self.device_mac)
+                print(f'>>> connect_and_stream - {self.device_mac} - Connected IP: {self.ip_address}')
                 connected = True
 
             except socket.error as error:
@@ -203,13 +203,18 @@ class ConnectAndStream(threading.Thread):
 
             # device_type 2 = Relays
             if self.device_type == 2:
+                self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
+                self.hub_connection.on('syncdata', (lambda data: print(f">>> connect_and_stream - {self.device_mac} ",
+                                                                       "Re-Sync Data command received")))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_index(16))))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_index(16))))
-                # self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(relay_num))))
-                # self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(relay_num))))
+                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(1))))
+                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(1))))
 
-                self.hub_connection.on('relay_on', (lambda data: print(f"TEST RELAY ON {data}")))
-                self.hub_connection.on('relay_off', (lambda data: print(f"TEST RELAY ON {data}")))
+                self.hub_connection.on('relay_on', (lambda relay_num: print(f"{self.device_mac}"
+                                                                            f" TEST RELAY ON {relay_num}")))
+                self.hub_connection.on('relay_off', (lambda relay_num: print(f"{self.device_mac}"
+                                                                             f" TEST RELAY OFF {relay_num}")))
                 self.hub_connection.on('relay_reset', (lambda relay_num: (self.ncd.turn_off_relay_by_index(0))))
 
         try:
@@ -230,11 +235,14 @@ class ConnectAndStream(threading.Thread):
                 try:
 
                     if self.device_type == 2:
-                        # TODO: Change type to 2 for relay boards.  Using 1 for testing only on DC thread
+                        # Change type to 2 for relay boards.  Using 1 for testing only on DC thread
                         # print("IM WAITING FORE RELAY COMMANDS")
                         # loop here and do nothing but check for connection to the relay board.
                         # signalR will fire in the background when needed.
-                        self.ncd.test_comms()
+                        # print(f">>> connect_and_stream - {self.device_mac} - DEVICE IS TYPE {self.device_type}")
+                        # self.ncd.test_comms()
+
+                        # print(f">>> connect_and_stream - {self.device_mac} - NCD DEVICE COMMS TEST SUCCESSFUL")
                         # print(f">>> connect_and_stream - {self.device_mac} - {room_controller.ACTIVE_INPUT_VALUES}")
 
                         # Define a function to check if a given condition is true
@@ -287,15 +295,17 @@ class ConnectAndStream(threading.Thread):
 
                         # Define a function to execute a given action
                         def execute_action(action):
-                            relay_num = action['relay']
+                            relay_num = int(action['relay'])
                             relay_action = action['action']
 
                             # Perform the relay action
                             print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action} on relay {relay_num}")
-                            if {relay_num} == 'on':
+                            if relay_action == 'on':
                                 self.ncd.turn_on_relay_by_index(relay_num)
-                            elif {relay_num} == 'off':
-                                self.ncd.turn_on_relay_by_index(relay_num)
+                                print(f"Automation ran for turning on index {relay_num}")
+                            elif relay_action == 'off':
+                                self.ncd.turn_off_relay_by_index(relay_num)
+                                print(f"Automation ran for turning off index {relay_num}")
 
                         # Loop indefinitely
                         # while True:
@@ -327,11 +337,56 @@ class ConnectAndStream(threading.Thread):
                                 # Set fired flag to False
                                 rule['fired'] = False
 
+                        # Check status of relays after automation and report to SignalR
+                        self.data_response = (self.ncd.get_relay_status_by_index(1))
+                        data_response_new = self.data_response
+                        if not self.data_response:
+                            print(f'DATA RESPONSE IS: {self.data_response}')
+
+                        if data_response_old != data_response_new:
+                            data_response_old = data_response_new
+
+                            # load input device values into global variable to use for automation
+                            device_value = (self.device_mac, self.data_response)
+                            # devices_info = room_controller.ACTIVE_INPUT_VALUES
+                            # update = device_value
+
+                            if device_value[0] not in [device[0] for device in room_controller.ACTIVE_INPUT_VALUES]:
+                                room_controller.ACTIVE_INPUT_VALUES.append(device_value)
+                            else:
+                                for device in room_controller.ACTIVE_INPUT_VALUES:  # looping through every record
+                                    # checking if update mac address in present in each looped device
+                                    if device_value[0] in device:  # if mac matches then check if the update
+                                        # data is the same or not
+                                        if device_value[1] == device[1]:  # if yes, then pass
+                                            pass
+                                        else:  # update with new values
+                                            device[1].clear()
+                                            device[1].extend(device_value[1])
+                                            # print(room_controller.ACTIVE_INPUT_VALUES)
+                                    else:
+                                        pass
+
+                            # upload relay changes to SignalR
+                            if self.signalr_status:
+                                try:
+                                    print(f">>> connect_and_stream - {self.device_mac} - SEND VALUES TO CLUEMASTER"
+                                          f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
+
+                                    # send data to signalR hub
+                                    self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
+                                                                            str(self.data_response)])
+                                except Exception as error:
+                                    print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
+                            else:
+                                print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
+                                      , [str(self.room_id), str(self.device_mac), str(self.data_response)])
+
                         # Wait for some time before checking again
                         # TODO: See if we need to sleep to slow cpu usage and add NCD.COMMS check.
-                        #time.sleep(0.05)
+                        time.sleep(0.10)
 
-                    if self.device_type == 1:
+                    elif self.device_type == 1:
 
                         self.data_response = (self.ncd.get_dc_bank_status(0, self.bank_total))
                         data_response_new = self.data_response
@@ -419,9 +474,10 @@ class ConnectAndStream(threading.Thread):
                             self.client_socket.close()
                             self.hub_connection.stop()
                         except Exception as error:
-                            print('>>> connect_and_stream - ', self.device_mac, ' Error: ', str(error))
-                        print(">>> connect_and_stream - Device Type Not Compatible")
-                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                            print(f'>>> connect_and_stream - {self.device_mac} Error: {error}')
+                        if self.device_type not in (1, 2):
+                            print(f'>>> connect_and_stream - ', self.device_mac, f' Error: Device Type {self.device_type} Not Compatible')
+                        print(f'>>> connect_and_stream - Closing Thread for ', self.device_mac)
                         return
 
                 except socket.error:

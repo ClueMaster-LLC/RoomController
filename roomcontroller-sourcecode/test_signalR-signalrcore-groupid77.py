@@ -39,6 +39,7 @@ hub_connection = HubConnectionBuilder()\
 ##                "serialnumber": str(device_mac)
         }) \
     .configure_logging(logging.ERROR, socket_trace=True, handler=handler) \
+    .with_hub_protocol(MessagePackHubProtocol()) \
     .with_automatic_reconnect({
             "type": "raw",
             "keep_alive_interval": 10,
