@@ -11,6 +11,7 @@ from requests.structures import CaseInsensitiveDict
 import ncd_industrial_devices
 import room_controller
 import ast
+import re
 
 ## This import will be for signalR code##
 import logging
@@ -27,6 +28,12 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 # GLOBAL VARIABLES
 
 log_level = 0  # 0 for disabled | 1 for ALL details | 2 for device input/relay status | 3 for network connections
+
+
+def function_relay(relay_val):
+    relay_num = int(re.findall('[0-9]+', str(relay_val[0]))[0])
+    return relay_num
+
 
 class ConnectAndStream(threading.Thread):
     def __init__(self, device_mac):
@@ -208,13 +215,11 @@ class ConnectAndStream(threading.Thread):
                                                                        "Re-Sync Data command received")))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_index(16))))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_index(16))))
-                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(1))))
-                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(1))))
+                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(function_relay(relay_num)))))
+                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(function_relay(relay_num)))))
 
-                self.hub_connection.on('relay_on', (lambda relay_num: print(f"{self.device_mac}"
-                                                                            f" TEST RELAY ON {relay_num}")))
-                self.hub_connection.on('relay_off', (lambda relay_num: print(f"{self.device_mac}"
-                                                                             f" TEST RELAY OFF {relay_num}")))
+                self.hub_connection.on('relay_on', (lambda relay_num: print(f">>> connect_and_stream - {self.device_mac} - RELAY ON {function_relay(relay_num)}")))
+                self.hub_connection.on('relay_off', (lambda relay_num: print(f">>> connect_and_stream - {self.device_mac} - RELAY OFF {function_relay(relay_num)}")))
                 self.hub_connection.on('relay_reset', (lambda relay_num: (self.ncd.turn_off_relay_by_index(0))))
 
         try:
@@ -339,12 +344,12 @@ class ConnectAndStream(threading.Thread):
 
                         # Check status of relays after automation and report to SignalR
                         self.data_response = (self.ncd.get_relay_status_by_index(1))
-                        data_response_new = self.data_response
+                        # data_response_new = self.data_response
                         if not self.data_response:
-                            print(f'DATA RESPONSE IS: {self.data_response}')
+                            print(f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
 
-                        if data_response_old != data_response_new:
-                            data_response_old = data_response_new
+                        if data_response_old != self.data_response:
+                            data_response_old = self.data_response
 
                             # load input device values into global variable to use for automation
                             device_value = (self.device_mac, self.data_response)
@@ -389,12 +394,12 @@ class ConnectAndStream(threading.Thread):
                     elif self.device_type == 1:
 
                         self.data_response = (self.ncd.get_dc_bank_status(0, self.bank_total))
-                        data_response_new = self.data_response
+                        # data_response_new = self.data_response
                         if not self.data_response:
                             print(f'DATA RESPONSE IS: {self.data_response}')
 
-                        if data_response_old != data_response_new:
-                            data_response_old = data_response_new
+                        if data_response_old != self.data_response:
+                            data_response_old = self.data_response
 
                             # load input device values into global variable to use for automation
                             device_value = (self.device_mac, self.data_response)

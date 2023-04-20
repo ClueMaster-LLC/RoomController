@@ -1,4 +1,4 @@
-master_base_url = "https://devapi.cluemaster.io/"
+master_base_url = "https://deviceapi.cluemaster.io/"
 #signalr_hub_url = "https://cluemaster-signalr-win.azurewebsites.net/"
 signalr_hub_url = "https://comhub.cluemaster.io/"
 # apis available to cluemaster room controller
