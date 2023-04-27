@@ -50,8 +50,9 @@ class Authentication:
             while True:
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 if device_request_api_response.text in self.api_active_null_responses:
-                    print(">>> Console output " + str(datetime.datetime.utcnow()) + " - No Registration Requests Found")
-                    time.sleep(1)
+                    print(">>> Console output " + str(datetime.datetime.utcnow()) +
+                          " - No Registration Requests Found For: " + self.device_unique_id)
+                    time.sleep(5)
                     continue
 
                 else:
