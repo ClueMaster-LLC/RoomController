@@ -2,6 +2,7 @@ import os
 import platform
 import json
 import time
+import logging
 import socket
 import psutil
 import requests
@@ -28,6 +29,13 @@ class AutoStartup:
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
         self.device_status = True
+
+        level    = logging.INFO
+        format   = '  %(message)s'
+        handlers = [logging.FileHandler('filename.log'), logging.StreamHandler()]
+
+        logging.basicConfig(level = level, format = format, handlers = handlers)
+        logging.info('>>> auto_startup - AutoStartup Process Starting')
 
         # instance methods
         self.configurations()

@@ -1,6 +1,7 @@
 import os
 import time
 import datetime
+import logging
 import json
 import requests
 from apis import *
@@ -17,7 +18,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 class Authentication:
     def __init__(self):
         super(Authentication, self).__init__()
-        print(">>> authentication - Authentication")
+        print(">>> authentication - Authentication Process Starting")
 
         # global attributes
         self.api_headers = None
@@ -28,6 +29,13 @@ class Authentication:
 
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
+
+        level    = logging.INFO
+        format   = '  %(message)s'
+        handlers = [logging.FileHandler('filename.log'), logging.StreamHandler()]
+
+        logging.basicConfig(level = level, format = format, handlers = handlers)
+        logging.info('>>> authentication - Authentication Process Starting')
 
         # instance methods
         self.configuration()
@@ -51,6 +59,8 @@ class Authentication:
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 if device_request_api_response.text in self.api_active_null_responses:
                     print(">>> Console output " + str(datetime.datetime.utcnow()) +
+                          " - No Registration Requests Found For: " + self.device_unique_id)
+                    logging.info(">>> Console output " + str(datetime.datetime.utcnow()) +
                           " - No Registration Requests Found For: " + self.device_unique_id)
                     time.sleep(5)
                     continue
