@@ -30,12 +30,12 @@ class Authentication:
         self.unique_ids_file = os.path.join(APPLICATION_DATA_DIRECTORY, "unique_ids.json")
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
 
-        level    = logging.INFO
-        format   = '  %(message)s'
-        handlers = [logging.FileHandler('filename.log'), logging.StreamHandler()]
-
-        logging.basicConfig(level = level, format = format, handlers = handlers)
-        logging.info('>>> authentication - Authentication Process Starting')
+        # level    = logging.INFO
+        # format   = '  %(message)s'
+        # handlers = [logging.FileHandler('filename.log'), logging.StreamHandler()]
+        #
+        # logging.basicConfig(level = level, format = format, handlers = handlers)
+        # logging.info('>>> authentication - Authentication Process Starting')
 
         # instance methods
         self.configuration()
@@ -60,8 +60,8 @@ class Authentication:
                 if device_request_api_response.text in self.api_active_null_responses:
                     print(">>> Console output " + str(datetime.datetime.utcnow()) +
                           " - No Registration Requests Found For: " + self.device_unique_id)
-                    logging.info(">>> Console output " + str(datetime.datetime.utcnow()) +
-                          " - No Registration Requests Found For: " + self.device_unique_id)
+                    # logging.info(">>> Console output " + str(datetime.datetime.utcnow()) +
+                    #              " - No Registration Requests Found For: " + self.device_unique_id)
                     time.sleep(5)
                     continue
 

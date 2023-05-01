@@ -41,6 +41,7 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.active_input_values_old = None
         self.api_headers = None
         self.device_request_api_url = None
         self.api_bearer_key = None
@@ -210,17 +211,25 @@ class ConnectAndStream(threading.Thread):
 
             # device_type 2 = Relays
             if self.device_type == 2:
+                self.hub_connection.on('syncdata', (lambda data: old_relay_values_clear()))
                 self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
                 self.hub_connection.on('syncdata', (lambda data: print(f">>> connect_and_stream - {self.device_mac} ",
                                                                        "Re-Sync Data command received")))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_index(16))))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_index(16))))
-                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(function_relay(relay_num)))))
-                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(function_relay(relay_num)))))
+                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(function_relay(relay_num)),
+                                                                       old_relay_values_clear())))
+                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(function_relay(relay_num)),
+                                                                        old_relay_values_clear())))
 
-                self.hub_connection.on('relay_on', (lambda relay_num: print(f">>> connect_and_stream - {self.device_mac} - RELAY ON {function_relay(relay_num)}")))
-                self.hub_connection.on('relay_off', (lambda relay_num: print(f">>> connect_and_stream - {self.device_mac} - RELAY OFF {function_relay(relay_num)}")))
-                self.hub_connection.on('relay_reset', (lambda relay_num: (self.ncd.turn_off_relay_by_index(0))))
+                self.hub_connection.on('relay_on', (lambda relay_num: print(
+                    f'>>> connect_and_stream - {self.device_mac} - RELAY ON {function_relay(relay_num)}')))
+                self.hub_connection.on('relay_off', (lambda relay_num: print(
+                    f'>>> connect_and_stream - {self.device_mac} - RELAY OFF {function_relay(relay_num)}')))
+                self.hub_connection.on('reset_room', (lambda relay_num: (self.ncd.turn_off_relay_by_index(0))))
+
+                def old_relay_values_clear():
+                    self.active_input_values_old = None
 
         try:
             self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
@@ -232,6 +241,7 @@ class ConnectAndStream(threading.Thread):
                 data_response_init = self.device_mac
 
             data_response_old = None
+            # self.active_input_values_old = None
 
             print(f">>> connect_and_stream - {self.device_mac} - DEVICE CONNECTED AND READY")
 
@@ -250,146 +260,155 @@ class ConnectAndStream(threading.Thread):
                         # print(f">>> connect_and_stream - {self.device_mac} - NCD DEVICE COMMS TEST SUCCESSFUL")
                         # print(f">>> connect_and_stream - {self.device_mac} - {room_controller.ACTIVE_INPUT_VALUES}")
 
-                        # Define a function to check if a given condition is true
-                        def check_condition(condition):
-                            if 'type' in condition and condition['type'] == 'group':
-                                # Group condition
-                                conditions = condition['conditions']
-                                operator = condition['operator']
+                        # room_controller.ACTIVE_INPUT_VALUES
+                        if self.active_input_values_old != str(room_controller.ACTIVE_INPUT_VALUES):
 
-                                # Check if all sub-conditions satisfy the operator
-                                sub_results = [check_condition(sub_condition) for sub_condition in conditions]
-                                if operator == 'and':
-                                    result = all(sub_results)
-                                elif operator == 'or':
-                                    result = any(sub_results)
-                                else:
-                                    print(f"Invalid operator {operator}")
-                                    result = False
-                            else:
-                                # Sensor condition
-                                sensor_name = condition['sensor']
-                                sensor_inputs = condition['inputs']
-                                operator = condition['operator']
-                                value = condition['value']
+                            # print(f">>> connect_and_stream - {self.device_mac} - {room_controller.ACTIVE_INPUT_VALUES} CURRENT VALUES")
+                            # print(f">>> connect_and_stream - {self.device_mac} - {self.active_input_values_old} OLD HAVE CHANGED")
 
-                                # Find the sensor in the global variable
-                                for sensor in room_controller.ACTIVE_INPUT_VALUES:
-                                    if sensor[0] == sensor_name:
-                                        sensor_values = sensor[1]
-                                        break
-                                else:
-                                    # print(f"Sensor {sensor_name} not found in global variable")
-                                    return False
+                            self.active_input_values_old = str(room_controller.ACTIVE_INPUT_VALUES)
 
-                                # Check if the inputs satisfy the condition
-                                input_statuses = []
-                                for bank_value in sensor_values:
-                                    input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+                            # Define a function to check if a given condition is true
+                            def check_condition(condition):
+                                if 'type' in condition and condition['type'] == 'group':
+                                    # Group condition
+                                    conditions = condition['conditions']
+                                    operator = condition['operator']
 
-                                input_values = [input_statuses[i - 1] for i in sensor_inputs]
-                                if operator == 'and':
-                                    result = all(input_values) == value
-                                elif operator == 'or':
-                                    result = any(input_values) == value
-                                else:
-                                    print(f"Invalid operator {operator}")
-                                    result = False
-
-                            return result
-
-                        # Define a function to execute a given action
-                        def execute_action(action):
-                            relay_num = int(action['relay'])
-                            relay_action = action['action']
-
-                            # Perform the relay action
-                            print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action} on relay {relay_num}")
-                            if relay_action == 'on':
-                                self.ncd.turn_on_relay_by_index(relay_num)
-                                print(f"Automation ran for turning on index {relay_num}")
-                            elif relay_action == 'off':
-                                self.ncd.turn_off_relay_by_index(relay_num)
-                                print(f"Automation ran for turning off index {relay_num}")
-
-                        # Loop indefinitely
-                        # while True:
-                        # Read sensor values and update the global variable
-                        #
-                        # global_var = [('0004DGH64BH2', [255, 255]),
-                        #               ('0008DC222A0C', [255, 255, 255, 255, 255, 255])]
-
-                        # Check all automation rules
-                        for rule in self.automation_rules['rules']:
-                            rule_name = rule['name']
-                            conditions = rule['conditions']
-                            actions = rule['actions']
-
-                            # Check if all conditions are true
-                            all_conditions_true = all(check_condition(condition) for condition in conditions)
-
-                            # Execute actions if all conditions are true
-                            if all_conditions_true:
-                                # Check if this rule has already fired
-                                if 'fired' not in rule or not rule['fired']:
-                                    # Execute all actions
-                                    for action in actions:
-                                        execute_action(action)
-
-                                    # Set fired flag to True
-                                    rule['fired'] = True
-                            else:
-                                # Set fired flag to False
-                                rule['fired'] = False
-
-                        # Check status of relays after automation and report to SignalR
-                        self.data_response = (self.ncd.get_relay_status_by_index(1))
-                        # data_response_new = self.data_response
-                        if not self.data_response:
-                            print(f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
-
-                        if data_response_old != self.data_response:
-                            data_response_old = self.data_response
-
-                            # load input device values into global variable to use for automation
-                            device_value = (self.device_mac, self.data_response)
-                            # devices_info = room_controller.ACTIVE_INPUT_VALUES
-                            # update = device_value
-
-                            if device_value[0] not in [device[0] for device in room_controller.ACTIVE_INPUT_VALUES]:
-                                room_controller.ACTIVE_INPUT_VALUES.append(device_value)
-                            else:
-                                for device in room_controller.ACTIVE_INPUT_VALUES:  # looping through every record
-                                    # checking if update mac address in present in each looped device
-                                    if device_value[0] in device:  # if mac matches then check if the update
-                                        # data is the same or not
-                                        if device_value[1] == device[1]:  # if yes, then pass
-                                            pass
-                                        else:  # update with new values
-                                            device[1].clear()
-                                            device[1].extend(device_value[1])
-                                            # print(room_controller.ACTIVE_INPUT_VALUES)
+                                    # Check if all sub-conditions satisfy the operator
+                                    sub_results = [check_condition(sub_condition) for sub_condition in conditions]
+                                    if operator == 'and':
+                                        result = all(sub_results)
+                                    elif operator == 'or':
+                                        result = any(sub_results)
                                     else:
-                                        pass
+                                        print(f"Invalid operator {operator}")
+                                        result = False
+                                else:
+                                    # Sensor condition
+                                    sensor_name = condition['sensor']
+                                    sensor_inputs = condition['inputs']
+                                    operator = condition['operator']
+                                    value = condition['value']
 
-                            # upload relay changes to SignalR
-                            if self.signalr_status:
-                                try:
-                                    print(f">>> connect_and_stream - {self.device_mac} - SEND VALUES TO CLUEMASTER"
-                                          f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
+                                    # Find the sensor in the global variable
+                                    for sensor in room_controller.ACTIVE_INPUT_VALUES:
+                                        if sensor[0] == sensor_name:
+                                            sensor_values = sensor[1]
+                                            break
+                                    else:
+                                        # print(f"Sensor {sensor_name} not found in global variable")
+                                        return False
 
-                                    # send data to signalR hub
-                                    self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
-                                                                            str(self.data_response)])
-                                except Exception as error:
-                                    print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
-                            else:
-                                print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
-                                      , [str(self.room_id), str(self.device_mac), str(self.data_response)])
+                                    # Check if the inputs satisfy the condition
+                                    input_statuses = []
+                                    for bank_value in sensor_values:
+                                        input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+
+                                    input_values = [input_statuses[i - 1] for i in sensor_inputs]
+                                    if operator == 'and':
+                                        result = all(input_values) == value
+                                    elif operator == 'or':
+                                        result = any(input_values) == value
+                                    else:
+                                        print(f"Invalid operator {operator}")
+                                        result = False
+
+                                return result
+
+                            # Define a function to execute a given action
+                            def execute_action(action):
+                                relay_num = int(action['relay'])
+                                relay_action = action['action']
+
+                                # Perform the relay action
+                                print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action} on relay {relay_num}")
+                                if relay_action == 'on':
+                                    self.ncd.turn_on_relay_by_index(relay_num)
+                                    print(f"Automation ran for turning on index {relay_num}")
+                                elif relay_action == 'off':
+                                    self.ncd.turn_off_relay_by_index(relay_num)
+                                    print(f"Automation ran for turning off index {relay_num}")
+
+                            # Loop indefinitely
+                            # while True:
+                            # Read sensor values and update the global variable
+                            #
+                            # global_var = [('0004DGH64BH2', [255, 255]),
+                            #               ('0008DC222A0C', [255, 255, 255, 255, 255, 255])]
+
+                            # Check all automation rules
+                            for rule in self.automation_rules['rules']:
+                                rule_name = rule['name']
+                                conditions = rule['conditions']
+                                actions = rule['actions']
+
+                                # Check if all conditions are true
+                                all_conditions_true = all(check_condition(condition) for condition in conditions)
+
+                                # Execute actions if all conditions are true
+                                if all_conditions_true:
+                                    # Check if this rule has already fired
+                                    if 'fired' not in rule or not rule['fired']:
+                                        # Execute all actions
+                                        for action in actions:
+                                            execute_action(action)
+
+                                        # Set fired flag to True
+                                        rule['fired'] = True
+                                else:
+                                    # Set fired flag to False
+                                    rule['fired'] = False
+
+                            # Check status of relays after automation and report to SignalR
+                            # TODO: create ncd code to check all relays just like the dry contacts report
+                            self.data_response = (self.ncd.get_relay_status_by_index(1))
+                            # data_response_new = self.data_response
+                            if not self.data_response:
+                                print(f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
+
+                            if data_response_old != self.data_response:
+                                data_response_old = self.data_response
+
+                                # load input device values into global variable to use for automation
+                                device_value = (self.device_mac, self.data_response)
+                                # devices_info = room_controller.ACTIVE_INPUT_VALUES
+                                # update = device_value
+
+                                if device_value[0] not in [device[0] for device in room_controller.ACTIVE_INPUT_VALUES]:
+                                    room_controller.ACTIVE_INPUT_VALUES.append(device_value)
+                                else:
+                                    for device in room_controller.ACTIVE_INPUT_VALUES:  # looping through every record
+                                        # checking if update mac address in present in each looped device
+                                        if device_value[0] in device:  # if mac matches then check if the update
+                                            # data is the same or not
+                                            if device_value[1] == device[1]:  # if yes, then pass
+                                                pass
+                                            else:  # update with new values
+                                                device[1].clear()
+                                                device[1].extend(device_value[1])
+                                                # print(room_controller.ACTIVE_INPUT_VALUES)
+                                        else:
+                                            pass
+
+                                # upload relay changes to SignalR
+                                if self.signalr_status:
+                                    try:
+                                        print(f">>> connect_and_stream - {self.device_mac} - SEND VALUES TO CLUEMASTER"
+                                              f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
+
+                                        # send data to signalR hub
+                                        self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
+                                                                                str(self.data_response)])
+                                    except Exception as error:
+                                        print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
+                                else:
+                                    print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
+                                          , [str(self.room_id), str(self.device_mac), str(self.data_response)])
 
                         # Wait for some time before checking again
                         # TODO: See if we need to sleep to slow cpu usage and add NCD.COMMS check.
-                        time.sleep(0.10)
+                        time.sleep(0.005)
 
                     elif self.device_type == 1:
 
@@ -403,7 +422,7 @@ class ConnectAndStream(threading.Thread):
 
                             # load input device values into global variable to use for automation
                             device_value = (self.device_mac, self.data_response)
-                            # devices_info = room_controller.ACTIVE_INPUT_VALUES
+                            devices_info = room_controller.ACTIVE_INPUT_VALUES
                             # update = device_value
 
                             if device_value[0] not in [device[0] for device in room_controller.ACTIVE_INPUT_VALUES]:
@@ -423,7 +442,7 @@ class ConnectAndStream(threading.Thread):
 
                             # print(devices_info)
                             # set the global variable for ACTIVE_INPUT_VALUES to be used by other threads
-                            # room_controller.ACTIVE_INPUT_VALUES = devices_info
+                            # room_controller.ACTIVE_INPUT_VALUES = device_value
                             # print('>>> connect_and_stream - ', self.device_mac, ' - ACTIVE GLOBAL INPUTS: ',
                             #       room_controller.ACTIVE_INPUT_VALUES)
                             # print(f">>> connect_and_stream - {self.device_mac} - ACTIVE GLOBAL INPUTS: {room_controller.ACTIVE_INPUT_VALUES}")

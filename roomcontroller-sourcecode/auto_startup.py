@@ -30,12 +30,12 @@ class AutoStartup:
         self.api_active_null_responses = ["No room controller found", "No request found", "No record found"]
         self.device_status = True
 
-        level    = logging.INFO
-        format   = '  %(message)s'
-        handlers = [logging.FileHandler('filename.log'), logging.StreamHandler()]
-
-        logging.basicConfig(level = level, format = format, handlers = handlers)
-        logging.info('>>> auto_startup - AutoStartup Process Starting')
+        # level    = logging.INFO
+        # format   = '  %(message)s'
+        # handlers = [logging.FileHandler('filename.log'), logging.StreamHandler()]
+        #
+        # logging.basicConfig(level = level, format = format, handlers = handlers)
+        # logging.info('>>> auto_startup - AutoStartup Process Starting')
 
         # instance methods
         self.configurations()
