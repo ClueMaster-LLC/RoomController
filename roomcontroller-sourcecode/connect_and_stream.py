@@ -115,8 +115,8 @@ class ConnectAndStream(threading.Thread):
             .with_automatic_reconnect({
                 "type": "raw",
                 "keep_alive_interval": 5,
-                "reconnect_interval": 5,
-                "max_attempts": 99999999
+                "reconnect_interval": 5.0,
+                "max_attempts": 5
                 }).build()
 
         # "type": "interval",
@@ -217,15 +217,17 @@ class ConnectAndStream(threading.Thread):
                                                                        "Re-Sync Data command received")))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_index(16))))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_index(16))))
-                self.hub_connection.on('relay_on', (lambda relay_num: (self.ncd.turn_on_relay_by_index(function_relay(relay_num)),
-                                                                       old_relay_values_clear())))
-                self.hub_connection.on('relay_off', (lambda relay_num: (self.ncd.turn_off_relay_by_index(function_relay(relay_num)),
-                                                                        old_relay_values_clear())))
+                self.hub_connection.on('relay_on', (lambda relay_num:
+                                                    (self.ncd.turn_on_relay_by_index(function_relay(relay_num)),
+                                                     old_relay_values_clear())))
+                self.hub_connection.on('relay_off', (lambda relay_num:
+                                                     (self.ncd.turn_off_relay_by_index(function_relay(relay_num)),
+                                                      old_relay_values_clear())))
 
                 self.hub_connection.on('relay_on', (lambda relay_num: print(
-                    f'>>> connect_and_stream - {self.device_mac} - RELAY ON {function_relay(relay_num)}')))
+                    f'>>> connect_and_stream - {self.device_mac} - RELAY ON # {function_relay(relay_num)}')))
                 self.hub_connection.on('relay_off', (lambda relay_num: print(
-                    f'>>> connect_and_stream - {self.device_mac} - RELAY OFF {function_relay(relay_num)}')))
+                    f'>>> connect_and_stream - {self.device_mac} - RELAY OFF # {function_relay(relay_num)}')))
                 self.hub_connection.on('reset_room', (lambda relay_num: (self.ncd.turn_off_relay_by_index(0))))
 
                 def old_relay_values_clear():
@@ -322,13 +324,14 @@ class ConnectAndStream(threading.Thread):
                                 relay_action = action['action']
 
                                 # Perform the relay action
-                                print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action} on relay {relay_num}")
+                                print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
+                                      f" on relay # {relay_num}")
                                 if relay_action == 'on':
                                     self.ncd.turn_on_relay_by_index(relay_num)
-                                    print(f"Automation ran for turning on index {relay_num}")
+                                    print(f"Automation ran for turning on index # {relay_num}")
                                 elif relay_action == 'off':
                                     self.ncd.turn_off_relay_by_index(relay_num)
-                                    print(f"Automation ran for turning off index {relay_num}")
+                                    print(f"Automation ran for turning off index # {relay_num}")
 
                             # Loop indefinitely
                             # while True:
