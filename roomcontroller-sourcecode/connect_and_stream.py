@@ -238,15 +238,14 @@ class ConnectAndStream(threading.Thread):
             try:
                 # to clear the buffer on NIC when first connect sends MAC.
                 data_response_init = self.client_socket.recvfrom(32)
-                data_response_mac = str(list(data_response_init)[0]).replace(":", '').replace("b", '').replace("'", '')
+                data_response_mac = str(list(data_response_init)[0]).replace(":", '').replace("b'", '').replace("'", '')
                 if data_response_mac == self.device_mac:
                     # print(f'>>> connect_and_stream - {self.device_mac} - VALUES MATCH')
                     pass
                 else:
                     print(f'>>> connect_and_stream - {self.device_mac} - EXPECTED MAC VALUES DONT MATCH {data_response_mac}')
                     self.client_socket.close()
-                    print(
-                        f'>>> connect_and_stream - {self.device_mac} - Disconnecting from {self.ip_address}')
+                    print(f'>>> connect_and_stream - {self.device_mac} - Disconnecting from {self.ip_address}')
                     self.update_webapp_with_new_details(ip_address='0.0.0.0', macaddress=self.device_mac,
                                                         serverport='2101')
                     print(f'>>> connect_and_stream - {self.device_mac} - The last known IP {self.ip_address}'
