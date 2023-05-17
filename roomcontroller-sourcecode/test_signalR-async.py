@@ -24,9 +24,9 @@ class MyHub(Hub):
     async def on_message(message: List[Dict[str, Any]]) -> None:
         print(f'Received message: {message}')
     
-##    async def on_receive(self) -> None:
-##        #receive new chat messages from the hub
-##        await self.invoke("ReceiveMessage", print)
+    async def on_receive(self) -> None:
+        #receive new chat messages from the hub
+        await self.invoke("ReceiveMessage", print)
 
 
 hub = MyHub("chathub")
@@ -49,18 +49,18 @@ async def main():
     token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
     headers = {"Authorization": f"Bearer {token}"}
     async with Client(
-        "https://devapi.cluemaster.io/",
+        "https://comhub.cluemaster.io/",
         hub,
         connection_options={
             "http_client_options": {"headers": headers},
             "ws_client_options": {"headers": headers, "timeout": 5.0},
 ##            "protocol": MessagePackProtocol(),
             "protocol": JsonProtocol(),
-            "logger": logging.DEBUG,
+            "logger": logging.ERROR,
         },
     ) as client:
-        #await hub.on_message()
-        await hub.send_message_async("DEVICE1","Connected data sending")
+##        await hub.on_message()
+##        await hub.send_message_async("DEVICE1","Connected data sending")
 
         message = None
         username = "Robert"
