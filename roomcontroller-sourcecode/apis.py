@@ -14,6 +14,7 @@ GET_NEW_INPUT_RELAY_LIST = master_base_url + "api/roomcontroller/GetLatestInputR
 POST_ROOM_CONTROLLER_REQUEST = master_base_url + "api/roomcontroller/PostRoomControllerRequest/{device_id}/{request_id}"
 POST_NEW_INPUT_RELAY_DISCOVERY = master_base_url + "api/roomcontroller/PostNewInputRelayDiscovery?devicekey={device_id}"
 POST_INPUT_RELAY_REQUEST_UPDATE = master_base_url + "api/roomcontroller/PostInputRelayRequestUpdate"
+POST_ROOM_CONTROLLER_ERRORLOG = master_base_url + "api/roomcontroller/PostLogError/{device_id}/{ErrorLog}"
 
 # SIGNALR
 API_SIGNALR = signalr_hub_url + "chathub"
