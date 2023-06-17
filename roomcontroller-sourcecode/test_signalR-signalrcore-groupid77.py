@@ -1,6 +1,7 @@
 import logging
 import sys
 import time
+import requests
 
 import signalrcore.hub.base_hub_connection
 from signalrcore.hub_connection_builder import HubConnectionBuilder
@@ -23,20 +24,27 @@ device_mac = '0008DC22545X'
 #server_url = f"https://cluemaster-signalr-win.azurewebsites.net/chathub?{device_mac}"
 ##server_url = f"https://comhub.cluemaster.io/chathub?serialnumber={device_mac}"
 #server_url = f"https://comhub.cluemaster.io/chathub?{device_mac}"
-server_url = f"wss://dev-comhub.cluemaster.io/chathub"
+
+
+
+token = "F48C-5064-6347_f44442f10275efe965cf815c2de7f18c44446eee422ba7f80d6a768ca3eee11b"
+headers = {"Authorization": f"Bearer {token}"}
+
+hard_token = '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
+headers2 = {"Authorization": f"{token}"}
+access_token = 'access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt',
+
+server_url = f"wss://dev-comhub.cluemaster.io/chathub?access_token="+token
 print(server_url)
 
-#token = "F48C-5064-6347_c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
-#headers = {"Authorization": f"Bearer {token}"}
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 hub_connection = HubConnectionBuilder()\
     .with_url(server_url, options={
                 "verify_ssl": True,
-                "skip_negotiation": True,
-                "access_token_factory": lambda: '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
- #               "http_client_options": {"headers": headers, "timeout": 5.0},
- #               "ws_client_options": {"headers": headers, "timeout": 5.0},
+                "skip_negotiation": False,
+                "http_client_options": {"headers": access_token, "timeout": 5.0},
+                "ws_client_options": {"headers": access_token, "timeout": 5.0}
 ##                "serialnumber": str(device_mac)
         }) \
     .configure_logging(logging.DEBUG, socket_trace=True, handler=handler) \
@@ -48,11 +56,11 @@ hub_connection = HubConnectionBuilder()\
         })\
     .build()
 
-# hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
+##                "access_token_factory": lambda: '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt',
+##hub_connection.on_open(lambda: print("connection opened and handshake received ready to send messages"))
 hub_connection.on_open(lambda: (hub_connection.send('AddToGroup', [str(room_id)]),
-                                hub_connection.send('AddToGroup', [str(device_mac)]),
                                      print(f">>> connect_and_stream - {device_mac} - signalR handshake "
-                                           f"received. Ready to send/receive messages.")))
+                                           f"received. Ready to send/receive messages. Also joined group {room_id}")))
 hub_connection.on_close(lambda: print("connection closed"))
 hub_connection.on_error(lambda data: print(f"An exception was thrown closed{data.error}"))
 hub_connection.on_reconnect(lambda: print("re-connected"))
