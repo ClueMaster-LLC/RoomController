@@ -10,7 +10,7 @@ def input_with_default(input_text, default_value):
     return default_value if value is None or value.strip() == "" else value
 
 
-server_url = input_with_default('Enter your server url(default: {0}): ', "https://devapi.cluemaster.io/chathub")
+server_url = input_with_default('Enter your server url(default: {0}): ', "https://dev-comhub.cluemaster.io/chathub")
 username = input_with_default('Enter your username (default: {0}): ', "robert")
 token = "F48C-5064-6347:c156e961919141723e5cb21c01647838cf5fc7f39b0a1bb31c9f4c1daeb4e348"
 headers = {"Authorization": f"Bearer {token}"}
@@ -19,6 +19,7 @@ handler.setLevel(logging.ERROR)
 hub_connection = HubConnectionBuilder()\
     .with_url(server_url, options={
         "verify_ssl": True,
+        "access_token_factory": lambda: '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 ##        "http_client_options": {"headers": headers},
 ##        "ws_client_options": {"headers": headers, "timeout": 1.0},
         }) \

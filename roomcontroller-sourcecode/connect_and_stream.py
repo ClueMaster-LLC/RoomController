@@ -84,13 +84,7 @@ class ConnectAndStream(threading.Thread):
             json_response_of_unique_ids_file = json.load(unique_ids_file)
 
         # Load the automation rules from the JSON file
-        try:
-            with open(self.automation_rules_file, 'r') as f:
-                self.automation_rules = json.load(f)
-                print(f">>> connect_and_stream - {self.device_mac} - Automation Rules Loaded Successfully")
-        except Exception as error:
-            print(">>> connect_and_stream - ", self.device_mac,
-                  f" Failed to Load Automation Rules File or File Does Not Exist. {error}")
+        self.automation_rules_update()
 
         self.device_unique_id = json_response_of_unique_ids_file["device_id"]
         self.api_bearer_key = json_response_of_unique_ids_file["api_token"]
@@ -108,17 +102,19 @@ class ConnectAndStream(threading.Thread):
             .with_url(self.server_url, options={
                 "verify_ssl": True,
                 "skip_negotiation": False,
-                "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
-                "ws_client_options": {"headers": self.api_headers, "timeout": 5.0}
+                "access_token_factory": lambda: '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
             }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
                 "type": "raw",
                 "keep_alive_interval": 5,
                 "reconnect_interval": 5.0,
-                "max_attempts": 5
+                "max_attempts": 100
                 }).build()
         # TODO try to get retries working and connect to signalR when online
+        # "accessTokenFactory": '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
+        # "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
+        # "ws_client_options": {"headers": self.api_headers, "timeout": 5.0}
         # "type": "interval",
         # "keep_alive_interval": 5,
         # "reconnect_interval": 5,
@@ -164,6 +160,7 @@ class ConnectAndStream(threading.Thread):
         # command received by hub to refresh values from all device threads to update location workspace
         self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
 
+    @property
     def run(self):
         connected = False
         while not connected:
@@ -212,23 +209,26 @@ class ConnectAndStream(threading.Thread):
             # device_type 2 = Relays
             if self.device_type == 2:
                 self.hub_connection.on('syncdata', (lambda data: old_relay_values_clear()))
-                self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
                 self.hub_connection.on('syncdata', (lambda data: print(f">>> connect_and_stream - {self.device_mac} ",
                                                                        "Re-Sync Data command received")))
+                self.hub_connection.on('syncdata', (lambda data: self.sync_data()))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_on_relay_by_index(16))))
                 # self.hub_connection.on(str(self.room_id), (lambda relay_num: (self.ncd.turn_off_relay_by_index(16))))
                 self.hub_connection.on('relay_on', (lambda relay_num:
-                                                    (self.ncd.turn_on_relay_by_index(function_relay(relay_num)),
-                                                     old_relay_values_clear())))
+                                                    (self.ncd.turn_on_relay_by_index(function_relay(relay_num)))))
                 self.hub_connection.on('relay_off', (lambda relay_num:
-                                                     (self.ncd.turn_off_relay_by_index(function_relay(relay_num)),
-                                                      old_relay_values_clear())))
-
+                                                     (self.ncd.turn_off_relay_by_index(function_relay(relay_num)))))
                 self.hub_connection.on('relay_on', (lambda relay_num: print(
                     f'>>> connect_and_stream - {self.device_mac} - RELAY ON # {function_relay(relay_num)}')))
                 self.hub_connection.on('relay_off', (lambda relay_num: print(
                     f'>>> connect_and_stream - {self.device_mac} - RELAY OFF # {function_relay(relay_num)}')))
-                self.hub_connection.on('reset_room', (lambda relay_num: (self.ncd.turn_off_relay_by_index(0))))
+
+                self.hub_connection.on('relay_on', (lambda data: print(old_relay_values_clear())))
+                self.hub_connection.on('relay_off', (lambda data: print(old_relay_values_clear())))
+
+                self.hub_connection.on('reset_room', (lambda relay_num: (self.ncd.turn_off_relay_group(1, 1, 48),
+                                                                         (self.ncd.turn_off_relay_group(1, 2, 48)))))
+                self.hub_connection.on('reset_room', (lambda: print("resetting room")))
 
                 def old_relay_values_clear():
                     self.active_input_values_old = None
@@ -295,6 +295,11 @@ class ConnectAndStream(threading.Thread):
 
                         # print(f">>> connect_and_stream - {self.device_mac} - NCD DEVICE COMMS TEST SUCCESSFUL")
                         # print(f">>> connect_and_stream - {self.device_mac} - {room_controller.ACTIVE_INPUT_VALUES}")
+
+                        # DOWNLOAD NEW AUTOMATION RULES AND PUT IN ACTIVE MEMORY WITHOUT RESTARTING
+                        if room_controller.GLOBAL_AUTOMATION_RULE_PENDING:
+                            print(f">>> connect_and_stream - {self.device_mac} - New Automation Rules Ready for DL")
+                            self.automation_rules_update()
 
                         # room_controller.ACTIVE_INPUT_VALUES
                         if self.active_input_values_old != str(room_controller.ACTIVE_INPUT_VALUES):
@@ -399,8 +404,14 @@ class ConnectAndStream(threading.Thread):
 
                             # Check status of relays after automation and report to SignalR
                             # TODO: create ncd code to check all relays just like the dry contacts report
-                            self.data_response = (self.ncd.get_relay_status_by_index(1))
-                            # data_response_new = self.data_response
+                            data_response1 = (self.ncd.get_relay_all_bank_status(1))
+                            time.sleep(.10)
+                            data_response2 = (self.ncd.get_relay_all_bank_status(2))
+                            # self.data_response = self.ncd.get_relay_all_bank_status()
+                            self.data_response = data_response1+data_response2
+                            # print(
+                            #     f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
+
                             if not self.data_response:
                                 print(f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
 
@@ -803,6 +814,17 @@ class ConnectAndStream(threading.Thread):
             # self.connection_lost()
 
         return discover_ip, discover_port
+
+    def automation_rules_update(self):
+        try:
+            with open(self.automation_rules_file, 'r') as f:
+                self.automation_rules = json.load(f)
+                print(f">>> connect_and_stream - {self.device_mac} - Automation Rules Loaded Successfully")
+                room_controller.GLOBAL_AUTOMATION_RULE_PENDING = False
+
+        except Exception as error:
+            print(">>> connect_and_stream - ", self.device_mac,
+                  f" Failed to Load Automation Rules File or File Does Not Exist. {error}")
 
     @staticmethod
     def extract_ip():

@@ -84,7 +84,15 @@ class NCD_Controller:
 
 	def get_relay_all_bank_status(self, bank=0):
 		command = self.wrap_in_api([254, 124, bank])
-		print((self.send_command(command, 35)))
+		# print(self.send_command(command, 35))
+		# bytesObject = (self.send_command(command, 35))
+		# print(bytesObject)
+
+		# bytesObject = b'\x65\x66\x67\x00\x10\x00\x00\x00\x04\x00'
+		# length = len(bytesObject)
+		# print(f'Length of this bytes object is {length}.')
+
+		# return self.process_control_command_return(self.send_command(command, 32))
 		return self.process_read_command_return(self.send_command(command, 35))
 
 	def get_relay_status_by_index(self, relay):
@@ -152,16 +160,16 @@ class NCD_Controller:
 		return data
 
 	def send_command(self, command, bytes_back):
-# 	        The following line is causing problems and has been commented out until further study.
-                        # command = self.convert_data(command)
-                        if self.combus_type == 'serial':
-                                self.combus.write(command)
-                                return self.combus.read(bytes_back)
-                        else:
-                                # print(command)
-                                # print(bytearray(command))
-                                self.combus.send(bytearray(command))
-                                return self.combus.recv(32)
+		# The following line is causing problems and has been commented out until further study.
+		# command = self.convert_data(command)
+		if self.combus_type == 'serial':
+			self.combus.write(command)
+			return self.combus.read(bytes_back)
+		else:
+			# print(command)
+			# print(bytearray(command))
+			self.combus.send(bytearray(command))
+			return self.combus.recv(32)
 
 	def process_control_command_return(self, data):
 		# print(data).encode('hex');
@@ -305,10 +313,10 @@ class NCD_Controller:
 		command = self.wrap_in_api([254, 175, 0, 24])
 		return self.process_control_command_return(self.send_command(command, 32))
 
-	def get_dc_input_status_by_bank(self, relay, bank = 1):
+	def get_dc_input_status_by_bank(self, relay, bank=1):
 		command = self.wrap_in_api([254, 115+relay, bank])
 		return self.process_control_command_return(self.send_command(command, 32))
 
-	def get_dc_bank_status(self, bank_start = 1, band_end = 2):
+	def get_dc_bank_status(self, bank_start=1, band_end=2):
 		command = self.wrap_in_api([254, 175, bank_start, band_end])
 		return self.process_read_command_return(self.send_command(command, 32))

@@ -3,7 +3,13 @@
   <component name="ChangeListManager">
     <list default="true" id="30cdf677-a2a7-471e-9674-ecf1ff57afd5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/Network-Relay-Example.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/Network-Relay-Example.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/apis.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/apis.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/ncd_industrial_devices.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/ncd_industrial_devices.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/room_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/room_controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/test_signalR-signalrcore-groupid44.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/test_signalR-signalrcore-groupid44.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/test_signalR-signalrcore-groupid77.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/test_signalR-signalrcore-groupid77.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

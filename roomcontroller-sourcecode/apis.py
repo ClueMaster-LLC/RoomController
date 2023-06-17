@@ -1,6 +1,6 @@
 master_base_url = "https://deviceapi.cluemaster.io/"
-#signalr_hub_url = "https://cluemaster-signalr-win.azurewebsites.net/"
-signalr_hub_url = "https://comhub.cluemaster.io/"
+# signalr_hub_url = "https://cluemaster-signalr-win.azurewebsites.net/"
+signalr_hub_url = "wss://comhub.cluemaster.io/"
 # apis available to cluemaster room controller
 
 # GETs
@@ -9,6 +9,8 @@ ROOM_CONTROLLER_REQUEST_API = master_base_url + "api/roomcontroller/GetRoomContr
 NEW_RELAYS_DISCOVERY_REQUEST = master_base_url + "api/roomcontroller/GetNewInputRelayDiscoveryRequest/{device_id}"
 GET_NEW_INPUT_RELAY_LIST_REQUEST = master_base_url + "api/roomcontroller/GetNewInputRelayListRequest/{device_id}"
 GET_NEW_INPUT_RELAY_LIST = master_base_url + "api/roomcontroller/GetLatestInputRelayList/{device_id}"
+GET_ROOM_AUTOMATION_MASTER = master_base_url + "api/roomcontroller/GetRoomAutomationMaster/{device_id}"
+GET_ROOM_CONTROLLER_AUTOMATION_REQUEST = master_base_url + "api/roomcontroller/GetRoomControllerAutomationRequest/{device_id}"
 
 # POSTs
 POST_ROOM_CONTROLLER_REQUEST = master_base_url + "api/roomcontroller/PostRoomControllerRequest/{device_id}/{request_id}"
