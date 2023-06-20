@@ -312,5 +312,6 @@ class RoomController:
         self.connect_and_stream_thread = connect_and_stream.ConnectAndStream(device_mac=device_mac_id)
         self.connect_and_stream_thread.start()
 
+
     def reset_room_controller(self):
         pass

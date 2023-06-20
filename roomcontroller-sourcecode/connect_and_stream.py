@@ -41,6 +41,8 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.signalr_bearer_token = None
+        self.signalr_access_token = None
         self.active_input_values_old = None
         self.api_headers = None
         self.device_request_api_url = None
@@ -92,9 +94,11 @@ class ConnectAndStream(threading.Thread):
 
         self.api_headers = CaseInsensitiveDict()
         self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
+        self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
+        self.signalr_access_token = "?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt"
 
     def signalr_hub(self):
-        self.server_url = API_SIGNALR
+        self.server_url = API_SIGNALR + self.signalr_access_token
         print(f">>> connect_and_stream - {self.device_mac} - SignalR connected to {self.server_url}")
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
