@@ -11,7 +11,7 @@ confinement: strict
 
 architectures:
   - build-on: amd64
-    build-for: all
+    build-for: amd64
 
 apps:
   room-controller:
