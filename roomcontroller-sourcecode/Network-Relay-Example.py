@@ -10,10 +10,10 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # instantiate the board object and pass it the network socket
 board1 = ncd_industrial_devices.NCD_Controller(sock)
 # connect the socket using desired IP and Port
-IP_ADDRESS = "192.168.1.13"
+IP_ADDRESS = "192.168.1.34"
 PORT = 2101
 sock.connect((IP_ADDRESS, PORT))
-sock.settimeout(0.5)
+sock.settimeout(5.0)
 
 print(board1.test_comms())
 

@@ -408,11 +408,11 @@ class ConnectAndStream(threading.Thread):
 
                             # Check status of relays after automation and report to SignalR
                             # TODO: create ncd code to check all relays just like the dry contacts report
-                            data_response1 = (self.ncd.get_relay_all_bank_status(1))
-                            time.sleep(.10)
-                            data_response2 = (self.ncd.get_relay_all_bank_status(2))
-                            # self.data_response = self.ncd.get_relay_all_bank_status()
-                            self.data_response = data_response1+data_response2
+                            # data_response1 = (self.ncd.get_relay_all_bank_status(1))
+                            # time.sleep(.10)
+                            # data_response2 = (self.ncd.get_relay_all_bank_status(2))
+                            self.data_response = self.ncd.get_relay_all_bank_status()
+                            # self.data_response = data_response1+data_response2
                             # print(
                             #     f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
 

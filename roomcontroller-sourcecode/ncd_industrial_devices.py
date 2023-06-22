@@ -84,6 +84,7 @@ class NCD_Controller:
 
 	def get_relay_all_bank_status(self, bank=0):
 		command = self.wrap_in_api([254, 124, bank])
+		# print(command)
 		# print(self.send_command(command, 35))
 		# bytesObject = (self.send_command(command, 35))
 		# print(bytesObject)
@@ -169,7 +170,9 @@ class NCD_Controller:
 			# print(command)
 			# print(bytearray(command))
 			self.combus.send(bytearray(command))
-			return self.combus.recv(32)
+
+			# Changed per Jacob Youngblood @ NCD - 06/21/2023
+			return self.combus.recv(bytes_back)
 
 	def process_control_command_return(self, data):
 		# print(data).encode('hex');
@@ -183,11 +186,16 @@ class NCD_Controller:
 
 	def process_read_command_return(self, data):
 		handshake = self.check_handshake(data)
+		# print(f"handshake: {handshake}")
 		bytes_back = self.check_bytes_back(data)
+		# print(f"bytes_back: {bytes_back}")
 		checksum = self.check_checksum(data)
+		# print(f"checksum: {checksum}")
 		if handshake and bytes_back and checksum:
+			# print(f"get_payload(data) returns: {self.get_payload(data)}")
 			return self.get_payload(data)
 		else:
+			# print(f"get_payload(data) returns: {self.get_payload(data)}")
 			return False
 
 	def get_payload(self, data):
