@@ -34,7 +34,7 @@ hard_token = '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 headers2 = {"Authorization": f"{token}"}
 access_token = 'access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt',
 
-server_url = f"wss://dev-comhub.cluemaster.io/chathub?access_token="+token
+server_url = f"wss://dev-comhub.cluemaster.io/chathub?access_token={token}"
 print(server_url)
 
 handler = logging.StreamHandler()
