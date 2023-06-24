@@ -93,20 +93,19 @@ class ConnectAndStream(threading.Thread):
         self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
 
         self.api_headers = CaseInsensitiveDict()
-        self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
+        # self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
         self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
-        self.signalr_access_token = "?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt"
+        # self.signalr_access_token = f"?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt"
 
     def signalr_hub(self):
-        self.server_url = API_SIGNALR + self.signalr_access_token
+        self.server_url = API_SIGNALR + self.signalr_bearer_token
         print(f">>> connect_and_stream - {self.device_mac} - SignalR connected to {self.server_url}")
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
                 "verify_ssl": True,
-                "skip_negotiation": False,
-                "access_token_factory": lambda: '1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
+                "skip_negotiation": False
             }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
@@ -230,9 +229,17 @@ class ConnectAndStream(threading.Thread):
                 self.hub_connection.on('relay_on', (lambda data: print(old_relay_values_clear())))
                 self.hub_connection.on('relay_off', (lambda data: print(old_relay_values_clear())))
 
+                self.hub_connection.on('relay_on', (lambda relay_num: (relay_multi_command(function_relay(relay_num)))))
+
                 self.hub_connection.on('reset_room', (lambda relay_num: (self.ncd.turn_off_relay_group(1, 1, 48),
                                                                          (self.ncd.turn_off_relay_group(1, 2, 48)))))
-                self.hub_connection.on('reset_room', (lambda: print("resetting room")))
+                # self.hub_connection.on('reset_room', (lambda data: print(self.ncd.turn_off_relay_by_bank(0))))
+                self.hub_connection.on('reset_room', (lambda data: print(f">>> connect_and_stream - {self.device_mac} ",
+                                                                         "Reset Room command received")))
+
+                def relay_multi_command(relay_array):
+                    for relay in relay_array:
+                        print(f'do it now {relay}')
 
                 def old_relay_values_clear():
                     self.active_input_values_old = None

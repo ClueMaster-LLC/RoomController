@@ -2,8 +2,7 @@
 import socket
 import time
 import ncd_industrial_devices
-
-
+import re
 
 # set up your socket with the desired settings.
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,14 +16,20 @@ sock.settimeout(5.0)
 
 print(board1.test_comms())
 
+
+def function_relay(relay_val):
+    relay_num = int(re.findall('[0-9]+', str(relay_val[0]))[0])
+    return relay_num
+
+
 # pass these methods a number between 1 and 512 to set the current status of the relay.
 ##print(board1.turn_on_relay_by_index(3))
 ##print(board1.fusion_turn_on_relay_by_index(2))
-#print(board1.turn_on_relay_by_index(16))
-#print(board1.turn_on_relay_by_index(15))
+# print(board1.turn_on_relay_by_index(16))
+# print(board1.turn_on_relay_by_index(15))
 ##time.sleep(3)
-#print(board1.turn_off_relay_by_index(16))
-#print(board1.turn_off_relay_by_index(0))
+# print(board1.turn_off_relay_by_index(16))
+# print(board1.turn_off_relay_by_index(0))
 
 # pass these methods a number between 1 and 512 to get the current status of the relay
 ##print(board1.get_relay_status_by_index(1))
@@ -51,19 +56,20 @@ print(board1.test_comms())
 ### set the status of a bank, 255 is all relays on, 3 is relay one and two etc. The value is based on an 8 bit value so 3 = 00000011 = relays one and two will be on.
 ### the first arg is the relay value. The second arg is the bank number.
 ### Send 8bit value with Bank 0 = all, or bank value
-#print(board1.set_relay_bank_status(0, 0, 0, 0))
+# print(board1.set_relay_bank_status(0, 0, 0, 0))
 ##
 ### get a relay status value for the board in a byte value The value is based on an 8 bit value so 3 = 00000011 = relays one and two are on.
 ### The argument is the relay bank
 ##print(board1.get_relay_bank_status(1))
 ##print(board1.get_relay_bank_status(2))
 
-#monitor relay by number and by bank. The first argument is the relay number from 1-8. The second argument is the bank number. Bank = 1 if not specified.
+# monitor relay by number and by bank. The first argument is the relay number from 1-8. The second argument is the bank number. Bank = 1 if not specified.
 ##print(board1.get_relay_status_by_bank(1, 14))
 ##print(board1.get_relay_status_by_bank(2))
 
 ### monitor relays and return 8-bit value of what relay is on/off in all banks.
 print(board1.get_relay_all_bank_status(0))
+
 ##
 ### control relays by number and by bank. The first argument is the relay number from 1-8. The second argument is the bank number.
 ##print(board1.turn_on_relay_by_bank(1, 1))
