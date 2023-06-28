@@ -9,12 +9,13 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # instantiate the board object and pass it the network socket
 board1 = ncd_industrial_devices.NCD_Controller(sock)
 # connect the socket using desired IP and Port
-IP_ADDRESS = "192.168.1.34"
+IP_ADDRESS = "192.168.1.13"
 PORT = 2101
 sock.connect((IP_ADDRESS, PORT))
 sock.settimeout(5.0)
 
 print(board1.test_comms())
+time.sleep(.1)
 
 
 def function_relay(relay_val):
@@ -69,11 +70,17 @@ def function_relay(relay_val):
 
 ### monitor relays and return 8-bit value of what relay is on/off in all banks.
 print(board1.get_relay_all_bank_status(0))
+print(board1.get_relay_all_bank_status(0))
 
 ##
 ### control relays by number and by bank. The first argument is the relay number from 1-8. The second argument is the bank number.
 ##print(board1.turn_on_relay_by_bank(1, 1))
 ##print(board1.turn_on_relay_by_bank(2, 1))
+board1.set_relay_bank_status(255, 255)
+
+
+time.sleep(1)
+print(board1.set_relay_bank_status(0, 0))
 
 ##print(board1.turn_off_relay_by_bank(1, 1))
 ##print(board1.turn_off_relay_by_bank(2, 1))
