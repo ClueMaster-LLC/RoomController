@@ -90,6 +90,7 @@ class RoomController:
 
             # load all the devices on startup into memory array
             self.init_previous_devices()
+            self.init_automation_rules()
             # self.handling_devices_info()
 
         except Exception as ErrorFileNotFound:
@@ -306,6 +307,20 @@ class RoomController:
         global_active_mac_ids = self.active_mac_ids
 
         connected_devices.ConnectedDevices()
+
+    def init_automation_rules(self):
+        try:
+            # download latest list of devices from ClueMaster to refresh list if request_id=14
+            print(">>> room_controller - Download new Automation File form ClueMaster")
+            get_automationrule_response = self.get_automationrules_file()
+            print(f">>> room_controller - Update automation_rules.JSON file")
+            self.save_automationrules_file(get_automationrule_response)
+
+            # Set global var to true to relay threads can update rules in memory without rebooting
+            global GLOBAL_AUTOMATION_RULE_PENDING
+            GLOBAL_AUTOMATION_RULE_PENDING = True
+        except Exception as error:
+            print(f">>> room_controller - Automation File Download Error: {error}")
 
     def connect_and_stream_data(self, device_mac_id):
         print(">>> room_controller - Starting ConnectAndStream thread for device - ", device_mac_id)
