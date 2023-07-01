@@ -500,7 +500,6 @@ class ConnectAndStream(threading.Thread):
                                     except Exception as error:
                                         print(f'>>> connect_and_stream - {self.device_mac} SignalR Connection Error: {error}')
 
-
                         # Wait for some time before checking again
                         # TODO: See if we need to sleep to slow cpu usage and add NCD.COMMS check.
                         time.sleep(0.01)
