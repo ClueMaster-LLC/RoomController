@@ -41,6 +41,7 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.data_response_old = None
         self.signalr_bearer_token = None
         self.signalr_access_token = None
         self.active_input_values_old = None
@@ -256,7 +257,8 @@ class ConnectAndStream(threading.Thread):
                     self.active_input_values_old = None
 
                 def data_response_clear():
-                    self.data_response = []
+                    # self.data_response = []
+                    self.data_response_old = None
 
         try:
             self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
@@ -301,7 +303,7 @@ class ConnectAndStream(threading.Thread):
                 print('>>> connect_and_stream - init ERROR: ' + str(e))
                 data_response_init = self.device_mac
 
-            data_response_old = None
+            self.data_response_old = None
             # self.active_input_values_old = None
 
             print(f">>> connect_and_stream - {self.device_mac} - DEVICE CONNECTED AND READY")
@@ -427,6 +429,7 @@ class ConnectAndStream(threading.Thread):
                                         # Execute all actions
                                         for action in actions:
                                             execute_action(action)
+                                            self.data_response_old = None
 
                                         # Set fired flag to True
                                         rule['fired'] = True
@@ -454,8 +457,8 @@ class ConnectAndStream(threading.Thread):
                                 # self.ncd.renew_replace_interface(self.client_socket)
                                 pass
 
-                            if data_response_old != self.data_response:
-                                data_response_old = self.data_response
+                            if self.data_response_old != self.data_response:
+                                self.data_response_old = self.data_response
 
                                 # load input device values into global variable to use for automation
                                 device_value = (self.device_mac, self.data_response)
@@ -509,8 +512,8 @@ class ConnectAndStream(threading.Thread):
                         if not self.data_response:
                             print(f'DATA RESPONSE IS: {self.data_response}')
 
-                        if data_response_old != self.data_response:
-                            data_response_old = self.data_response
+                        if self.data_response_old != self.data_response:
+                            self.data_response_old = self.data_response
 
                             # load input device values into global variable to use for automation
                             device_value = (self.device_mac, self.data_response)
