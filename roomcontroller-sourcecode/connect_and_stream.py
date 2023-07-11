@@ -222,13 +222,15 @@ class ConnectAndStream(threading.Thread):
 
                 self.hub_connection.on('relay_on', (lambda relay_num:
                                                     (self.ncd.turn_on_relay_by_index(function_relay(relay_num))
-                                                     , print(f'>>> connect_and_stream - {self.device_mac} - RELAY ON # {function_relay(relay_num)}')
+                                                     , print(f'>>> connect_and_stream - {self.device_mac} - '
+                                                             f'RELAY ON # {function_relay(relay_num)}')
                                                      # , old_relay_values_clear()
                                                      # , time.sleep(1.0)
                                                      )))
                 self.hub_connection.on('relay_off', (lambda relay_num:
                                                      (self.ncd.turn_off_relay_by_index(function_relay(relay_num))
-                                                      , print(f'>>> connect_and_stream - {self.device_mac} - RELAY OFF # {function_relay(relay_num)}')
+                                                      , print(f'>>> connect_and_stream - {self.device_mac} - '
+                                                              f'RELAY OFF # {function_relay(relay_num)}')
                                                       # , old_relay_values_clear()
                                                       # , time.sleep(.5)
                                                       )))
@@ -245,9 +247,12 @@ class ConnectAndStream(threading.Thread):
 
                 # self.hub_connection.on('reset_room', (lambda relay_num: (self.ncd.turn_off_relay_group(1, 1, 48),
                 #                                                          (self.ncd.turn_off_relay_group(1, 2, 48)))))
-                self.hub_connection.on('reset_room', (lambda data: self.ncd.set_relay_bank_status(0, 0)))
-                self.hub_connection.on('reset_room', (lambda data: print(f">>> connect_and_stream - {self.device_mac} ",
-                                                                         "Reset Room command received")))
+                self.hub_connection.on('reset_room', (lambda data: (self.ncd.set_relay_bank_status(0, 0)
+                                                                    , old_relay_values_clear()
+                                                                    , data_response_clear()
+                                                                    , print(f">>> connect_and_stream - {self.device_mac}"
+                                                                            f" Reset Room command received")
+                                                                    )))
 
                 def relay_multi_command(relay_array):
                     for relay in relay_array:
