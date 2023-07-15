@@ -23,18 +23,24 @@ def function_relay(relay_val):
     return relay_num
 
 
+# check first response from board which might be MAC, and print
+data_response_init = sock.recvfrom(32)
+data_response_mac = str(list(data_response_init)[0]).replace(":", '').replace("b'", '').replace("'", '')
+print(data_response_mac)
+
 # pass these methods a number between 1 and 512 to set the current status of the relay.
-##print(board1.turn_on_relay_by_index(3))
-##print(board1.fusion_turn_on_relay_by_index(2))
+print(board1.turn_on_relay_by_index(3), time.sleep(.1), board1.turn_off_relay_by_index(3))
+# print(board1.turn_off_relay_by_index(3))
+# print(board1.fusion_turn_on_relay_by_index(2))
 # print(board1.turn_on_relay_by_index(16))
 # print(board1.turn_on_relay_by_index(15))
-##time.sleep(3)
+# time.sleep(3)
 # print(board1.turn_off_relay_by_index(16))
 # print(board1.turn_off_relay_by_index(0))
 
 # pass these methods a number between 1 and 512 to get the current status of the relay
-##print(board1.get_relay_status_by_index(1))
-##print(board1.get_relay_status_by_index(2))
+# print(board1.get_relay_status_by_index(1))
+# print(board1.get_relay_status_by_index(2))
 ##
 ### close the interface, not necessary here but you may need to in your application
 ##sock.close()
@@ -70,14 +76,12 @@ def function_relay(relay_val):
 
 ### monitor relays and return 8-bit value of what relay is on/off in all banks.
 print(board1.get_relay_all_bank_status(0))
-print(board1.get_relay_all_bank_status(0))
 
 ##
 ### control relays by number and by bank. The first argument is the relay number from 1-8. The second argument is the bank number.
 ##print(board1.turn_on_relay_by_bank(1, 1))
 ##print(board1.turn_on_relay_by_bank(2, 1))
 board1.set_relay_bank_status(255, 255)
-
 
 time.sleep(1)
 print(board1.set_relay_bank_status(0, 0))
@@ -125,11 +129,12 @@ print(board1.set_relay_bank_status(0, 0))
 ##print(board1.toggle_relay_by_index(1))
 ##
 ### configure flasher speed
-##print(board1.set_flasher_speed(1))
-##
-### tell relay to begin flashing. The argument passed is the number of the relay you would like to flash.
-##print(board1.turn_on_relay_flasher(1))
-##print(board1.turn_off_relay_flasher(1))
+# print(board1.set_flasher_speed(1))
+# ##
+# ### tell relay to begin flashing. The argument passed is the number of the relay you would like to flash.
+# print(board1.turn_on_relay_flasher(1))
+# time.sleep(5)
+# print(board1.turn_off_relay_flasher(1))
 ##
 ### tell a relay timer to start.
 ### Argument one is the number of the timer (1-16).
