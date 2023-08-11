@@ -13,7 +13,7 @@ import room_controller
 import ast
 import re
 
-## This import will be for signalR code##
+# This import will be for signalR code##
 import logging
 from signalrcore.hub_connection_builder import HubConnectionBuilder
 from signalrcore.protocol.messagepack_protocol import MessagePackHubProtocol
@@ -106,20 +106,21 @@ class ConnectAndStream(threading.Thread):
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
-            "verify_ssl": True,
-            "skip_negotiation": False
-        }) \
+                "verify_ssl": True,
+                "skip_negotiation": False
+            }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
-            "type": "raw",
-            "keep_alive_interval": 5,
-            "reconnect_interval": 5.0,
-            "max_attempts": 100
-        }).build()
+                "type": "raw",
+                "keep_alive_interval": 5,
+                "reconnect_interval": 5.0,
+                "max_attempts": 99
+            }).build()
         # TODO try to get retries working and connect to signalR when online
         # "accessTokenFactory": 'value'
         # "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
         # "ws_client_options": {"headers": self.api_headers, "timeout": 5.0}
+        # "type": "raw",
         # "type": "interval",
         # "keep_alive_interval": 5,
         # "reconnect_interval": 5,
@@ -128,8 +129,9 @@ class ConnectAndStream(threading.Thread):
         # .with_hub_protocol(MessagePackHubProtocol()) \
 
         self.hub_connection.on_close(lambda: (print(f">>> connect_and_stream - {self.device_mac} - "
-                                                    f"SignalR Connection Closed"),
-                                              self.signalr_connected(False)))
+                                                    f"SignalR Connection Closed")
+                                              , self.signalr_connected(False)
+                                              ))
         self.hub_connection.on_error(lambda data: (print(f">>> connect_and_stream - {self.device_mac} - "
                                                          f"An exception was thrown: {data.error}")))
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
@@ -137,8 +139,9 @@ class ConnectAndStream(threading.Thread):
                                              print(f">>> connect_and_stream - {self.device_mac} - signalR handshake "
                                                    f"received. Ready to send/receive messages."),
                                              self.signalr_connected(True)))
-        self.hub_connection.on_reconnect(lambda: (print(">>> connect_and_stream - Trying to re-connect to "
-                                                        "comhub.cluemaster.io")))
+        self.hub_connection.on_reconnect(lambda: (print(f">>> connect_and_stream - Trying to re-connect to"
+                                                        f" {API_SIGNALR}")
+                                                  ))
 
         self.hub_connection.start()
 
