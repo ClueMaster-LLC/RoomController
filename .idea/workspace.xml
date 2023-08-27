@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="30cdf677-a2a7-471e-9674-ecf1ff57afd5" name="Changes" comment="Fixed sync command issue with data_response_old = None">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/roomcontroller-sourcecode/connect_and_stream.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,6 +25,9 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2H3w1stX6FRb8NO7QA1TeAMX5M5" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
