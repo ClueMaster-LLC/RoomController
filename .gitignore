@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 cluemaster_roomcontroller_source/desktop.ini
 desktop.ini
+.idea/
