@@ -227,7 +227,8 @@ class ConnectAndStream(threading.Thread):
                                           (old_relay_values_clear()
                                            , data_response_clear()
                                            , print(f">>> connect_and_stream - {self.device_mac}"
-                                                   f"- Re-Sync Data command received"))))
+                                                   f"- Re-Sync Data command received")
+                                           )))
 
                 self.hub_connection.on('relay_on'
                                        , (lambda relay_num:

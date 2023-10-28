@@ -58,15 +58,16 @@ class Authentication:
             while True:
                 device_request_api_response = requests.get(self.device_request_api_url, headers=self.api_headers)
                 if device_request_api_response.text in self.api_active_null_responses:
-                    print(">>> Console output " + str(datetime.datetime.utcnow()) +
+                    print(">>> authentication " + str(datetime.datetime.utcnow()) +
                           " - No Registration Requests Found For: " + self.device_unique_id)
-                    # logging.info(">>> Console output " + str(datetime.datetime.utcnow()) +
+                    # logging.info(">>> authentication " + str(datetime.datetime.utcnow()) +
                     #              " - No Registration Requests Found For: " + self.device_unique_id)
                     time.sleep(5)
                     continue
 
                 else:
-                    print(">>> Console output " + str(datetime.datetime.utcnow()) + "- Room Controller Registration Requests Found")
+                    print(">>> authentication " + str(datetime.datetime.utcnow()) + "- Room Controller Registration "
+                                                                                    "Requests Found")
                     break
 
             while requests.get(self.device_request_api_url,

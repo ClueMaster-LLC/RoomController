@@ -64,6 +64,7 @@ class AutoStartup:
                     room_controller_response = requests.get(get_rc_request_api, headers=api_header)
                     if room_controller_response.status_code in [401, 500, 501]:
 
+                        print(f'>>> auto_startup - Authentication Server API response: {room_controller_response}')
                         print(">>> auto_startup - API token invalid. Creating New Token")
                         new_api_bearer_key = self.generate_secure_api_token(device_id=device_unique_id)
                         json_response_of_unique_ids_file["api_token"] = new_api_bearer_key
@@ -74,8 +75,9 @@ class AutoStartup:
 
                     if room_controller_response.text not in self.api_active_null_responses:
                         try:
-                            temp_response = room_controller_response.json()
-                            if temp_response["DeviceRequestid"] <= 7:
+                            # temp_response = room_controller_response.json()
+                            # if temp_response["DeviceRequestid"] <= 7:
+                            if room_controller_response.status_code != 200:
                                 self.device_status = False
                             else:
                                 pass

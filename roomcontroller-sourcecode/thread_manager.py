@@ -141,8 +141,8 @@ class ThreadManager:
         self.registration_thread = RegistrationThread()
         self.registration_thread.start()
 
-        # self.heartbeat_thread = HeartbeatThread()
-        # self.heartbeat_thread.start()
+        self.heartbeat_thread = HeartbeatThread()
+        self.heartbeat_thread.start()
 
         # self.automation_thread = AutomationThread()
         # self.automation_thread.start()

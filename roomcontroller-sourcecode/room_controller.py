@@ -8,9 +8,10 @@ import add_find_device
 from requests.structures import CaseInsensitiveDict
 import connected_devices
 
-## This import will be for signalR code##
-import logging
-from signalrcore.hub_connection_builder import HubConnectionBuilder
+# # This import will be for signalR code##
+# import logging
+# from signalrcore.hub_connection_builder import HubConnectionBuilder
+# from signalrcore.protocol.messagepack_protocol import MessagePackHubProtocol
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
