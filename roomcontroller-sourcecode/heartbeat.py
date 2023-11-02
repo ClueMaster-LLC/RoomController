@@ -109,6 +109,7 @@ class Heartbeat:
                                              print(
                                                  f">>> heartbeat - {self.device_unique_id} - signalR "
                                                  f"handshake received. Ready to send/receive messages.")
+                                             , self.signalr_status is True
                                              )
                                     )
         self.hub_connection.on_reconnect(lambda: (print(f">>> heartbeat - Trying to re-connect to"
