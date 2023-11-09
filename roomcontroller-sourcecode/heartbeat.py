@@ -3,6 +3,9 @@ import json
 import socket
 import time
 import platform
+import psutil
+# import timeit
+import requests
 
 from apis import *
 from requests.structures import CaseInsensitiveDict
@@ -44,11 +47,14 @@ class Heartbeat:
         # instance methods
         self.configurations()
 
-        try:
-            self.signalr_hub()
-        except Exception as error:
-            print(
-                f">>> heartbeat - {self.device_unique_id} - SignalR Did not connect for Device. Server Error: {error}")
+        # Try to Connect to Comhub with SignalR and loop until it does.
+        while self.signalr_status is not True:
+            try:
+                self.signalr_hub()
+            except Exception as error:
+                print(
+                    f">>> heartbeat - {self.device_unique_id} - SignalR Did not connect for Device. Server Error: {error}")
+                time.sleep(5)
 
         print(f">>> heartbeat - {self.device_unique_id} - ***STARTUP COMPLETED***")
         self.execution_environment()
@@ -68,7 +74,7 @@ class Heartbeat:
         self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
 
         self.api_headers = CaseInsensitiveDict()
-        # self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
+        self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
         self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
         # self.signalr_access_token = f'?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 
@@ -78,11 +84,12 @@ class Heartbeat:
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder() \
-            .with_url(
-            self.server_url, options={"verify_ssl": True, "skip_negotiation": False}) \
+            .with_url(self.server_url, options={
+                "verify_ssl": True,
+                "skip_negotiation": False
+            }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
-            .with_automatic_reconnect(
-            {
+            .with_automatic_reconnect({
                 "type": "raw",
                 "keep_alive_interval": 5,
                 "reconnect_interval": 5.0,
@@ -104,12 +111,14 @@ class Heartbeat:
                                                     f"Connection Closed"), self.signalr_connected(False)
                                               ))
         self.hub_connection.on_error(lambda data: (print(f">>> heartbeat - {self.device_unique_id} - "
-                                                         f"An exception was thrown: {data.error}")))
+                                                         f"A Server exception error was thrown: {data.error}")
+                                                   )
+                                     )
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.device_unique_id)]),
                                              print(
                                                  f">>> heartbeat - {self.device_unique_id} - signalR "
                                                  f"handshake received. Ready to send/receive messages.")
-                                             , self.signalr_status is True
+                                             , self.signalr_connected(True)
                                              )
                                     )
         self.hub_connection.on_reconnect(lambda: (print(f">>> heartbeat - Trying to re-connect to"
@@ -121,43 +130,72 @@ class Heartbeat:
 
         print(">>> heartbeat - starting signalR")
 
-        print(f'>>> heartbeat - signalR status: {self.signalr_status}')
+        self.hub_connection.start()
+        print(f'>>> heartbeat - {self.device_unique_id} - waiting for signalR handshake ...')
         while self.signalr_status is not True:
             try:
-                self.hub_connection.start()
-
                 if self.signalr_status is True:
                     break
                 else:
-                    print(f'>>> heartbeat - {self.device_unique_id} - waiting for signalR handshake ...')
-                time.sleep(5)
+
+                    # print(self.server_url)
+                    # print(f'>>> heartbeat - SignalR Status: {self.signalr_status}')
+                    time.sleep(0)
 
             except socket.error as error:
                 print(f'>>> heartbeat - {self.device_unique_id} - SignalR connection ERROR ... {error}')
                 self.signalr_status = False
                 self.hub_connection.stop()
                 time.sleep(5)
+                self.hub_connection.start()
+                time.sleep(5)
 
         else:
-            print(">>> heartbeat - signalr connected")
-
-
+            print(f">>> heartbeat - {self.device_unique_id} - SignalR Connected")
 
     def signalr_connected(self, status):
         if status is True:
             self.signalr_status = True
-        elif not status:
+        else:
             self.signalr_status = False
 
-    @staticmethod
-    def execution_environment():
+    # @staticmethod
+    def execution_environment(self):
         while True:
-            print(">>> heartbeat - waiting for heartbeat action")
+            # print(f">>> heartbeat - {self.device_unique_id} - waiting for heartbeat action")
+
+            # # Post Device HeartBeat Data to API
+            # heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
+            #                                                  CpuAvg=psutil.cpu_percent(1),
+            #                                                  MemoryAvg=psutil.virtual_memory()[2],
+            #                                                  NetworkAvg=10)
+            # requests.post(heartbeat_api_url, headers=self.api_headers)
+            # print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent")
+
+            # Getting loadover15 minutes
+            # load1, load5, load15 = psutil.getloadavg()
+            #
+            # cpu_usage = (load1 / os.cpu_count()) * 100
+            # print("The CPU usage is : ", cpu_usage)
+            # print("The CPU usage is : ", psutil.getloadavg())
+            # # print("The CPU count is : ", os.cpu_count())
+            #
+            # print('The CPU usage is: ', psutil.cpu_percent(5))
+            # # Getting % usage of virtual_memory ( 3rd field)
+            # print('RAM memory % used:', psutil.virtual_memory()[2])
+            # # Getting usage of virtual_memory in GB ( 4th field)
+            # print('RAM Used (GB):', psutil.virtual_memory()[3] / 1000000000)
+            #
+            # pid = os.getpid()
+            # python_process = psutil.Process(pid)
+            # memoryUse = python_process.memory_info()[0] / 2. ** 30  # memory use in GB...I think
+            # print('memory use:', memoryUse)
+
             time.sleep(5)
             # run heartbeat logic here
 
     def ping_response(self):
-        self.hub_connection.send('heartbeat', [str(self.device_unique_id), "true"])
+        self.hub_connection.send('ping_response', [str(self.device_unique_id), "true"])
         print(f">>> heartbeat - {self.device_unique_id} - PING Response Sent")
 
     @staticmethod
@@ -175,7 +213,7 @@ class Heartbeat:
             print(f">>> heartbeat - ERROR: {error}")
             print(">>> heartbeat - Error Sending Reboot Command")
 
-# Comment out the function when testing from main.py
+# # Comment out the function when testing from main.py
 # def start_thread():
 #     if __name__ == "__main__":
 #         Heartbeat = Heartbeat()

@@ -39,7 +39,7 @@ class RegistrationThread(threading.Thread):
 class ConnectPreviousDevicesThread(threading.Thread):
     def __init__(self):
         super(ConnectPreviousDevicesThread, self).__init__()
-        print(">>> thread_manager - ConnectPreviousThread active ....")
+        print(">>> thread_manager - ConnectPreviousDevices Thread active ....")
 
         # global attributes
         self.active = None
@@ -48,7 +48,7 @@ class ConnectPreviousDevicesThread(threading.Thread):
     def run(self):
         self.connected_devices_instance = connected_devices.ConnectedDevices()
         # self.connected_devices_instance.__init__()
-        print(">>> thread_manager - Stopped Base ConnectPreviousDevicesThread ...")
+        print(">>> thread_manager - Stopped Base ConnectPreviousDevices Thread ...")
         return
 
 
@@ -64,7 +64,7 @@ class HeartbeatThread(threading.Thread):
 
     def run(self):
         self.heartbeat_instance = heartbeat.Heartbeat()
-        print(">>> thread_manager - Stopped Base ConnectPreviousDevicesThread ...")
+        print(">>> thread_manager - Stopped Base Heartbeat Thread ...")
         return
 
 
@@ -80,7 +80,7 @@ class AutomationThread(threading.Thread):
 
     def run(self):
         self.automation_instance = automation.Automation()
-        print(">>> thread_manager - Stopped Base ConnectPreviousDevicesThread ...")
+        print(">>> thread_manager - Stopped Base Automation Thread ...")
         return
 
 

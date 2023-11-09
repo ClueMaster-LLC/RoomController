@@ -133,7 +133,7 @@ class ConnectAndStream(threading.Thread):
                                               , self.signalr_connected(False)
                                               ))
         self.hub_connection.on_error(lambda data: (print(f">>> connect_and_stream - {self.device_mac} - "
-                                                         f"An exception was thrown: {data.error}")))
+                                                         f"A Server exception error was thrown: {data.error}")))
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
                                              self.hub_connection.send('AddToGroup', [str(self.device_mac)]),
                                              print(f">>> connect_and_stream - {self.device_mac} - signalR handshake "
@@ -153,6 +153,7 @@ class ConnectAndStream(threading.Thread):
                     print(f'>>> connect_and_stream - {self.device_mac} - Timeout exceeded. SignalR not connected.')
                     break
                 print(f'>>> connect_and_stream - {self.device_mac} - waiting for signalR handshake ... {i}')
+                # print(self.server_url)
                 time.sleep(1)
             break
         else:
@@ -168,7 +169,7 @@ class ConnectAndStream(threading.Thread):
         # command received by hub to refresh values from all device threads to update location workspace
         self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
 
-    @property
+    # @property
     def run(self):
         connected = False
         while not connected:
@@ -306,6 +307,7 @@ class ConnectAndStream(threading.Thread):
 
                     if self.device_mac not in room_controller.global_active_mac_ids:
                         print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        # self.hub_connection.stop()
                         return
                     self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.client_socket.settimeout(1.0)
@@ -622,7 +624,7 @@ class ConnectAndStream(threading.Thread):
                         if self.device_type not in (1, 2):
                             print(f'>>> connect_and_stream - ', self.device_mac,
                                   f' Error: Device Type {self.device_type} Not Compatible')
-                        print(f'>>> connect_and_stream - Closing Thread for ', self.device_mac)
+                        print(f'>>> connect_and_stream - 1+Closing Thread for ', self.device_mac)
                         return
 
                 except socket.error:
@@ -632,14 +634,14 @@ class ConnectAndStream(threading.Thread):
                             self.hub_connection.stop()
                         except Exception as error:
                             print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(error))
-                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        print(">>> connect_and_stream - 2+Closing Thread for " + self.device_mac)
                         return
                     # set connection status and recreate socket
                     connected = False
                     while not connected:
                         try:
                             if self.device_mac not in room_controller.global_active_mac_ids:
-                                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                                print(">>> connect_and_stream - 3+Closing Thread for " + self.device_mac)
                                 return
                             self.client_socket.close()
                             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -662,7 +664,7 @@ class ConnectAndStream(threading.Thread):
                         except socket.error as e:
                             if self.device_mac not in room_controller.global_active_mac_ids:
                                 self.client_socket.close()
-                                print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                                print(">>> connect_and_stream - 4+Closing Thread for " + self.device_mac)
                                 return
                             print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(e))
                             self.connection_lost()
@@ -674,23 +676,30 @@ class ConnectAndStream(threading.Thread):
                             self.hub_connection.stop()
                         except Exception as error:
                             print(f'>>> connect_and_stream - {error}')
-                        print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+                        print(">>> connect_and_stream - 5+Closing Thread for " + self.device_mac)
                         return
                     print(f'>>> connect_and_stream - {self.device_mac} - Error: {e}')
 
+            # MAC Address no longer in active memory.
             try:
                 self.client_socket.close()
-                self.hub_connection.stop()
+                if self.signalr_status:
+                    self.hub_connection.stop()
+                    time.sleep(1)
+
             except Exception as error:
                 print(f'>>> connect_and_stream - {self.device_mac} - {error}')
-            print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
+
+            print(">>> connect_and_stream - 6+Closing Thread for " + self.device_mac)
             return
 
         except socket.error:
             if self.device_mac not in room_controller.global_active_mac_ids:
                 try:
                     self.client_socket.close()
-                    self.hub_connection.stop()
+                    if self.signalr_status:
+                        self.hub_connection.stop()
+                        time.sleep(1)
                 except Exception as error:
                     print('>>> connect_and_stream - ', self.device_mac, ' Connection Error: ', str(error))
                 print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
@@ -731,7 +740,9 @@ class ConnectAndStream(threading.Thread):
             if self.device_mac not in room_controller.global_active_mac_ids:
                 try:
                     self.client_socket.close()
-                    self.hub_connection.stop()
+                    if self.signalr_status:
+                        self.hub_connection.stop()
+                        time.sleep(1)
                 except Exception as error:
                     print(error)
                 print(">>> connect_and_stream - Closing Thread for " + self.device_mac)

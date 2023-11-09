@@ -163,7 +163,7 @@ class AddFindDevices(threading.Thread):
                                 pass
                             else:
                                 devices_discovered.append(i_device_data)
-                                print(">>> add_find_device - Building Memory Array: " + str(devices_discovered))
+                                print(">>> add_find_device - Building In-Memory List: " + str(devices_discovered))
 
                             if time.time() - start_time < 15:
                                 # time.sleep(1)
