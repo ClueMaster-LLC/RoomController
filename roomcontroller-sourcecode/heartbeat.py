@@ -178,9 +178,11 @@ class Heartbeat:
             # cpu_usage = (load1 / os.cpu_count()) * 100
             # print("The CPU usage is : ", cpu_usage)
             # print("The CPU usage is : ", psutil.getloadavg())
-            # # print("The CPU count is : ", os.cpu_count())
             #
-            # print('The CPU usage is: ', psutil.cpu_percent(5))
+            # print("THE Unix Style CPU Usage is : ", psutil.cpu_percent(interval=5, percpu=False))
+            # print("The CPU count is : ", os.cpu_count())
+
+            # print('The CPU usage is: ', psutil.cpu_percent(1))
             # # Getting % usage of virtual_memory ( 3rd field)
             # print('RAM memory % used:', psutil.virtual_memory()[2])
             # # Getting usage of virtual_memory in GB ( 4th field)
@@ -188,8 +190,8 @@ class Heartbeat:
             #
             # pid = os.getpid()
             # python_process = psutil.Process(pid)
-            # memoryUse = python_process.memory_info()[0] / 2. ** 30  # memory use in GB...I think
-            # print('memory use:', memoryUse)
+            # memoryuse = python_process.memory_info()[0] / 2. ** 30  # memory use in GB...I think
+            # print('memory use:', memoryuse)
 
             time.sleep(5)
             # run heartbeat logic here
