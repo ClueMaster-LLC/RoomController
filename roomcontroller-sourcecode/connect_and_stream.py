@@ -146,7 +146,7 @@ class ConnectAndStream(threading.Thread):
         self.hub_connection.start()
 
         while self.signalr_status is not True:
-            for i in range(15, -1, -1):
+            for i in range(5, -1, -1):
                 if self.signalr_status is True:
                     break
                 if i == 0:
@@ -582,6 +582,11 @@ class ConnectAndStream(threading.Thread):
                             else:
                                 print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
                                       , [str(self.room_id), str(self.device_mac), str(self.data_response)])
+                                try:
+                                    self.hub_connection.start()
+                                except Exception as error:
+                                    print(
+                                        f'>>> connect_and_stream - {self.device_mac} SignalR Connection Error: {error}')
 
                             # if log_level in (1, 2):
                             #     print('>>> connect_and_stream - HEX BYTE VALUES RETURNED FROM DEVICE ',
