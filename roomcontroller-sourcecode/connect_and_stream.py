@@ -103,13 +103,13 @@ class ConnectAndStream(threading.Thread):
         self.server_url = API_SIGNALR + self.signalr_bearer_token
         print(f">>> connect_and_stream - {self.device_mac} - SignalR connected to {API_SIGNALR}")
         self.handler = logging.StreamHandler()
-        self.handler.setLevel(logging.ERROR)
+        self.handler.setLevel(logging.CRITICAL)
         self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
                 "verify_ssl": True,
                 "skip_negotiation": False
             }) \
-            .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
+            .configure_logging(logging.CRITICAL, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
                 "type": "raw",
                 "keep_alive_interval": 5,
