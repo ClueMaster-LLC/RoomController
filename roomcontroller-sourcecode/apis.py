@@ -1,6 +1,6 @@
-master_base_url = "https://deviceapi.cluemaster.io/"
+master_base_url = "https://dev-deviceapi.cluemaster.io/"
 # signalr_hub_url = "https://cluemaster-signalr-win.azurewebsites.net/"
-signalr_hub_url = "wss://comhub.cluemaster.io/"
+signalr_hub_url = "wss://dev-comhub.cluemaster.io/"
 # apis available to cluemaster room controller
 
 # GETs

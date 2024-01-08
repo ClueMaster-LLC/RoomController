@@ -91,14 +91,15 @@ class ConnectedDevices:
                 # break
                 try:
                     connected_devices_response = requests.get(self.get_devicelist_api, headers=self.api_headers)
-                    if connected_devices_response.status_code in [401, 404, 500, 501]:
-                        print(">>> connected_devices - API HTTP Error")
+                    # if connected_devices_response.status_code in [401, 404, 500, 501]:
+                    if connected_devices_response.status_code in [401]:
+                        print(">>> connected_devices - API API token invalid Error")
                         break
                 except Exception as e:
                     print(">>> connected_devices - " + str(e))
 
                 else:
-                    print(">>> connected_devices - Not a API token invalid Error")
+                    # print(">>> connected_devices - Not a API token invalid Error")
                     print(">>> connected_devices - " + str(request_error))
                     time.sleep(5)
 
