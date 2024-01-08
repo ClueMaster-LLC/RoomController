@@ -52,8 +52,8 @@ class Heartbeat:
             try:
                 self.signalr_hub()
             except Exception as error:
-                print(
-                    f">>> heartbeat - {self.device_unique_id} - SignalR Did not connect for Device. Server Error: {error}")
+                print(f">>> heartbeat - {self.device_unique_id} - SignalR Did not connect for Room Controller. "
+                      f"Server Error: {error}")
                 time.sleep(5)
 
         print(f">>> heartbeat - {self.device_unique_id} - ***STARTUP COMPLETED***")
