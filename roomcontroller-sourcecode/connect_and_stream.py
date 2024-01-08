@@ -113,8 +113,8 @@ class ConnectAndStream(threading.Thread):
             .with_automatic_reconnect({
                 "type": "raw",
                 "keep_alive_interval": 5,
-                "reconnect_interval": 10.0,
-                "max_attempts": 9999999999
+                "reconnect_interval": 10,
+                "max_attempts": 3
             }).build()
         # TODO try to get retries working and connect to signalR when online
         # "accessTokenFactory": 'value'
