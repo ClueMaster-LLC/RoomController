@@ -85,16 +85,16 @@ class Heartbeat:
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
-                "verify_ssl": True,
-                "skip_negotiation": False
-            }) \
+            "verify_ssl": True,
+            "skip_negotiation": False
+        }) \
             .configure_logging(logging.ERROR, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
-                "type": "raw",
-                "keep_alive_interval": 5,
-                "reconnect_interval": 10,
-                "max_attempts": 3
-            }).build()
+            "type": "raw",
+            "keep_alive_interval": 5,
+            "reconnect_interval": 10,
+            "max_attempts": 3
+        }).build()
         # TODO try to get retries working and connect to signalR when online
         # "accessTokenFactory": 'value'
         # "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
@@ -125,8 +125,14 @@ class Heartbeat:
                                                         f" {API_SIGNALR}")
                                                   ))
 
-        self.hub_connection.on('ping', (lambda data: (print(f">>> heartbeat - {self.device_unique_id} - PING "
-                                                            f"command received"), self.ping_response())))
+        self.hub_connection.on('ping', (lambda: (print(f">>> heartbeat - {self.device_unique_id} - PING "
+                                                       f"command received"), self.ping_response())))
+
+        self.hub_connection.on('restart', (lambda: (print(f">>> heartbeat - {self.device_unique_id} - RESTART "
+                                                          f"command received"), self.restart_rc())))
+
+        self.hub_connection.on('shutdown', (lambda: (print(f">>> heartbeat - {self.device_unique_id} - SHUTDOWN "
+                                                           f"command received"), self.shutdown_rc())))
 
         print(">>> heartbeat - starting signalR")
 
@@ -159,7 +165,6 @@ class Heartbeat:
         else:
             self.signalr_status = False
 
-    # @staticmethod
     def execution_environment(self):
         while True:
             # print(f">>> heartbeat - {self.device_unique_id} - waiting for heartbeat action")
@@ -200,20 +205,35 @@ class Heartbeat:
         self.hub_connection.send('ping_response', [str(self.device_unique_id), "true"])
         print(f">>> heartbeat - {self.device_unique_id} - PING Response Sent")
 
-    @staticmethod
-    def reboot_rc():
+    # @staticmethod
+    def restart_rc(self):
         try:
             if platform.system() == "Windows":
                 # win32api.InitiateSystemShutdown()
-                print(">>> heartbeat - Windows Room Controller Rebooting")
+                print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
                 pass
             elif platform.system() == "Linux" or platform.system() == "Linux2":
                 os.system('systemctl reboot -i')
-            print(">>> heartbeat - Room Controller Rebooting")
+            print(f">>> heartbeat - {self.device_unique_id} - Room Controller Rebooting")
 
         except Exception as error:
             print(f">>> heartbeat - ERROR: {error}")
-            print(">>> heartbeat - Error Sending Reboot Command")
+            print(f">>> heartbeat - {self.device_unique_id} - Error Sending Reboot Command")
+
+    # @staticmethod
+    def shutdown_rc(self):
+        try:
+            if platform.system() == "Windows":
+                # win32api.InitiateSystemShutdown()
+                print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
+                pass
+            elif platform.system() == "Linux" or platform.system() == "Linux2":
+                os.system('systemctl poweroff -i')
+            print(f">>> heartbeat - {self.device_unique_id} - Shutting Down Room Controller")
+
+        except Exception as error:
+            print(f">>> heartbeat - {self.device_unique_id} - ERROR: {error}")
+            print(f">>> heartbeat - {self.device_unique_id} - Error Sending Reboot Command")
 
 # # Comment out the function when testing from main.py
 # def start_thread():

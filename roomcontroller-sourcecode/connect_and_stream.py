@@ -66,6 +66,10 @@ class ConnectAndStream(threading.Thread):
         self.ncd = None
         self.automation_rules = None
         self.automation_rules_file = os.path.join(APPLICATION_DATA_DIRECTORY, "automation_rules.json")
+        self.command_resync = False
+        self.startup_init = True
+        self.command_relay_send = False
+        self.command_reset_room = False
 
         # Diagnostic Only, global mac addresses to verify all threads can see them
         print(f">>> connect_and_stream - {self.device_mac} - GLOBAL MAC FOUND: {room_controller.global_active_mac_ids}")
@@ -106,16 +110,16 @@ class ConnectAndStream(threading.Thread):
         self.handler.setLevel(logging.CRITICAL)
         self.hub_connection = HubConnectionBuilder() \
             .with_url(self.server_url, options={
-                "verify_ssl": True,
-                "skip_negotiation": False
-            }) \
+            "verify_ssl": True,
+            "skip_negotiation": False
+        }) \
             .configure_logging(logging.CRITICAL, socket_trace=False, handler=self.handler) \
             .with_automatic_reconnect({
-                "type": "raw",
-                "keep_alive_interval": 5,
-                "reconnect_interval": 10,
-                "max_attempts": 3
-            }).build()
+            "type": "raw",
+            "keep_alive_interval": 5,
+            "reconnect_interval": 10,
+            "max_attempts": 3
+        }).build()
         # TODO try to get retries working and connect to signalR when online
         # "accessTokenFactory": 'value'
         # "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
@@ -133,12 +137,14 @@ class ConnectAndStream(threading.Thread):
                                               , self.signalr_connected(False)
                                               ))
         self.hub_connection.on_error(lambda data: (print(f">>> connect_and_stream - {self.device_mac} - "
-                                                         f"A Server exception error was thrown: {data.error}")))
+                                                         f"A Server exception error was thrown: {data.error}")
+                                                   ))
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
                                              self.hub_connection.send('AddToGroup', [str(self.device_mac)]),
                                              print(f">>> connect_and_stream - {self.device_mac} - signalR handshake "
                                                    f"received. Ready to send/receive messages."),
-                                             self.signalr_connected(True)))
+                                             self.signalr_connected(True)
+                                             ))
         self.hub_connection.on_reconnect(lambda: (print(f">>> connect_and_stream - Trying to re-connect to"
                                                         f" {API_SIGNALR}")
                                                   ))
@@ -167,7 +173,9 @@ class ConnectAndStream(threading.Thread):
 
     def sync_data(self):
         # command received by hub to refresh values from all device threads to update location workspace
+        self.command_resync = True
         self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
+        self.command_resync = False
 
     # @property
     def run(self):
@@ -214,12 +222,9 @@ class ConnectAndStream(threading.Thread):
                 self.hub_connection.on('syncdata'
                                        , (lambda data:
                                           (self.sync_data()
-                                           , print(f">>> connect_and_stream - {self.device_mac} "
-                                                   , "Re-Sync Data command received"
-                                                   )
-                                           )
-                                          )
-                                       )
+                                           , print(f">>> connect_and_stream - {self.device_mac} - "
+                                                   f"Re-Sync Data command received")
+                                           )))
 
             # device_type 2 = Relays
             if self.device_type == 2:
@@ -227,19 +232,28 @@ class ConnectAndStream(threading.Thread):
                                        , (lambda data:
                                           (old_relay_values_clear()
                                            , data_response_clear()
-                                           , print(f">>> connect_and_stream - {self.device_mac}"
-                                                   f"- Re-Sync Data command received")
+                                           , command_resync_true()
+                                           , print(f">>> connect_and_stream - {self.device_mac} - "
+                                                   f"Re-Sync Data command received")
                                            )))
 
                 self.hub_connection.on('relay_on'
                                        , (lambda relay_num:
                                           (self.ncd.turn_on_relay_by_index(function_relay(relay_num))
+                                           # , relay_trigger_update()
+                                           , relay_send_true()
+                                           , old_relay_values_clear()
+                                           , data_response_clear()
                                            , print(f'>>> connect_and_stream - {self.device_mac} - '
                                                    f'RELAY ON # {function_relay(relay_num)}')
                                            )))
                 self.hub_connection.on('relay_off'
                                        , (lambda relay_num:
                                           (self.ncd.turn_off_relay_by_index(function_relay(relay_num))
+                                           # , relay_trigger_update()
+                                           , relay_send_true()
+                                           , old_relay_values_clear()
+                                           , data_response_clear()
                                            , print(f'>>> connect_and_stream - {self.device_mac} - '
                                                    f'RELAY OFF # {function_relay(relay_num)}')
                                            )))
@@ -248,6 +262,7 @@ class ConnectAndStream(threading.Thread):
                                        , (lambda data: (self.ncd.set_relay_bank_status(0, 0)
                                                         , old_relay_values_clear()
                                                         , data_response_clear()
+                                                        , command_reset_room()
                                                         , print(f">>> connect_and_stream - {self.device_mac}"
                                                                 f" Reset Room command received")
                                                         )))
@@ -282,6 +297,15 @@ class ConnectAndStream(threading.Thread):
                 def data_response_clear():
                     # self.data_response = []
                     self.data_response_old = None
+
+                def command_resync_true():
+                    self.command_resync = True
+
+                def command_reset_room():
+                    self.command_reset_room = True
+
+                def relay_send_true():
+                    self.command_relay_send = True
 
         try:
             self.ncd = ncd_industrial_devices.NCD_Controller(self.client_socket)
@@ -416,6 +440,13 @@ class ConnectAndStream(threading.Thread):
                             def execute_action(action):
                                 relay_num = int(action['relay'])
                                 relay_action = action['action']
+                                # relay_wait = action['wait']
+                                # relay_waittime = action['time']
+                                #
+                                # if relay_action == 'wait':
+                                #     print(f">>> connect_and_stream - {self.device_mac} - "
+                                #           f"Performing WAIT {relay_wait} "
+                                #           f"for {relay_waittime} seconds")
 
                                 # Perform the relay action
                                 print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
@@ -464,7 +495,6 @@ class ConnectAndStream(threading.Thread):
                                     rule['fired'] = False
 
                             # Check status of relays after automation and report to SignalR
-                            # TODO: create ncd code to check all relays just like the dry contacts report
                             # data_response1 = (self.ncd.get_relay_all_bank_status(1))
                             # time.sleep(.50)
                             # data_response2 = (self.ncd.get_relay_all_bank_status(2))
@@ -473,12 +503,12 @@ class ConnectAndStream(threading.Thread):
 
                             # self.data_response = data_response1+data_response2
                             # print(
-                            #     f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
+                            # f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
 
                             if not self.data_response:
                                 print(f"{self.data_response} SENDING DATA TO RELAY TOO FAST. CPU TIMEOUT")
-                                print(
-                                    f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
+                                print(f">>> connect_and_stream - {self.device_mac} - "
+                                      f"DATA RESPONSE IS: {self.data_response}")
                                 self.client_socket.close()
                                 time.sleep(1)
                                 # self.ncd.renew_replace_interface(self.client_socket)
@@ -511,12 +541,40 @@ class ConnectAndStream(threading.Thread):
                                 # upload relay changes to SignalR
                                 if self.signalr_status:
                                     try:
-                                        print(f">>> connect_and_stream - {self.device_mac} - SEND VALUES TO CLUEMASTER"
-                                              f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
 
-                                        # send data to signalR hub
-                                        self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
-                                                                                str(self.data_response)])
+                                        if not self.command_relay_send:
+                                            print(f">>> connect_and_stream - {self.device_mac} - "
+                                                  f"SEND RELAY VALUES TO CLUEMASTER - "
+                                                  f"SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
+
+                                            # send data to signalR hub
+                                            self.hub_connection.send('sendtoroom', [str(self.room_id),
+                                                                                    str(self.device_mac),
+                                                                                    str(self.data_response)])
+
+                                        try:
+                                            print(f">>> connect_and_stream - {self.device_mac} - {self.command_resync}, {self.startup_init}, {self.command_relay_send}")
+                                            if not self.command_resync and not self.startup_init and not self.command_reset_room:
+                                                print(f">>> connect_and_stream - {self.device_mac} - "
+                                                      f"SEND RELAY TRIGGER VALUES TO CLUEMASTER - "
+                                                      f"SignalR > [{self.room_id}, "
+                                                      f"{self.device_mac}, "
+                                                      f"{self.data_response}]")
+
+                                                # send trigger data to signalR hub
+                                                self.hub_connection.send('SendClueTrigger', [str(self.room_id),
+                                                                                             str(self.device_mac),
+                                                                                             str(self.data_response)])
+
+                                        except Exception as error:
+                                            print(f'>>> connect_and_stream - {self.device_mac} SignalR Error: {error}')
+
+                                        # Setting resync command to false so that when refreshing the website,
+                                        # it won't cause a trigger to fire.
+                                        self.command_resync = False
+                                        self.command_relay_send = False
+                                        self.command_reset_room = False
+
                                     except Exception as error:
                                         print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
                                 else:
@@ -575,10 +633,27 @@ class ConnectAndStream(threading.Thread):
                                           f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
 
                                     # send data to signalR hub
-                                    self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac),
+                                    self.hub_connection.send('sendtoroom', [str(self.room_id),
+                                                                            str(self.device_mac),
                                                                             str(self.data_response)])
+
+                                    try:
+                                        # print(self.command_resync, self.startup_init)
+                                        if not self.command_resync and not self.startup_init:
+                                            print(f">>> connect_and_stream - {self.device_mac} - "
+                                                  f"SEND TRIGGER VALUES TO CLUEMASTER"
+                                                  f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
+
+                                            # send trigger data to signalR hub
+                                            self.hub_connection.send('SendClueTrigger', [str(self.room_id),
+                                                                                         str(self.device_mac),
+                                                                                         str(self.data_response)])
+
+                                    except Exception as error:
+                                        print(f'>>> connect_and_stream - {self.device_mac} SignalR Error: {error}')
+
                                 except Exception as error:
-                                    print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
+                                    print(f'>>> connect_and_stream - {self.device_mac} SignalR Error: {error}')
                             else:
                                 print('>>> connect_and_stream - SIGNALR IS NOT CONNECTED > '
                                       , [str(self.room_id), str(self.device_mac), str(self.data_response)])
@@ -684,6 +759,9 @@ class ConnectAndStream(threading.Thread):
                         print(">>> connect_and_stream - 5+Closing Thread for " + self.device_mac)
                         return
                     print(f'>>> connect_and_stream - {self.device_mac} - Error: {e}')
+
+                # Run is finished starting and begins loop
+                self.startup_init = False
 
             # MAC Address no longer in active memory.
             try:
