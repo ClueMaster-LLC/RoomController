@@ -381,8 +381,10 @@ class ConnectAndStream(threading.Thread):
                         # room_controller.ACTIVE_INPUT_VALUES
                         if self.active_input_values_old != str(room_controller.ACTIVE_INPUT_VALUES):
 
-                            # print(f">>> connect_and_stream - {self.device_mac} - {room_controller.ACTIVE_INPUT_VALUES} CURRENT VALUES")
-                            # print(f">>> connect_and_stream - {self.device_mac} - {self.active_input_values_old} OLD HAVE CHANGED")
+                            # print(f">>> connect_and_stream - {self.device_mac} -
+                            # {room_controller.ACTIVE_INPUT_VALUES} CURRENT VALUES")
+                            # print(f">>> connect_and_stream - {self.device_mac} -
+                            # {self.active_input_values_old} OLD HAVE CHANGED")
 
                             # Set the var to what is in the GLOBAL var for active input values to stop loop
                             self.active_input_values_old = str(room_controller.ACTIVE_INPUT_VALUES)
@@ -440,17 +442,11 @@ class ConnectAndStream(threading.Thread):
                             def execute_action(action):
                                 relay_num = int(action['relay'])
                                 relay_action = action['action']
-                                # relay_wait = action['wait']
-                                # relay_waittime = action['time']
-                                #
-                                # if relay_action == 'wait':
-                                #     print(f">>> connect_and_stream - {self.device_mac} - "
-                                #           f"Performing WAIT {relay_wait} "
-                                #           f"for {relay_waittime} seconds")
 
                                 # Perform the relay action
-                                print(f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
-                                      f" on relay # {relay_num}")
+                                print(
+                                    f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
+                                    f" on relay # {relay_num}")
                                 if relay_action == 'on':
                                     self.ncd.turn_on_relay_by_index(relay_num)
                                     print(f"Automation ran for turning on index # {relay_num}")
@@ -490,6 +486,8 @@ class ConnectAndStream(threading.Thread):
 
                                         # Set fired flag to True
                                         rule['fired'] = True
+                                        print(f">>> connect_and_stream - {self.device_mac} - "
+                                              f"Running Rule:  {rule_name}")
                                 else:
                                     # Set fired flag to False
                                     rule['fired'] = False
@@ -498,7 +496,6 @@ class ConnectAndStream(threading.Thread):
                             # data_response1 = (self.ncd.get_relay_all_bank_status(1))
                             # time.sleep(.50)
                             # data_response2 = (self.ncd.get_relay_all_bank_status(2))
-
                             self.data_response = self.ncd.get_relay_all_bank_status()
 
                             # self.data_response = data_response1+data_response2
@@ -553,7 +550,8 @@ class ConnectAndStream(threading.Thread):
                                                                                     str(self.data_response)])
 
                                         try:
-                                            print(f">>> connect_and_stream - {self.device_mac} - {self.command_resync}, {self.startup_init}, {self.command_relay_send}")
+                                            # print(f">>> connect_and_stream - {self.device_mac} - {self.command_resync},"
+                                            #       f" {self.startup_init}, {self.command_relay_send}")
                                             if not self.command_resync and not self.startup_init and not self.command_reset_room:
                                                 print(f">>> connect_and_stream - {self.device_mac} - "
                                                       f"SEND RELAY TRIGGER VALUES TO CLUEMASTER - "
