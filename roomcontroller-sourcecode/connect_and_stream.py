@@ -35,6 +35,28 @@ def function_relay(relay_val):
     return relay_num
 
 
+class TimerThread(threading.Thread):
+    def __init__(self, timer_value):
+        super().__init__()
+        self.timer_value = timer_value
+        self.timer_expired = threading.Event()
+        self.stop_event = threading.Event()
+        self.lock = threading.Lock()
+
+    def run(self):
+        while not self.stop_event.is_set():
+            with self.lock:
+                if self.timer_value > 0:
+                    self.timer_value -= 1
+                else:
+                    self.timer_expired.set()
+                    break
+            time.sleep(1)
+
+    def stop(self):
+        self.stop_event.set()
+
+
 class ConnectAndStream(threading.Thread):
     def __init__(self, device_mac):
         super(ConnectAndStream, self).__init__()
@@ -440,22 +462,55 @@ class ConnectAndStream(threading.Thread):
 
                             # Define a function to execute a given action
                             def execute_action(action):
+                                timer_thread = None
                                 relay_num = int(action['relay'])
                                 relay_action = action['action']
 
-                                # Perform the relay action
-                                print(
-                                    f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
-                                    f" on relay # {relay_num}")
-                                if relay_action == 'on':
-                                    self.ncd.turn_on_relay_by_index(relay_num)
-                                    print(f"Automation ran for turning on index # {relay_num}")
-                                elif relay_action == 'off':
-                                    if relay_num == 0:
-                                        self.ncd.set_relay_bank_status(0, 0)
-                                    else:
-                                        self.ncd.turn_off_relay_by_index(relay_num)
-                                        print(f"Automation ran for turning off index # {relay_num}")
+                                def execute_relay_action():
+                                    # Perform the relay action
+                                    print(
+                                        f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
+                                        f" on relay # {relay_num}")
+                                    if relay_action == 'on':
+                                        self.ncd.turn_on_relay_by_index(relay_num)
+                                        print(f"Automation ran for turning on index # {relay_num}")
+                                    elif relay_action == 'off':
+                                        if relay_num == 0:
+                                            self.ncd.set_relay_bank_status(0, 0)
+                                        else:
+                                            self.ncd.turn_off_relay_by_index(relay_num)
+                                            print(f"Automation ran for turning off index # {relay_num}")
+
+                                try:
+                                    relay_wait = [int(action['wait'])]
+
+                                    data_list = [5, 3, 7]  # Example list of timer values
+
+                                    active_thread = None
+
+                                    for timer_value in relay_wait:
+                                        if active_thread is not None:
+                                            active_thread.join()  # Wait for the previous timer thread to finish before starting a new one
+
+                                        print(f"Setting timer for {timer_value} seconds.")
+                                        timer_thread = TimerThread(timer_value)
+                                        timer_thread.start()
+                                        active_thread = timer_thread
+
+                                        while not timer_thread.timer_expired.wait(0.1):
+                                            # Continue with other tasks while waiting for the timer to expire
+                                            pass
+
+                                        # Timer expired, execute code
+                                        execute_relay_action()
+                                        # TODO fix
+
+                                    if active_thread is not None:
+                                        active_thread.stop()  # Stop the last timer thread
+
+                                    execute_relay_action()
+                                except Exception as relay_wait_error:
+                                    execute_relay_action()
 
                                 # old_relay_values_clear()
 
