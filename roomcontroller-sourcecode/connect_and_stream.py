@@ -63,6 +63,7 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.game_status = None
         self.data_response_old = None
         self.signalr_bearer_token = None
         self.signalr_access_token = None
@@ -171,6 +172,12 @@ class ConnectAndStream(threading.Thread):
                                                         f" {API_SIGNALR}")
                                                   ))
 
+        self.hub_connection.on('game_status'
+                               , (lambda data: (self.set_game_status(data)
+                                                       , print(f">>> connect_and_stream - {self.device_mac}"
+                                                               f" GameStatus command received. Status = {data}")
+                                                       )))
+
         self.hub_connection.start()
 
         while self.signalr_status is not True:
@@ -198,6 +205,10 @@ class ConnectAndStream(threading.Thread):
         self.command_resync = True
         self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
         self.command_resync = False
+        
+    def set_game_status(self, game_status):
+        # command received by hub to refresh values from all device threads to update location workspace
+        self.game_status = game_status
 
     # @property
     def run(self):
@@ -289,7 +300,7 @@ class ConnectAndStream(threading.Thread):
                                                                 f" Reset Room command received")
                                                         )))
 
-                self.hub_connection.on('relay_on_pulse'
+                self.hub_connection.on('relay_pulse'
                                        , (lambda relay_num, pulse_time=.1:
                                           (self.ncd.turn_on_relay_by_index(function_relay(relay_num))
                                            , time.sleep(pulse_time)
@@ -299,15 +310,15 @@ class ConnectAndStream(threading.Thread):
                                                    f' for ({pulse_time} second)')
                                            )))
 
-                self.hub_connection.on('relay_off_pulse'
-                                       , (lambda relay_num, pulse_time=.1:
-                                          (self.ncd.turn_off_relay_by_index(function_relay(relay_num))
-                                           , time.sleep(pulse_time)
-                                           , self.ncd.turn_on_relay_by_index(function_relay(relay_num))
-                                           , print(f'>>> connect_and_stream - {self.device_mac} - '
-                                                   f'RELAY PULSE OFF/ON # {function_relay(relay_num)}'
-                                                   f' for ({pulse_time} second)')
-                                           )))
+                # self.hub_connection.on('relay_off_pulse'
+                #                        , (lambda relay_num, pulse_time=.1:
+                #                           (self.ncd.turn_off_relay_by_index(function_relay(relay_num))
+                #                            , time.sleep(pulse_time)
+                #                            , self.ncd.turn_on_relay_by_index(function_relay(relay_num))
+                #                            , print(f'>>> connect_and_stream - {self.device_mac} - '
+                #                                    f'RELAY PULSE OFF/ON # {function_relay(relay_num)}'
+                #                                    f' for ({pulse_time} second)')
+                #                            )))
 
                 def relay_multi_command(relay_array):
                     for relay in relay_array:
@@ -481,36 +492,36 @@ class ConnectAndStream(threading.Thread):
                                             self.ncd.turn_off_relay_by_index(relay_num)
                                             print(f"Automation ran for turning off index # {relay_num}")
 
-                                try:
-                                    relay_wait = [int(action['wait'])]
-
-                                    data_list = [5, 3, 7]  # Example list of timer values
-
-                                    active_thread = None
-
-                                    for timer_value in relay_wait:
-                                        if active_thread is not None:
-                                            active_thread.join()  # Wait for the previous timer thread to finish before starting a new one
-
-                                        print(f"Setting timer for {timer_value} seconds.")
-                                        timer_thread = TimerThread(timer_value)
-                                        timer_thread.start()
-                                        active_thread = timer_thread
-
-                                        while not timer_thread.timer_expired.wait(0.1):
-                                            # Continue with other tasks while waiting for the timer to expire
-                                            pass
-
-                                        # Timer expired, execute code
-                                        execute_relay_action()
-                                        # TODO fix
-
-                                    if active_thread is not None:
-                                        active_thread.stop()  # Stop the last timer thread
-
-                                    execute_relay_action()
-                                except Exception as relay_wait_error:
-                                    execute_relay_action()
+                                    # try:
+                                    #     relay_wait = [int(action['wait'])]
+                                    #
+                                    #     data_list = [5, 3, 7]  # Example list of timer values
+                                    #
+                                    #     active_thread = None
+                                    #
+                                    #     for timer_value in relay_wait:
+                                    #         if active_thread is not None:
+                                    #             active_thread.join()  # Wait for the previous timer thread to finish before starting a new one
+                                    #
+                                    #         print(f"Setting timer for {timer_value} seconds.")
+                                    #         timer_thread = TimerThread(timer_value)
+                                    #         timer_thread.start()
+                                    #         active_thread = timer_thread
+                                    #
+                                    #         while not timer_thread.timer_expired.wait(0.1):
+                                    #             # Continue with other tasks while waiting for the timer to expire
+                                    #             pass
+                                    #
+                                    #         # Timer expired, execute code
+                                    #         execute_relay_action()
+                                    #         # TODO fix
+                                    #
+                                    #     if active_thread is not None:
+                                    #         active_thread.stop()  # Stop the last timer thread
+                                #
+                                execute_relay_action()
+                                # except Exception as relay_wait_error:
+                                #     execute_relay_action()
 
                                 # old_relay_values_clear()
 

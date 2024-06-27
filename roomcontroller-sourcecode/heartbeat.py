@@ -1,3 +1,4 @@
+import time
 import os
 import json
 import socket
@@ -168,27 +169,29 @@ class Heartbeat:
     def execution_environment(self):
         while True:
             # print(f">>> heartbeat - {self.device_unique_id} - waiting for heartbeat action")
-
-            # # Post Device HeartBeat Data to API
-            # heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
-            #                                                  CpuAvg=psutil.cpu_percent(1),
-            #                                                  MemoryAvg=psutil.virtual_memory()[2],
-            #                                                  NetworkAvg=10)
-            # requests.post(heartbeat_api_url, headers=self.api_headers)
-            # print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent")
+            # Post Device HeartBeat Data to API
+            heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
+                                                             CpuAvg=psutil.cpu_percent(interval=None),
+                                                             MemoryAvg=psutil.virtual_memory()[2],
+                                                             NetworkAvg=10)
+            requests.post(heartbeat_api_url, headers=self.api_headers)
+            print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
 
             # Getting loadover15 minutes
             # load1, load5, load15 = psutil.getloadavg()
-            #
+            # #
             # cpu_usage = (load1 / os.cpu_count()) * 100
             # print("The CPU usage is : ", cpu_usage)
-            # print("The CPU usage is : ", psutil.getloadavg())
+            # print("The CPU LoadAverage usage is : ", psutil.getloadavg())
+            # cpu_percent = [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()][1]
+            # print("The CPU %LoadAverage usage is : ", cpu_percent)
+            # print("The CPU %LoadAverage usage is : ", round(cpu_percent, 2))
             #
             # print("THE Unix Style CPU Usage is : ", psutil.cpu_percent(interval=5, percpu=False))
             # print("The CPU count is : ", os.cpu_count())
 
-            # print('The CPU usage is: ', psutil.cpu_percent(1))
-            # # Getting % usage of virtual_memory ( 3rd field)
+            # print('The CPU usage is: ', psutil.cpu_percent(interval=None))
+            # Getting % usage of virtual_memory ( 3rd field)
             # print('RAM memory % used:', psutil.virtual_memory()[2])
             # # Getting usage of virtual_memory in GB ( 4th field)
             # print('RAM Used (GB):', psutil.virtual_memory()[3] / 1000000000)
@@ -197,9 +200,8 @@ class Heartbeat:
             # python_process = psutil.Process(pid)
             # memoryuse = python_process.memory_info()[0] / 2. ** 30  # memory use in GB...I think
             # print('memory use:', memoryuse)
-
-            time.sleep(5)
             # run heartbeat logic here
+            time.sleep(60)
 
     def ping_response(self):
         self.hub_connection.send('ping_response', [str(self.device_unique_id), "true"])

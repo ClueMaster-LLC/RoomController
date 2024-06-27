@@ -5,6 +5,7 @@ import auto_startup
 import connected_devices
 import automation
 import heartbeat
+import websocket_server
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -84,6 +85,22 @@ class AutomationThread(threading.Thread):
         return
 
 
+# WebsocketServer connect to run a Websocket Server in a separate process for video player client connections
+class WebsocketServerThread(threading.Thread):
+    def __init__(self):
+        super(WebsocketServerThread, self).__init__()
+        print(">>> thread_manager - WebsocketServer Thread active ....")
+
+        # global attributes
+        self.active = None
+        self.websocket_instance = None
+
+    def run(self):
+        self.websocket_instance = websocket_server.WebsocketServer()
+        print(">>> thread_manager - Stopped Base WebsocketServer Thread ...")
+        return
+
+
 # master thread manager
 class ThreadManager:
     def __init__(self):
@@ -96,6 +113,7 @@ class ThreadManager:
         self.registration_thread = None
         self.heartbeat_thread = None
         self.automation_thread = None
+        self.websocket_server_thread = None
         self.connect_to_previous_device_thread = None
         self.controller_status_thread = None
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -143,6 +161,9 @@ class ThreadManager:
 
         self.heartbeat_thread = HeartbeatThread()
         self.heartbeat_thread.start()
+
+        # self.websocket_server_thread = WebsocketServerThread()
+        # self.websocket_server_thread.start()
 
         # self.automation_thread = AutomationThread()
         # self.automation_thread.start()
