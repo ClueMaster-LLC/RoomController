@@ -84,8 +84,8 @@ class Heartbeat:
         self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
         # self.signalr_access_token = f'?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 
-        self.net_interval = 1  # Interval between measurements in seconds
-        self.net_duration = 10  # Duration of measurement in seconds
+        self.net_interval = 1  # Interval between network measurements in seconds
+        self.net_duration = 1  # Duration of network measurement in seconds
 
         # set the Room ID for the Room Controller to listen to signalR commands
         # TODO remove the wait and pull from the unique_ids file after getting it from a API
