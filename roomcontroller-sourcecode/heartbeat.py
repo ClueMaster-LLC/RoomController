@@ -7,6 +7,7 @@ import platform
 import psutil
 # import timeit
 import requests
+import room_controller
 
 from apis import *
 from requests.structures import CaseInsensitiveDict
@@ -28,6 +29,10 @@ class Heartbeat:
         super(Heartbeat, self).__init__()
 
         # local class attributes
+        self.net_interval = None
+        self.net_duration = None
+        self.room_id = None
+        self.game_status = None
         self.hub_connection = None
         self.handler = None
         self.server_url = None
@@ -79,9 +84,27 @@ class Heartbeat:
         self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
         # self.signalr_access_token = f'?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 
+        self.net_interval = 1  # Interval between measurements in seconds
+        self.net_duration = 10  # Duration of measurement in seconds
+
+        # set the Room ID for the Room Controller to listen to signalR commands
+        # TODO remove the wait and pull from the unique_ids file after getting it from a API
+        while room_controller.GLOBAL_ROOM_ID is None:
+            for i in range(15, -1, -1):
+                if room_controller.GLOBAL_ROOM_ID:
+                    self.room_id = room_controller.GLOBAL_ROOM_ID
+                    print(f">>> heartbeat - {self.device_unique_id} - ROOM ID: {room_controller.GLOBAL_ROOM_ID}")
+                    break
+                if i == 0:
+                    print(f'>>> heartbeat - {self.device_unique_id} - Timeout exceeded. No Room_ID Set.')
+                    # break
+                print(f'>>> heartbeat - {self.device_unique_id} - waiting for to set Room_ID ... {i}')
+                time.sleep(1)
+            break
+
     def signalr_hub(self):
         self.server_url = API_SIGNALR + self.signalr_bearer_token
-        print(f">>> connect_and_stream - {self.device_unique_id} - SignalR connected to {API_SIGNALR}")
+        print(f">>> heartbeat - {self.device_unique_id} - SignalR connected to {API_SIGNALR}")
         self.handler = logging.StreamHandler()
         self.handler.setLevel(logging.ERROR)
         self.hub_connection = HubConnectionBuilder() \
@@ -115,7 +138,8 @@ class Heartbeat:
                                                          f"A Server exception error was thrown: {data.error}")
                                                    )
                                      )
-        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.device_unique_id)]),
+        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
+                                             self.hub_connection.send('AddToGroup', [str(self.device_unique_id)]),
                                              print(
                                                  f">>> heartbeat - {self.device_unique_id} - signalR "
                                                  f"handshake received. Ready to send/receive messages.")
@@ -134,11 +158,17 @@ class Heartbeat:
 
         self.hub_connection.on('shutdown', (lambda: (print(f">>> heartbeat - {self.device_unique_id} - SHUTDOWN "
                                                            f"command received"), self.shutdown_rc())))
+        
+        self.hub_connection.on('game_status'
+                               , (lambda data: (self.set_game_status(data)
+                                                , print(f">>> heartbeat - {self.device_unique_id} - "
+                                                        f"GameStatus command received. Status = {data}")
+                                                )))
 
-        print(">>> heartbeat - starting signalR")
+        print(f">>> heartbeat - {self.device_unique_id} - starting signalR")
 
         self.hub_connection.start()
-        print(f'>>> heartbeat - {self.device_unique_id} - waiting for signalR handshake ...')
+        print(f">>> heartbeat - {self.device_unique_id} - waiting for signalR handshake ...")
         while self.signalr_status is not True:
             try:
                 if self.signalr_status is True:
@@ -160,6 +190,10 @@ class Heartbeat:
         else:
             print(f">>> heartbeat - {self.device_unique_id} - SignalR Connected")
 
+    def set_game_status(self, game_status):
+        # command received by hub to refresh values from all device threads to update location workspace
+        room_controller.GLOBAL_GAME_STATUS = game_status
+        
     def signalr_connected(self, status):
         if status is True:
             self.signalr_status = True
@@ -168,40 +202,46 @@ class Heartbeat:
 
     def execution_environment(self):
         while True:
-            # print(f">>> heartbeat - {self.device_unique_id} - waiting for heartbeat action")
+            # find network utilization
+            net_avg_utilization = round(self.get_total_average_utilization(self.net_interval, self.net_duration), 2)
+            # print(f"Total average network utilization: {net_avg_utilization} MB/s")
+
             # Post Device HeartBeat Data to API
             heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
                                                              CpuAvg=psutil.cpu_percent(interval=None),
                                                              MemoryAvg=psutil.virtual_memory()[2],
-                                                             NetworkAvg=10)
+                                                             NetworkAvg=net_avg_utilization)
             requests.post(heartbeat_api_url, headers=self.api_headers)
             print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
 
-            # Getting loadover15 minutes
-            # load1, load5, load15 = psutil.getloadavg()
-            # #
-            # cpu_usage = (load1 / os.cpu_count()) * 100
-            # print("The CPU usage is : ", cpu_usage)
-            # print("The CPU LoadAverage usage is : ", psutil.getloadavg())
-            # cpu_percent = [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()][1]
-            # print("The CPU %LoadAverage usage is : ", cpu_percent)
-            # print("The CPU %LoadAverage usage is : ", round(cpu_percent, 2))
-            #
-            # print("THE Unix Style CPU Usage is : ", psutil.cpu_percent(interval=5, percpu=False))
-            # print("The CPU count is : ", os.cpu_count())
-
-            # print('The CPU usage is: ', psutil.cpu_percent(interval=None))
-            # Getting % usage of virtual_memory ( 3rd field)
-            # print('RAM memory % used:', psutil.virtual_memory()[2])
-            # # Getting usage of virtual_memory in GB ( 4th field)
-            # print('RAM Used (GB):', psutil.virtual_memory()[3] / 1000000000)
-            #
-            # pid = os.getpid()
-            # python_process = psutil.Process(pid)
-            # memoryuse = python_process.memory_info()[0] / 2. ** 30  # memory use in GB...I think
-            # print('memory use:', memoryuse)
-            # run heartbeat logic here
             time.sleep(60)
+
+    def get_network_utilization(self, interval=1):
+        net1 = psutil.net_io_counters(pernic=True)
+        time.sleep(interval)
+        net2 = psutil.net_io_counters(pernic=True)
+
+        utilization = {}
+        for nic in net1.keys():
+            sent_diff = net2[nic].bytes_sent - net1[nic].bytes_sent
+            recv_diff = net2[nic].bytes_recv - net1[nic].bytes_recv
+            total_diff = sent_diff + recv_diff
+            utilization[nic] = total_diff / (interval * 1024 * 1024)  # Convert to MB/s
+
+        return utilization
+
+    def get_total_average_utilization(self, interval=1, duration=10):
+        total_utilization = 0
+        count = 0
+        start_time = time.time()
+
+        while time.time() - start_time < duration:
+            utilization = self.get_network_utilization(interval)
+            total_utilization += sum(utilization.values())
+            count += 1
+
+        average_utilization = total_utilization / count
+        return average_utilization
 
     def ping_response(self):
         self.hub_connection.send('ping_response', [str(self.device_unique_id), "true"])

@@ -31,6 +31,9 @@ GLOBAL_AUTOMATION_RULE_PENDING = None
 global GLOBAL_GAME_STATUS
 GLOBAL_GAME_STATUS = None
 
+global GLOBAL_ROOM_ID
+GLOBAL_ROOM_ID = None
+
 
 # master class
 class RoomController:

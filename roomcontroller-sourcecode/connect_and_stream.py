@@ -58,6 +58,7 @@ class ConnectAndStream(threading.Thread):
         self.device_mac = device_mac
         [self.ip_address, self.server_port, self.device_model, self.device_type, self.read_speed, self.input_total,
          self.relay_total, self.room_id] = self.read_device_info(self.device_mac)
+        room_controller.GLOBAL_ROOM_ID = self.room_id  # TODO remove this and add room_id to the RC config file from api.
         self.bank_total = ((self.input_total // 8) - 1)
         self.post_input_relay_request_update_api = POST_INPUT_RELAY_REQUEST_UPDATE
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
@@ -150,12 +151,6 @@ class ConnectAndStream(threading.Thread):
                                                         f" {API_SIGNALR}")
                                                   ))
 
-        self.hub_connection.on('game_status'
-                               , (lambda data: (self.set_game_status(data)
-                                                , print(f">>> connect_and_stream - {self.device_mac}"
-                                                        f" GameStatus command received. Status = {data}")
-                                                )))
-
         self.hub_connection.start()
 
         while self.signalr_status is not True:
@@ -183,10 +178,6 @@ class ConnectAndStream(threading.Thread):
         self.command_resync = True
         self.hub_connection.send('sendtoroom', [str(self.room_id), str(self.device_mac), str(self.data_response)])
         self.command_resync = False
-        
-    def set_game_status(self, game_status):
-        # command received by hub to refresh values from all device threads to update location workspace
-        self.game_status = game_status
 
     # @property
     def run(self):
