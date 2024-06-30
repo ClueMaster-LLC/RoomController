@@ -1,11 +1,13 @@
 import http.client
 import os
 import json
+import threading
 import time
 import requests
 from apis import *
 import connect_and_stream
 import add_find_device
+import heartbeat
 from requests.structures import CaseInsensitiveDict
 import connected_devices
 
@@ -59,6 +61,7 @@ class RoomController:
         self.update_automation_rule_id = 14
         self.resetting_room_controller = False
         self.connect_and_stream_thread = None
+        self.heartbeat_thread = None
         self.add_find_device_thread = None
         self.get_devicelist_request_api = None
         self.signalr_status = None
@@ -74,8 +77,14 @@ class RoomController:
         self.configurations()
         # self.signalr_hub()
         print(">>> room_controller - **********  STARTUP COMPLETE  **********")
+
+        self.heartbeat_thread = HeartbeatThread()
+        self.heartbeat_thread.start()
+
         self.execution_environment()
         print(">>> room_controller - **********  ROOM CONTROLLER SHUTTING DOWN  **********")
+        heartbeat.HEARTBEAT_STOP = True
+        print(">>> room_controller - **********  STOPPING HEARTBEAT THREAD  **********")
 
     def configurations(self):
         try:
@@ -243,7 +252,7 @@ class RoomController:
             room_id = json_response_of_room_id_api["RoomID"]
             # set the Room ID for the Room Controller to listen to signalR commands
             GLOBAL_ROOM_ID = room_id
-            print(f">>> heartbeat - {self.device_unique_id} - Room Controller RoomID: {GLOBAL_ROOM_ID}")
+            print(f">>> room_controller - {self.device_unique_id} - Room Controller RoomID: {GLOBAL_ROOM_ID}")
 
             # update room controller configuration file with new room id value
             with open(self.roomcontroller_configs_file) as configurations_file:
@@ -255,7 +264,7 @@ class RoomController:
 
         except Exception as error:
             # can't query api
-            print(f">>> heartbeat - {self.device_unique_id} - ERROR, Unable to query api for Room ID. "
+            print(f">>> room_controller - {self.device_unique_id} - ERROR, Unable to query api for Room ID. "
                   f"Setting to previously saved Room ID.")
             with open(self.roomcontroller_configs_file) as configurations_file:
                 configurations_file_data = json.load(configurations_file)
@@ -367,3 +376,20 @@ class RoomController:
 
     def reset_room_controller(self):
         pass
+
+
+# HeartBeat Thread to monitor system and game status in a separate process
+class HeartbeatThread(threading.Thread):
+    def __init__(self):
+        super(HeartbeatThread, self).__init__()
+        print(">>> thread_manager - HeartBeat Thread active ....")
+
+        # global attributes
+        self.active = None
+        self.heartbeat_instance = None
+
+    def run(self):
+        self.heartbeat_instance = heartbeat.Heartbeat()
+        print(">>> thread_manager - Stopped Base Heartbeat Thread ...")
+        heartbeat.HEARTBEAT_STOP = False
+        return

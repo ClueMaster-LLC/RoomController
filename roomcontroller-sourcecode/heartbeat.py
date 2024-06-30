@@ -1,3 +1,4 @@
+import threading
 import time
 import os
 import json
@@ -22,9 +23,12 @@ ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomController")
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
+global HEARTBEAT_STOP
+HEARTBEAT_STOP = False
+
 
 # master class
-class Heartbeat:
+class Heartbeat(threading.Thread):
     def __init__(self):
         super(Heartbeat, self).__init__()
 
@@ -152,7 +156,7 @@ class Heartbeat:
 
         self.hub_connection.on('shutdown', (lambda: (print(f">>> heartbeat - {self.device_unique_id} - SHUTDOWN "
                                                            f"command received"), self.shutdown_rc())))
-        
+
         self.hub_connection.on('game_status'
                                , (lambda data: (self.set_game_status(data)
                                                 , print(f">>> heartbeat - {self.device_unique_id} - "
@@ -187,7 +191,7 @@ class Heartbeat:
     def set_game_status(self, game_status):
         # command received by hub to refresh values from all device threads to update location workspace
         room_controller.GLOBAL_GAME_STATUS = game_status
-        
+
     def signalr_connected(self, status):
         if status is True:
             self.signalr_status = True
@@ -196,19 +200,33 @@ class Heartbeat:
 
     def execution_environment(self):
         while True:
-            # find network utilization
-            net_avg_utilization = round(self.get_total_average_utilization(self.net_interval, self.net_duration), 2)
-            # print(f"Total average network utilization: {net_avg_utilization} MB/s")
+            try:
+                # find network utilization
+                net_avg_utilization = round(self.get_total_average_utilization(self.net_interval, self.net_duration), 2)
+                # print(f"Total average network utilization: {net_avg_utilization} MB/s")
 
-            # Post Device HeartBeat Data to API
-            heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
-                                                             CpuAvg=psutil.cpu_percent(interval=None),
-                                                             MemoryAvg=psutil.virtual_memory()[2],
-                                                             NetworkAvg=net_avg_utilization)
-            requests.post(heartbeat_api_url, headers=self.api_headers)
-            print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
+                # Post Device HeartBeat Data to API
+                heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
+                                                                 CpuAvg=psutil.cpu_percent(interval=None),
+                                                                 MemoryAvg=psutil.virtual_memory()[2],
+                                                                 NetworkAvg=net_avg_utilization)
+                requests.post(heartbeat_api_url, headers=self.api_headers)
+                print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
 
-            time.sleep(60)
+                time.sleep(60)
+                print(f">>> heartbeat - {self.device_unique_id} - HEART BEAT STOP IS: {HEARTBEAT_STOP}")
+                if HEARTBEAT_STOP is True:
+                    break
+
+            except requests.exceptions.HTTPError as request_error:
+                if "401 Client Error" in str(request_error):
+                    self.hub_connection.stop()
+                    self.reset_heartbeat()
+                    time.sleep(5)
+                    break
+                else:
+                    print(">>> room_controller - " + str(request_error))
+                    time.sleep(5)
 
     def get_network_utilization(self, interval=1):
         net1 = psutil.net_io_counters(pernic=True)
@@ -270,6 +288,10 @@ class Heartbeat:
         except Exception as error:
             print(f">>> heartbeat - {self.device_unique_id} - ERROR: {error}")
             print(f">>> heartbeat - {self.device_unique_id} - Error Sending Reboot Command")
+
+    def reset_heartbeat(self):
+
+        pass
 
 # # Comment out the function when testing from main.py
 # def start_thread():

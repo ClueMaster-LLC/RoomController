@@ -57,7 +57,7 @@ class ConnectPreviousDevicesThread(threading.Thread):
 class HeartbeatThread(threading.Thread):
     def __init__(self):
         super(HeartbeatThread, self).__init__()
-        print(">>> thread_manager - AutomationThread active ....")
+        print(">>> thread_manager - HeartBeat Thread active ....")
 
         # global attributes
         self.active = None
@@ -159,9 +159,6 @@ class ThreadManager:
         # starting registration thread
         self.registration_thread = RegistrationThread()
         self.registration_thread.start()
-
-        self.heartbeat_thread = HeartbeatThread()
-        self.heartbeat_thread.start()
 
         # self.websocket_server_thread = WebsocketServerThread()
         # self.websocket_server_thread.start()
