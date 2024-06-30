@@ -1,6 +1,7 @@
-import http.client
 import os
 import json
+import platform
+import socket
 import threading
 import time
 import requests
@@ -11,10 +12,10 @@ import heartbeat
 from requests.structures import CaseInsensitiveDict
 import connected_devices
 
-# # This import will be for signalR code##
-# import logging
-# from signalrcore.hub_connection_builder import HubConnectionBuilder
-# from signalrcore.protocol.messagepack_protocol import MessagePackHubProtocol
+# This import will be for signalR code##
+import logging
+from signalrcore.hub_connection_builder import HubConnectionBuilder
+from signalrcore.protocol.messagepack_protocol import MessagePackHubProtocol
 
 # BASE DIRECTORIES
 ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -34,8 +35,8 @@ GLOBAL_AUTOMATION_RULE_PENDING = None
 global GLOBAL_GAME_STATUS
 GLOBAL_GAME_STATUS = None
 
-global GLOBAL_ROOM_ID
-GLOBAL_ROOM_ID = None
+# global GLOBAL_ROOM_ID
+# GLOBAL_ROOM_ID = None
 
 
 # master class
@@ -44,6 +45,10 @@ class RoomController:
         super(RoomController, self).__init__()
 
         # local class attributes
+        self.room_id = None
+        self.signalr_bearer_token = None
+        self.device_request_api_url = None
+        self.api_bearer_key = None
         self.get_automationrule_request_api = None
         self.get_automationrule_api = None
         self.hub_connection = None
@@ -91,19 +96,20 @@ class RoomController:
             with open(self.unique_ids_file) as unique_ids_file:
                 json_response_of_unique_ids_file = json.load(unique_ids_file)
 
-            device_unique_id = json_response_of_unique_ids_file["device_id"]
-            api_key = json_response_of_unique_ids_file["api_token"]
-
-            self.device_unique_id = device_unique_id
-            self.api_token = api_key
+            self.device_unique_id = json_response_of_unique_ids_file["device_id"]
+            self.api_bearer_key = json_response_of_unique_ids_file["api_token"]
+            self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
 
             self.api_headers = CaseInsensitiveDict()
-            self.api_headers["Authorization"] = f"Basic {device_unique_id}:{api_key}"
-            self.discover_new_relays_request_api = NEW_RELAYS_DISCOVERY_REQUEST.format(device_id=device_unique_id)
-            self.get_devicelist_request_api = GET_NEW_INPUT_RELAY_LIST_REQUEST.format(device_id=device_unique_id)
-            self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=device_unique_id)
-            self.get_automationrule_api = GET_ROOM_AUTOMATION_MASTER.format(device_id=device_unique_id)
-            self.get_automationrule_request_api = GET_ROOM_CONTROLLER_AUTOMATION_REQUEST.format(device_id=device_unique_id)
+            self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
+            self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
+            # self.signalr_access_token = f'?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
+
+            self.discover_new_relays_request_api = NEW_RELAYS_DISCOVERY_REQUEST.format(device_id=self.device_unique_id)
+            self.get_devicelist_request_api = GET_NEW_INPUT_RELAY_LIST_REQUEST.format(device_id=self.device_unique_id)
+            self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=self.device_unique_id)
+            self.get_automationrule_api = GET_ROOM_AUTOMATION_MASTER.format(device_id=self.device_unique_id)
+            self.get_automationrule_request_api = GET_ROOM_CONTROLLER_AUTOMATION_REQUEST.format(device_id=self.device_unique_id)
 
             # load room id into memory
             self.get_rc_room_id()
@@ -118,6 +124,15 @@ class RoomController:
     def execution_environment(self):
         while True:
             try:
+                # Try to Connect to Comhub with SignalR and loop until it does.
+                if self.signalr_status is not True:
+                    try:
+                        self.signalr_hub()
+                    except Exception as error:
+                        print(f">>> room_controller - {self.device_unique_id} - SignalR Did not connect for Room Controller. "
+                              f"Server Error: {error}")
+                        # time.sleep(5)
+
                 # print(">>> Console Output " + str(datetime.datetime.utcnow()) +
                 # " - Searching for new input relays request ...")
                 relays_discovery_request = requests.get(self.discover_new_relays_request_api, headers=self.api_headers)
@@ -249,17 +264,17 @@ class RoomController:
             # Get Room Controller Room number it's assigned to
             room_id_api_url = GET_ROOM_CONTROLLER_INFO_API.format(device_id=self.device_unique_id)
             json_response_of_room_id_api = requests.get(room_id_api_url, headers=self.api_headers).json()
-            room_id = json_response_of_room_id_api["RoomID"]
+            self.room_id = json_response_of_room_id_api["RoomID"]
             # set the Room ID for the Room Controller to listen to signalR commands
-            GLOBAL_ROOM_ID = room_id
-            print(f">>> room_controller - {self.device_unique_id} - Room Controller RoomID: {GLOBAL_ROOM_ID}")
+
+            print(f">>> room_controller - {self.device_unique_id} - Room Controller RoomID: {self.room_id}")
 
             # update room controller configuration file with new room id value
             with open(self.roomcontroller_configs_file) as configurations_file:
                 configurations_file_data = json.load(configurations_file)
 
             with open(self.roomcontroller_configs_file, "w") as configurations_file:
-                configurations_file_data["room_id"] = room_id
+                configurations_file_data["room_id"] = self.room_id
                 json.dump(configurations_file_data, configurations_file)
 
         except Exception as error:
@@ -268,7 +283,7 @@ class RoomController:
                   f"Setting to previously saved Room ID.")
             with open(self.roomcontroller_configs_file) as configurations_file:
                 configurations_file_data = json.load(configurations_file)
-                GLOBAL_ROOM_ID = configurations_file_data["room_id"]
+                self.room_id = configurations_file_data["room_id"]
 
 
     def get_devicelist(self):
@@ -374,15 +389,146 @@ class RoomController:
         self.connect_and_stream_thread = connect_and_stream.ConnectAndStream(device_mac=device_mac_id)
         self.connect_and_stream_thread.start()
 
+    def signalr_hub(self):
+        self.server_url = API_SIGNALR + self.signalr_bearer_token
+        print(f">>> room_controller - {self.device_unique_id} - SignalR connected to {API_SIGNALR}")
+        self.handler = logging.StreamHandler()
+        self.handler.setLevel(logging.CRITICAL)
+        self.hub_connection = HubConnectionBuilder() \
+            .with_url(self.server_url, options={
+            "verify_ssl": True,
+            "skip_negotiation": False
+        }) \
+            .configure_logging(logging.CRITICAL, socket_trace=False, handler=self.handler) \
+            .with_automatic_reconnect({
+            "type": "raw",
+            "keep_alive_interval": 5,
+            "reconnect_interval": 10,
+            "max_attempts": 3
+        }).build()
+        # TODO try to get retries working and connect to signalR when online
+        # "accessTokenFactory": 'value'
+        # "http_client_options": {"headers": self.api_headers, "timeout": 5.0},
+        # "ws_client_options": {"headers": self.api_headers, "timeout": 5.0}
+        # "type": "raw",
+        # "type": "interval",
+        # "keep_alive_interval": 5,
+        # "reconnect_interval": 5,
+        # "max_attempts": 99999999,
+        # "intervals": [1, 3, 5, 6, 7, 87, 3]
+        # .with_hub_protocol(MessagePackHubProtocol()) \
+
+        self.hub_connection.on_close(lambda: (print(f">>> room_controller - {self.device_unique_id} - SignalR "
+                                                    f"Connection Closed"), self.signalr_connected(False)
+                                              ))
+        self.hub_connection.on_error(lambda data: (print(f">>> room_controller - {self.device_unique_id} - "
+                                                         f"A Server exception error was thrown: {data.error}")
+                                                   )
+                                     )
+        self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
+                                             self.hub_connection.send('AddToGroup', [str(self.device_unique_id)]),
+                                             print(
+                                                 f">>> room_controller - {self.device_unique_id} - signalR "
+                                                 f"handshake received. Ready to send/receive messages.")
+                                             , self.signalr_connected(True)
+                                             )
+                                    )
+        self.hub_connection.on_reconnect(lambda: (print(f">>> room_controller - Trying to re-connect to"
+                                                        f" {API_SIGNALR}")
+                                                  ))
+
+        self.hub_connection.on('ping', (lambda: (print(f">>> room_controller - {self.device_unique_id} - PING "
+                                                       f"command received"), self.ping_response())))
+
+        self.hub_connection.on('restart', (lambda: (print(f">>> room_controller - {self.device_unique_id} - RESTART "
+                                                          f"command received"), self.restart_rc())))
+
+        self.hub_connection.on('shutdown', (lambda: (print(f">>> room_controller - {self.device_unique_id} - SHUTDOWN "
+                                                           f"command received"), self.shutdown_rc())))
+
+        self.hub_connection.on('game_status'
+                               , (lambda data: (self.set_game_status(data)
+                                                , print(f">>> room_controller - {self.device_unique_id} - "
+                                                        f"GameStatus command received. Status = {data}")
+                                                )))
+
+        print(f">>> room_controller - {self.device_unique_id} - starting signalR")
+        self.hub_connection.start()
+        print(f">>> room_controller - {self.device_unique_id} - waiting for signalR handshake ...")
+
+        while self.signalr_status is not True:
+            try:
+                if self.signalr_status is True:
+                    break
+                else:
+                    # print(self.server_url)
+                    # print(f'>>> room_controller - SignalR Status: {self.signalr_status}')
+                    time.sleep(0)
+
+            except socket.error as error:
+                print(f'>>> room_controller - {self.device_unique_id} - SignalR connection ERROR ... {error}')
+                self.signalr_status = False
+                self.hub_connection.stop()
+                time.sleep(5)
+                self.hub_connection.start()
+                time.sleep(5)
+
+        else:
+            print(f">>> room_controller - {self.device_unique_id} - SignalR Connected")
+
+    def signalr_connected(self, status):
+        if status is True:
+            self.signalr_status = True
+        else:
+            self.signalr_status = False
+
+    def set_game_status(self, game_status):
+        # command received by hub to refresh values from all device threads to update location workspace
+        GLOBAL_GAME_STATUS = game_status
+
     def reset_room_controller(self):
         pass
+
+    def ping_response(self):
+        self.hub_connection.send('ping_response', [str(self.device_unique_id), "true"])
+        print(f">>> heartbeat - {self.device_unique_id} - PING Response Sent")
+
+    # @staticmethod
+    def restart_rc(self):
+        try:
+            if platform.system() == "Windows":
+                # win32api.InitiateSystemShutdown()
+                print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
+                pass
+            elif platform.system() == "Linux" or platform.system() == "Linux2":
+                os.system('systemctl reboot -i')
+            print(f">>> heartbeat - {self.device_unique_id} - Room Controller Rebooting")
+
+        except Exception as error:
+            print(f">>> heartbeat - ERROR: {error}")
+            print(f">>> heartbeat - {self.device_unique_id} - Error Sending Reboot Command")
+
+    # @staticmethod
+    def shutdown_rc(self):
+        try:
+            if platform.system() == "Windows":
+                # win32api.InitiateSystemShutdown()
+                print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
+                pass
+            elif platform.system() == "Linux" or platform.system() == "Linux2":
+                os.system('systemctl poweroff -i')
+            print(f">>> heartbeat - {self.device_unique_id} - Shutting Down Room Controller")
+
+        except Exception as error:
+            print(f">>> heartbeat - {self.device_unique_id} - ERROR: {error}")
+            print(f">>> heartbeat - {self.device_unique_id} - Error Sending Reboot Command")
 
 
 # HeartBeat Thread to monitor system and game status in a separate process
 class HeartbeatThread(threading.Thread):
     def __init__(self):
         super(HeartbeatThread, self).__init__()
-        print(">>> thread_manager - HeartBeat Thread active ....")
+        print(">>> room_controller - HeartBeat Thread active ....")
 
         # global attributes
         self.active = None
@@ -390,6 +536,6 @@ class HeartbeatThread(threading.Thread):
 
     def run(self):
         self.heartbeat_instance = heartbeat.Heartbeat()
-        print(">>> thread_manager - Stopped Base Heartbeat Thread ...")
+        print(">>> room_controller - Stopped Base Heartbeat Thread ...")
         heartbeat.HEARTBEAT_STOP = False
         return

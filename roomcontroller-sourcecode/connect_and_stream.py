@@ -487,8 +487,9 @@ class ConnectAndStream(threading.Thread):
                                     if 'fired' not in rule or not rule['fired']:
                                         # Execute all actions
                                         for action in actions:
-                                            execute_action(action)
-                                            self.data_response_old = None
+                                            if not self.command_resync and not self.startup_init:
+                                                execute_action(action)
+                                                self.data_response_old = None
 
                                         # Set fired flag to True
                                         rule['fired'] = True
