@@ -5,6 +5,7 @@ signalr_hub_url = "wss://dev-comhub.cluemaster.io/"
 # GETs
 GENERATE_API_TOKEN_API = master_base_url + "api/Auth/PostGenerateApiKey"
 ROOM_CONTROLLER_REQUEST_API = master_base_url + "api/roomcontroller/GetRoomControllerRequest/{device_id}"
+GET_ROOM_CONTROLLER_INFO_API = master_base_url + "api/roomcontroller/GetRoomControllerInfo/{device_id}"
 NEW_RELAYS_DISCOVERY_REQUEST = master_base_url + "api/roomcontroller/GetNewInputRelayDiscoveryRequest/{device_id}"
 GET_NEW_INPUT_RELAY_LIST_REQUEST = master_base_url + "api/roomcontroller/GetNewInputRelayListRequest/{device_id}"
 GET_NEW_INPUT_RELAY_LIST = master_base_url + "api/roomcontroller/GetLatestInputRelayList/{device_id}"

@@ -136,7 +136,8 @@ class ThreadManager:
 
         with open(self.roomcontroller_configs_file, "w") as configurations_file:
             input_dictionary = {"connect_previous_device_thread_active": True,
-                                "registration_thread_active": True}
+                                "registration_thread_active": True,
+                                "room_id": 0}
             json.dump(input_dictionary, configurations_file)
 
     def execution_environment(self):

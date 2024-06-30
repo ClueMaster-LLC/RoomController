@@ -1,3 +1,4 @@
+import http.client
 import os
 import json
 import time
@@ -95,10 +96,12 @@ class RoomController:
             self.get_automationrule_api = GET_ROOM_AUTOMATION_MASTER.format(device_id=device_unique_id)
             self.get_automationrule_request_api = GET_ROOM_CONTROLLER_AUTOMATION_REQUEST.format(device_id=device_unique_id)
 
+            # load room id into memory
+            self.get_rc_room_id()
+
             # load all the devices on startup into memory array
             self.init_previous_devices()
             self.init_automation_rules()
-            # self.handling_devices_info()
 
         except Exception as ErrorFileNotFound:
             print(f'>>> room_controller - Error: {ErrorFileNotFound}')
@@ -231,6 +234,33 @@ class RoomController:
         else:
             self.add_find_device_thread = add_find_device.AddFindDevices(method='find')
             self.add_find_device_thread.start()
+
+    def get_rc_room_id(self):
+        try:
+            # Get Room Controller Room number it's assigned to
+            room_id_api_url = GET_ROOM_CONTROLLER_INFO_API.format(device_id=self.device_unique_id)
+            json_response_of_room_id_api = requests.get(room_id_api_url, headers=self.api_headers).json()
+            room_id = json_response_of_room_id_api["RoomID"]
+            # set the Room ID for the Room Controller to listen to signalR commands
+            GLOBAL_ROOM_ID = room_id
+            print(f">>> heartbeat - {self.device_unique_id} - Room Controller RoomID: {GLOBAL_ROOM_ID}")
+
+            # update room controller configuration file with new room id value
+            with open(self.roomcontroller_configs_file) as configurations_file:
+                configurations_file_data = json.load(configurations_file)
+
+            with open(self.roomcontroller_configs_file, "w") as configurations_file:
+                configurations_file_data["room_id"] = room_id
+                json.dump(configurations_file_data, configurations_file)
+
+        except Exception as error:
+            # can't query api
+            print(f">>> heartbeat - {self.device_unique_id} - ERROR, Unable to query api for Room ID. "
+                  f"Setting to previously saved Room ID.")
+            with open(self.roomcontroller_configs_file) as configurations_file:
+                configurations_file_data = json.load(configurations_file)
+                GLOBAL_ROOM_ID = configurations_file_data["room_id"]
+
 
     def get_devicelist(self):
         print(">>> room_controller - API query to download new list of devices")

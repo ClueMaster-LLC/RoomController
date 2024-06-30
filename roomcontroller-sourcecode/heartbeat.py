@@ -29,6 +29,7 @@ class Heartbeat:
         super(Heartbeat, self).__init__()
 
         # local class attributes
+        self.room_id_api_url = None
         self.net_interval = None
         self.net_duration = None
         self.room_id = None
@@ -84,23 +85,16 @@ class Heartbeat:
         self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
         # self.signalr_access_token = f'?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 
+        # # Get Room Controller Room number it's assigned to (MOVED TO ROOM CONTROLLER .py)
+        # self.room_id_api_url = GET_ROOM_CONTROLLER_INFO_API.format(device_id=self.device_unique_id)
+        # json_response_of_room_id_api = requests.get(self.room_id_api_url, headers=self.api_headers).json()
+        # self.room_id = json_response_of_room_id_api["RoomID"]
+        # print(f">>> heartbeat - {self.device_unique_id} - Room Controller RoomID: {self.room_id}")
+        # # set the Room ID for the Room Controller to listen to signalR commands
+        # room_controller.GLOBAL_ROOM_ID = self.room_id
+
         self.net_interval = 1  # Interval between network measurements in seconds
         self.net_duration = 1  # Duration of network measurement in seconds
-
-        # set the Room ID for the Room Controller to listen to signalR commands
-        # TODO remove the wait and pull from the unique_ids file after getting it from a API
-        while room_controller.GLOBAL_ROOM_ID is None:
-            for i in range(15, -1, -1):
-                if room_controller.GLOBAL_ROOM_ID:
-                    self.room_id = room_controller.GLOBAL_ROOM_ID
-                    print(f">>> heartbeat - {self.device_unique_id} - ROOM ID: {room_controller.GLOBAL_ROOM_ID}")
-                    break
-                if i == 0:
-                    print(f'>>> heartbeat - {self.device_unique_id} - Timeout exceeded. No Room_ID Set.')
-                    # break
-                print(f'>>> heartbeat - {self.device_unique_id} - waiting for to set Room_ID ... {i}')
-                time.sleep(1)
-            break
 
     def signalr_hub(self):
         self.server_url = API_SIGNALR + self.signalr_bearer_token
