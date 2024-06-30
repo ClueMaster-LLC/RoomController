@@ -97,6 +97,8 @@ class Heartbeat(threading.Thread):
         # # set the Room ID for the Room Controller to listen to signalR commands
         # room_controller.GLOBAL_ROOM_ID = self.room_id
 
+        self.room_id = room_controller.GLOBAL_ROOM_ID
+
         self.net_interval = 1  # Interval between network measurements in seconds
         self.net_duration = 1  # Duration of network measurement in seconds
 
@@ -214,7 +216,7 @@ class Heartbeat(threading.Thread):
                 print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
 
                 time.sleep(60)
-                print(f">>> heartbeat - {self.device_unique_id} - HEART BEAT STOP IS: {HEARTBEAT_STOP}")
+                # print(f">>> heartbeat - {self.device_unique_id} - HEART BEAT STOP IS: {HEARTBEAT_STOP}")
                 if HEARTBEAT_STOP is True:
                     break
 
