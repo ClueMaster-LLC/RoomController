@@ -50,14 +50,12 @@ class Heartbeat:
         self.connected_devices_file = os.path.join(APPLICATION_DATA_DIRECTORY, "connected_devices.json")
         self.roomcontroller_configs_file = os.path.join(APPLICATION_DATA_DIRECTORY, "roomcontroller_configs.json")
 
-
+        # instance methods
+        self.configurations()
 
         # Try to Connect to Comhub with SignalR and loop until it does.
         while self.signalr_status is not True:
             try:
-                # instance methods
-                self.configurations()
-
                 self.signalr_hub()
             except Exception as error:
                 print(f">>> heartbeat - {self.device_unique_id} - SignalR Did not connect for Room Controller. "
