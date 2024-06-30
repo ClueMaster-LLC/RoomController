@@ -159,8 +159,8 @@ class ThreadManager:
         self.registration_thread = RegistrationThread()
         self.registration_thread.start()
 
-        # self.heartbeat_thread = HeartbeatThread()
-        # self.heartbeat_thread.start()
+        self.heartbeat_thread = HeartbeatThread()
+        self.heartbeat_thread.start()
 
         # self.websocket_server_thread = WebsocketServerThread()
         # self.websocket_server_thread.start()

@@ -297,6 +297,7 @@ class RoomController:
         except Exception as ErrorFileNotFound:
             print(f'>>> room_controller - Error: {ErrorFileNotFound}')
             api_json_list = self.get_devicelist()
+            print(f'>>> room_controller - Creating new connected_devices_file')
             self.save_device_info(api_json_list)
 
             with open(self.connected_devices_file) as connected_devices_file:

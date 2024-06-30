@@ -41,6 +41,7 @@ parts:
       - psutil
       - signalrcore
       - requests
+      - websockets
 
     stage-packages:
       - libass9
