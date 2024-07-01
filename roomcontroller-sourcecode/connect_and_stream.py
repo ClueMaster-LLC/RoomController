@@ -443,16 +443,18 @@ class ConnectAndStream(threading.Thread):
                             # Define a function to execute a given action
                             def execute_action(action):
                                 timer_thread = None
+                                device_name = action['device']
                                 relay_num = int(action['relay'])
                                 relay_action = action['action']
+
                                 # TODO need to find code to delay without blocking script
                                 # relay_delay = int(action['delay'])
 
                                 def execute_relay_action():
                                     # Perform the relay action
-                                    print(
-                                        f">>> connect_and_stream - {self.device_mac} - Performing action {relay_action}"
-                                        f" on relay # {relay_num}")
+                                    print(f">>> connect_and_stream - {self.device_mac} "
+                                          f"- Performing action {relay_action}"
+                                          f" on relay # {relay_num}")
                                     if relay_action == 'on':
                                         self.ncd.turn_on_relay_by_index(relay_num)
                                         print(f"Automation ran for turning on index # {relay_num}")
@@ -463,7 +465,12 @@ class ConnectAndStream(threading.Thread):
                                             self.ncd.turn_off_relay_by_index(relay_num)
                                             print(f"Automation ran for turning off index # {relay_num}")
 
-                                execute_relay_action()
+                                if device_name == self.device_mac:
+                                    # print(f">>> connect_and_stream - {self.device_mac} - EXEC {device_name} & {self.device_mac}")
+                                    try:
+                                        execute_relay_action()
+                                    except Exception as error_execute_action:
+                                        print(f">>> connect_and_stream - {self.device_mac} - HELP {error_execute_action}")
 
                             # Loop indefinitely
                             # while True:
