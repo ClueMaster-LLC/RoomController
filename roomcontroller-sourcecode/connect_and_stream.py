@@ -409,18 +409,18 @@ class ConnectAndStream(threading.Thread):
                                         result = False
                                 else:
                                     # Sensor condition
-                                    sensor_name = condition['sensor']
+                                    device_name = condition['device']
                                     sensor_inputs = condition['inputs']
                                     operator = condition['operator']
                                     value = condition['value']
 
                                     # Find the sensor in the global variable
                                     for sensor in room_controller.ACTIVE_INPUT_VALUES:
-                                        if sensor[0] == sensor_name:
+                                        if sensor[0] == device_name:
                                             sensor_values = sensor[1]
                                             break
                                     else:
-                                        print(f">>> connect_and_stream - {self.device_mac} - Sensor {sensor_name}"
+                                        print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
                                               f" not found in global variable")
                                         return False
 
@@ -487,6 +487,7 @@ class ConnectAndStream(threading.Thread):
                                     if 'fired' not in rule or not rule['fired']:
                                         # Execute all actions
                                         for action in actions:
+                                            # TODO monitor to see if we need to allow for resync command too?
                                             if not self.command_resync and not self.startup_init:
                                                 execute_action(action)
                                                 self.data_response_old = None
@@ -523,8 +524,6 @@ class ConnectAndStream(threading.Thread):
 
                                 # load input device values into global variable to use for automation
                                 device_value = (self.device_mac, self.data_response)
-                                # devices_info = room_controller.ACTIVE_INPUT_VALUES
-                                # update = device_value
 
                                 if device_value[0] not in [device[0] for device in room_controller.ACTIVE_INPUT_VALUES]:
                                     room_controller.ACTIVE_INPUT_VALUES.append(device_value)
