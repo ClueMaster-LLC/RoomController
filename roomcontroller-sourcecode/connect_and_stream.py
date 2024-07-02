@@ -3,6 +3,7 @@ import threading
 import socket
 import time
 import datetime
+from datetime import datetime, timedelta
 import os
 import platform
 import requests
@@ -41,6 +42,7 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.command_relay_list = []
         self.game_status = None
         self.data_response_old = None
         self.signalr_bearer_token = None
@@ -442,35 +444,49 @@ class ConnectAndStream(threading.Thread):
 
                             # Define a function to execute a given action
                             def execute_action(action):
-                                timer_thread = None
+                                current_datetime = datetime.now()
+                                print("Current date and time:", current_datetime)
+
                                 device_name = action['device']
                                 relay_num = int(action['relay'])
+                                relay_delay = int(action['delay'])
                                 relay_action = action['action']
 
-                                # TODO need to find code to delay without blocking script
-                                # relay_delay = int(action['delay'])
+                                # Convert milliseconds to a timedelta object
+                                millisecond_timedelta = timedelta(milliseconds=relay_delay)
+                                # print("Current TIME DELTA:", millisecond_timedelta)
 
-                                def execute_relay_action():
-                                    # Perform the relay action
-                                    print(f">>> connect_and_stream - {self.device_mac} "
-                                          f"- Performing action {relay_action}"
-                                          f" on relay # {relay_num}")
-                                    if relay_action == 'on':
-                                        self.ncd.turn_on_relay_by_index(relay_num)
-                                        print(f"Automation ran for turning on index # {relay_num}")
-                                    elif relay_action == 'off':
-                                        if relay_num == 0:
-                                            self.ncd.set_relay_bank_status(0, 0)
-                                        else:
-                                            self.ncd.turn_off_relay_by_index(relay_num)
-                                            print(f"Automation ran for turning off index # {relay_num}")
+                                # Add 5 seconds to the current time
+                                scheduled_datetime = current_datetime + millisecond_timedelta
+                                # print("Current FUTURE DATETIME:", scheduled_datetime)
 
-                                if device_name == self.device_mac:
-                                    # print(f">>> connect_and_stream - {self.device_mac} - EXEC {device_name} & {self.device_mac}")
-                                    try:
-                                        execute_relay_action()
-                                    except Exception as error_execute_action:
-                                        print(f">>> connect_and_stream - {self.device_mac} - HELP {error_execute_action}")
+                                # def execute_relay_action():
+                                #     # Perform the relay action
+                                #     print(f">>> connect_and_stream - {self.device_mac} "
+                                #           f"- Performing action {relay_action}"
+                                #           f" on relay # {relay_num}")
+                                #     if relay_action == 'on':
+                                #         self.ncd.turn_on_relay_by_index(relay_num)
+                                #         print(f"Automation ran for turning on index # {relay_num}")
+                                #     elif relay_action == 'off':
+                                #         if relay_num == 0:
+                                #             self.ncd.set_relay_bank_status(0, 0)
+                                #         else:
+                                #             self.ncd.turn_off_relay_by_index(relay_num)
+                                #             print(f"Automation ran for turning off index # {relay_num}")
+
+                                # Append additional variables
+                                self.command_relay_list.append([device_name, scheduled_datetime, relay_num
+                                                                , relay_action, relay_delay])
+
+                                # if device_name == self.device_mac:
+                                #     # print(f">>> connect_and_stream - {self.device_mac} - EXEC {device_name} & {self.device_mac}")
+                                #     try:
+                                #         execute_relay_action()
+                                #     except Exception as error_execute_action:
+                                #         print(f">>> connect_and_stream - {self.device_mac} - HELP {error_execute_action}")
+
+
 
                             # Loop indefinitely
                             # while True:
@@ -488,34 +504,27 @@ class ConnectAndStream(threading.Thread):
                                 # Check if all conditions are true
                                 all_conditions_true = all(check_condition(condition) for condition in conditions)
 
-                                # Execute actions if all conditions are true
-                                if all_conditions_true:
-                                    # Check if this rule has already fired
-                                    if 'fired' not in rule or not rule['fired']:
-                                        # Execute all actions
-                                        for action in actions:
-                                            # TODO monitor to see if we need to allow for resync command too?
-                                            if not self.command_resync and not self.startup_init:
+                                # TODO monitor to see if we need to allow for resync command too?
+                                if not self.command_resync and not self.startup_init:
+                                    # Execute actions if all conditions are true
+                                    if all_conditions_true:
+                                        # Check if this rule has already fired
+                                        if 'fired' not in rule or not rule['fired']:
+                                            # Execute all actions
+                                            for action in actions:
                                                 execute_action(action)
                                                 self.data_response_old = None
 
-                                        # Set fired flag to True
-                                        rule['fired'] = True
-                                        print(f">>> connect_and_stream - {self.device_mac} - "
-                                              f"Running Rule:  {rule_name}")
-                                else:
-                                    # Set fired flag to False
-                                    rule['fired'] = False
+                                            # Set fired flag to True
+                                            rule['fired'] = True
+                                            print(f">>> connect_and_stream - {self.device_mac} - "
+                                                  f"Running Rule:  {rule_name}")
+                                    else:
+                                        # Set fired flag to False
+                                        rule['fired'] = False
 
                             # Check status of relays after automation and report to SignalR
-                            # data_response1 = (self.ncd.get_relay_all_bank_status(1))
-                            # time.sleep(.50)
-                            # data_response2 = (self.ncd.get_relay_all_bank_status(2))
                             self.data_response = self.ncd.get_relay_all_bank_status()
-
-                            # self.data_response = data_response1+data_response2
-                            # print(
-                            # f">>> connect_and_stream - {self.device_mac} - DATA RESPONSE IS: {self.data_response}")
 
                             if not self.data_response:
                                 print(f"{self.data_response} SENDING DATA TO RELAY TOO FAST. CPU TIMEOUT")
@@ -597,8 +606,52 @@ class ConnectAndStream(threading.Thread):
                                         print(
                                             f'>>> connect_and_stream - {self.device_mac} SignalR Connection Error: {error}')
 
+                        # start checking list to see if we have commands to fire for relays
+                        if self.command_relay_list != []:
+                            # local variables
+                            current_datetime = datetime.now()
+
+                            # run the relay commands in a loop from list until empty
+                            def execute_relay_action(relay_number, relay_actions, delay):
+                                # Perform the relay action
+                                if relay_actions == 'on':
+                                    self.ncd.turn_on_relay_by_index(relay_number)
+                                    print(f">>> connect_and_stream - {self.device_mac} "
+                                          f"- Performing action ({relay_actions})"
+                                          f" on relay # ({relay_number})"
+                                          f" after ({delay*0.001}) seconds.")
+                                elif relay_actions == 'off':
+                                    if relay_number == 0:
+                                        self.ncd.set_relay_bank_status(0, 0)
+                                    else:
+                                        self.ncd.turn_off_relay_by_index(relay_number)
+                                        print(f">>> connect_and_stream - {self.device_mac} "
+                                              f"- Performing action ({relay_actions})"
+                                              f" on relay # ({relay_number})"
+                                              f" after ({delay*0.001}) seconds.")
+
+                            for command in self.command_relay_list:
+                                device_name, scheduled_datetime, relay_num, relay_action, relay_delay = command
+                                if device_name == self.device_mac:
+                                    try:
+                                        if current_datetime >= scheduled_datetime:
+                                            execute_relay_action(relay_num, relay_action, relay_delay)
+
+                                            # Remove the command from the list once it has been executed
+                                            self.command_relay_list.remove(command)
+
+                                    except Exception as error:
+                                        print(f">>> connect_and_stream - {self.device_mac} - Relay Timer Command:"
+                                              f" {error}")
+
+                            # Clear out old relay values incase they have changed and on next loop it will check
+                            # and send new values to signalR for GM Workspace to update puzzles linked to relays.
+                            old_relay_values_clear()
+
                         # Wait for some time before checking again
                         # TODO: See if we need to sleep to slow cpu usage and add NCD.COMMS check.
+                        #  Maybe set to 0.05. This is the loop to check for automations. Too fast will eat 100% cpu
+                        #  in the loop as it checks.
                         time.sleep(0.01)
 
                     elif self.device_type == 1:
