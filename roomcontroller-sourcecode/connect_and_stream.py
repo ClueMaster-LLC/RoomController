@@ -475,9 +475,10 @@ class ConnectAndStream(threading.Thread):
                                 #             self.ncd.turn_off_relay_by_index(relay_num)
                                 #             print(f"Automation ran for turning off index # {relay_num}")
 
-                                # Append additional variables
-                                self.command_relay_list.append([device_name, scheduled_datetime, relay_num
-                                                                , relay_action, relay_delay])
+                                # Append additional relay commands to list to queue up.
+                                if device_name == self.device_mac:
+                                    self.command_relay_list.append([device_name, scheduled_datetime, relay_num
+                                                                    , relay_action, relay_delay])
 
                                 # if device_name == self.device_mac:
                                 #     # print(f">>> connect_and_stream - {self.device_mac} - EXEC {device_name} & {self.device_mac}")
@@ -632,17 +633,17 @@ class ConnectAndStream(threading.Thread):
 
                             for command in self.command_relay_list:
                                 device_name, scheduled_datetime, relay_num, relay_action, relay_delay = command
-                                if device_name == self.device_mac:
-                                    try:
-                                        if current_datetime >= scheduled_datetime:
-                                            execute_relay_action(relay_num, relay_action, relay_delay)
+                                
+                                try:
+                                    if current_datetime >= scheduled_datetime:
+                                        execute_relay_action(relay_num, relay_action, relay_delay)
 
-                                            # Remove the command from the list once it has been executed
-                                            self.command_relay_list.remove(command)
+                                        # Remove the command from the list once it has been executed
+                                        self.command_relay_list.remove(command)
 
-                                    except Exception as error:
-                                        print(f">>> connect_and_stream - {self.device_mac} - Relay Timer Command:"
-                                              f" {error}")
+                                except Exception as error:
+                                    print(f">>> connect_and_stream - {self.device_mac} - Relay Timer Command:"
+                                          f" {error}")
 
                             # Clear out old relay values incase they have changed and on next loop it will check
                             # and send new values to signalR for GM Workspace to update puzzles linked to relays.
