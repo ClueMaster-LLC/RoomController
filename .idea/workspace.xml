@@ -36,6 +36,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Python.FTP Maint.executor&quot;: &quot;Run&quot;,
     &quot;Python.clue_msg_test.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.test_client_2.executor&quot;: &quot;Run&quot;,

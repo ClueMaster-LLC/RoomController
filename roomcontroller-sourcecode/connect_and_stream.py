@@ -2,7 +2,6 @@ import json
 import threading
 import socket
 import time
-import datetime
 from datetime import datetime, timedelta
 import os
 import platform
@@ -149,7 +148,7 @@ class ConnectAndStream(threading.Thread):
                                                    f"received. Ready to send/receive messages."),
                                              self.signalr_connected(True)
                                              ))
-        self.hub_connection.on_reconnect(lambda: (print(f">>> connect_and_stream - Trying to re-connect to"
+        self.hub_connection.on_reconnect(lambda: (print(f">>> connect_and_stream - {self.device_mac} - Trying to re-connect to"
                                                         f" {API_SIGNALR}")
                                                   ))
 
@@ -205,8 +204,9 @@ class ConnectAndStream(threading.Thread):
                     print(">>> connect_and_stream - Closing Thread for " + self.device_mac)
                     return
                 print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
-                print(f'>>> connect_and_stream - {self.device_mac} - The last known IP {self.ip_address}'
-                      f' is no longer valid. Searching network for device... ')
+                print(f'>>> connect_and_stream - {self.device_mac} - The last known IP {self.ip_address} on PORT: '
+                      f'{self.server_port} is no longer valid. Searching network for device... ')
+
                 self.ip_address, self.server_port = self.device_discovery(self.device_mac)  # find new device IP Address
                 print('>>> connect_and_stream - Connecting to ' + str(self.ip_address))
                 self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -317,6 +317,7 @@ class ConnectAndStream(threading.Thread):
                 # to clear the buffer on NIC when first connect sends MAC.
                 data_response_init = self.client_socket.recvfrom(32)
                 data_response_mac = str(list(data_response_init)[0]).replace(":", '').replace("b'", '').replace("'", '')
+
                 if data_response_mac == self.device_mac:
                     # print(f'>>> connect_and_stream - {self.device_mac} - VALUES MATCH')
                     pass
@@ -445,7 +446,7 @@ class ConnectAndStream(threading.Thread):
                             # Define a function to execute a given action
                             def execute_action(action):
                                 current_datetime = datetime.now()
-                                print("Current date and time:", current_datetime)
+                                # print("Current date and time:", current_datetime)
 
                                 device_name = action['device']
                                 relay_num = int(action['relay'])
@@ -618,18 +619,18 @@ class ConnectAndStream(threading.Thread):
                                 if relay_actions == 'on':
                                     self.ncd.turn_on_relay_by_index(relay_number)
                                     print(f">>> connect_and_stream - {self.device_mac} "
-                                          f"- Performing action ({relay_actions})"
-                                          f" on relay # ({relay_number})"
-                                          f" after ({delay*0.001}) seconds.")
+                                          f"- AUTOMATION ACTION ({relay_actions})"
+                                          f" ON RELAY # ({relay_number})"
+                                          f" AFTER ({delay*0.001}) SECONDS.")
                                 elif relay_actions == 'off':
                                     if relay_number == 0:
                                         self.ncd.set_relay_bank_status(0, 0)
                                     else:
                                         self.ncd.turn_off_relay_by_index(relay_number)
                                         print(f">>> connect_and_stream - {self.device_mac} "
-                                              f"- Performing action ({relay_actions})"
-                                              f" on relay # ({relay_number})"
-                                              f" after ({delay*0.001}) seconds.")
+                                              f"- AUTOMATION ACTION ({relay_actions})"
+                                              f" ON RELAY # ({relay_number})"
+                                              f" AFTER ({delay*0.001}) SECONDS.")
 
                             for command in self.command_relay_list:
                                 device_name, scheduled_datetime, relay_num, relay_action, relay_delay = command
@@ -769,7 +770,7 @@ class ConnectAndStream(threading.Thread):
                         if self.device_type not in (1, 2):
                             print(f'>>> connect_and_stream - ', self.device_mac,
                                   f' Error: Device Type {self.device_type} Not Compatible')
-                        print(f'>>> connect_and_stream - 1+Closing Thread for ', self.device_mac)
+                        print(f'>>> connect_and_stream - {self.device_mac} - 1+Closing Thread for ', self.device_mac)
                         return
 
                 except socket.error:
@@ -820,7 +821,7 @@ class ConnectAndStream(threading.Thread):
                             self.client_socket.close()
                             self.hub_connection.stop()
                         except Exception as error:
-                            print(f'>>> connect_and_stream - {error}')
+                            print(f'>>> connect_and_stream - {self.device_mac} - {error}')
                         print(">>> connect_and_stream - 5+Closing Thread for " + self.device_mac)
                         return
                     print(f'>>> connect_and_stream - {self.device_mac} - Error: {e}')
@@ -946,6 +947,8 @@ class ConnectAndStream(threading.Thread):
             local_ip = self.extract_ip()
             local_port = 13000
             buffer_size = 1024
+            print(f'>>> connect_and_stream - {self.device_mac} - SCANNING NETWORK USING LOCAL IP: {local_ip} '
+                  f'ON PORT: {local_port}')
 
             # msgFromServer = "Connected"
             # bytesToSend = str.encode(msgFromServer)
@@ -968,9 +971,8 @@ class ConnectAndStream(threading.Thread):
                         print(f">>> connect_and_stream - {self.device_mac} - Closing Discovery"
                               f" Thread for {self.device_mac}")
                         return
-                    # print(">>> connect_and_stream - " + str(
-                    #     datetime.datetime.utcnow()) + " - UDP Network Search for: " + str(device_mac))
-                    print(f">>> connect_and_stream - {self.device_mac} - {datetime.datetime.utcnow()}"
+
+                    print(f">>> connect_and_stream - {self.device_mac} - {datetime.utcnow()}"
                           f" - UDP Network Search for: {device_mac}")
                     udp_server_socket.settimeout(15)
                     bytes_address_pair = udp_server_socket.recvfrom(buffer_size)
@@ -1004,30 +1006,38 @@ class ConnectAndStream(threading.Thread):
                             print(">>> connect_and_stream - Discovered Device Network Card Firmware Version: ",
                                   discovery_version)
                             print(">>> connect_and_stream - Saving updated device info to file.")
-                            self.save_device_info(discover_ip, discover_mac, discover_port)
-                            self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac,
-                                                                serverport=discover_port)
+
+                            # Write new updated IP to local file
+                            try:
+                                self.save_device_info(discover_ip, discover_mac, discover_port)
+                            except Exception as error:
+                                print(f'>>> connect_and_stream - {self.device_mac} - Error: Unable to save updated '
+                                      f'device info to file. - {error}')
+                            try:
+                                self.update_webapp_with_new_details(ip_address=discover_ip, macaddress=discover_mac,
+                                                                    serverport=discover_port)
+                            except Exception as error:
+                                print(f'>>> connect_and_stream - {self.device_mac}: {error}')
 
                             udp_server_socket.close()
                             time.sleep(1)
                             break
                         except Exception as e:
-                            print(
-                                f'>>> connect_and_stream - {self.device_mac} - Error: Unable to save updated device info to file.')
                             print(f'>>> connect_and_stream - {self.device_mac}: {e}')
                     else:
                         if self.device_mac not in room_controller.global_active_mac_ids:
                             udp_server_socket.close()
-                            print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
+                            print(f'>>> connect_and_stream - {self.device_mac} - Closing Discovery Thread')
                             return
-                        print(">>> connect_and_stream - " + str(datetime.datetime.utcnow()) + " - Device: " + str(
+                        print(">>> connect_and_stream - " + str(datetime.now()) + " - Device: " + str(
                             device_mac) + " not found on network. Continuing to search...")
 
                     # break
                 except socket.error:  # change to exception:
                     if self.device_mac not in room_controller.global_active_mac_ids:
                         udp_server_socket.close()
-                        print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
+                        print(f'>>> connect_and_stream - {self.device_mac} - Closing Discovery '
+                              f'Thread for {self.device_mac}')
                         return
                     print(">>> connect_and_stream - UDP Search Timeout Reached - Device not found")
                     # set connection status and recreate socket
@@ -1038,11 +1048,16 @@ class ConnectAndStream(threading.Thread):
 
         except Exception as e:
             if self.device_mac not in room_controller.global_active_mac_ids:
-                udp_server_socket.close()
-                print(">>> connect_and_stream - Closing Discovery Thread for " + self.device_mac)
+                try:
+                    udp_server_socket.close()
+                    print(f'>>> connect_and_stream - {self.device_mac} - UDP Socket Closed on {self.ip_address}')
+                except socket.error as e:
+                    print(f'>>> connect_and_stream - {self.device_mac} - Error closing port: {e} on {self.ip_address}')
+
+                print(f'>>> connect_and_stream - {self.device_mac} - CLOSING DISCOVERY THREAD')
                 return
-            print('>>> connect_and_stream - ' + str(e))
-            print(">>> connect_and_stream - Error trying to open UDP discovery port")
+            print(f'>>> connect_and_stream - {self.device_mac} - {e}')
+            print(f'>>> connect_and_stream - {self.device_mac} - Error trying to open UDP discovery port')
             # set connection status and recreate socket
             # self.connection_lost()
 
