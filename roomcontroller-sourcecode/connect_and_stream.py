@@ -412,34 +412,61 @@ class ConnectAndStream(threading.Thread):
                                         result = False
                                 else:
                                     # Sensor condition
+                                    event_type = condition['event_type']
                                     device_name = condition['device']
                                     sensor_inputs = condition['inputs']
                                     operator = condition['operator']
                                     value = condition['value']
 
-                                    # Find the sensor in the global variable
-                                    for sensor in room_controller.ACTIVE_INPUT_VALUES:
-                                        if sensor[0] == device_name:
-                                            sensor_values = sensor[1]
-                                            break
-                                    else:
-                                        print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
-                                              f" not found in global variable")
-                                        return False
+                                    if event_type == 'device':
+                                        # Find the sensor in the global variable
+                                        for sensor in room_controller.ACTIVE_INPUT_VALUES:
+                                            if sensor[0] == device_name:
+                                                sensor_values = sensor[1]
+                                                break
+                                        else:
+                                            print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
+                                                  f" not found in global variable")
+                                            return False
 
-                                    # Check if the inputs satisfy the condition
-                                    input_statuses = []
-                                    for bank_value in sensor_values:
-                                        input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+                                        # Check if the inputs satisfy the condition
+                                        input_statuses = []
+                                        for bank_value in sensor_values:
+                                            input_statuses += [(bank_value >> i) & 1 for i in range(8)]
 
-                                    input_values = [input_statuses[i - 1] for i in sensor_inputs]
-                                    if operator == 'and':
-                                        result = all(input_values) == value
-                                    elif operator == 'or':
-                                        result = any(input_values) == value
-                                    else:
-                                        print(f"Invalid operator {operator}")
-                                        result = False
+                                        input_values = [input_statuses[i - 1] for i in sensor_inputs]
+                                        if operator == 'and':
+                                            result = all(input_values) == value
+                                        elif operator == 'or':
+                                            result = any(input_values) == value
+                                        else:
+                                            print(f"Invalid operator {operator}")
+                                            result = False
+
+                                    elif event_type == 'system':
+                                        # Find the sensor in the global variable
+                                        for sensor in room_controller.ACTIVE_INPUT_VALUES:
+                                            if sensor[0] == device_name:
+                                                sensor_values = sensor[1]
+                                                break
+                                        else:
+                                            print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
+                                                  f" not found in global variable")
+                                            return False
+
+                                        # Check if the inputs satisfy the condition
+                                        input_statuses = []
+                                        for bank_value in sensor_values:
+                                            input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+
+                                        input_values = [input_statuses[i - 1] for i in sensor_inputs]
+                                        if operator == 'and':
+                                            result = all(input_values) == value
+                                        elif operator == 'or':
+                                            result = any(input_values) == value
+                                        else:
+                                            print(f"Invalid operator {operator}")
+                                            result = False
 
                                 return result
 
@@ -461,34 +488,10 @@ class ConnectAndStream(threading.Thread):
                                 scheduled_datetime = current_datetime + millisecond_timedelta
                                 # print("Current FUTURE DATETIME:", scheduled_datetime)
 
-                                # def execute_relay_action():
-                                #     # Perform the relay action
-                                #     print(f">>> connect_and_stream - {self.device_mac} "
-                                #           f"- Performing action {relay_action}"
-                                #           f" on relay # {relay_num}")
-                                #     if relay_action == 'on':
-                                #         self.ncd.turn_on_relay_by_index(relay_num)
-                                #         print(f"Automation ran for turning on index # {relay_num}")
-                                #     elif relay_action == 'off':
-                                #         if relay_num == 0:
-                                #             self.ncd.set_relay_bank_status(0, 0)
-                                #         else:
-                                #             self.ncd.turn_off_relay_by_index(relay_num)
-                                #             print(f"Automation ran for turning off index # {relay_num}")
-
                                 # Append additional relay commands to list to queue up.
                                 if device_name == self.device_mac:
                                     self.command_relay_list.append([device_name, scheduled_datetime, relay_num
                                                                     , relay_action, relay_delay])
-
-                                # if device_name == self.device_mac:
-                                #     # print(f">>> connect_and_stream - {self.device_mac} - EXEC {device_name} & {self.device_mac}")
-                                #     try:
-                                #         execute_relay_action()
-                                #     except Exception as error_execute_action:
-                                #         print(f">>> connect_and_stream - {self.device_mac} - HELP {error_execute_action}")
-
-
 
                             # Loop indefinitely
                             # while True:
@@ -638,6 +641,9 @@ class ConnectAndStream(threading.Thread):
                                 try:
                                     if current_datetime >= scheduled_datetime:
                                         execute_relay_action(relay_num, relay_action, relay_delay)
+
+                                        # TODO: We might need to slow down the commands if they run too fast
+                                        # time.sleep(0.01)
 
                                         # Remove the command from the list once it has been executed
                                         self.command_relay_list.remove(command)
