@@ -23,16 +23,16 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 # global variables
-global global_active_mac_ids
+# global global_active_mac_ids
 global_active_mac_ids = []
 
-global ACTIVE_INPUT_VALUES
+# global ACTIVE_INPUT_VALUES
 ACTIVE_INPUT_VALUES = []
 
-global GLOBAL_AUTOMATION_RULE_PENDING
+# global GLOBAL_AUTOMATION_RULE_PENDING
 GLOBAL_AUTOMATION_RULE_PENDING = None
 
-global GLOBAL_GAME_STATUS
+# global GLOBAL_GAME_STATUS
 GLOBAL_GAME_STATUS = None
 
 # global GLOBAL_ROOM_ID
@@ -427,9 +427,8 @@ class RoomController:
                                      )
         self.hub_connection.on_open(lambda: (self.hub_connection.send('AddToGroup', [str(self.room_id)]),
                                              self.hub_connection.send('AddToGroup', [str(self.device_unique_id)]),
-                                             print(
-                                                 f">>> room_controller - {self.device_unique_id} - signalR "
-                                                 f"handshake received. Ready to send/receive messages.")
+                                             print(f">>> room_controller - {self.device_unique_id} - signalR "
+                                                   f"handshake received. Ready to send/receive messages.")
                                              , self.signalr_connected(True)
                                              )
                                     )
@@ -484,7 +483,11 @@ class RoomController:
 
     def set_game_status(self, game_status):
         # command received by hub to refresh values from all device threads to update location workspace
-        GLOBAL_GAME_STATUS = game_status
+        global GLOBAL_GAME_STATUS
+        try:
+            GLOBAL_GAME_STATUS = int(game_status[0])
+        except Exception as error:
+            print(f">>> heartbeat - {self.device_unique_id} - GLOBAL_GAME_STATUS Error: {error}")
 
     def reset_room_controller(self):
         pass

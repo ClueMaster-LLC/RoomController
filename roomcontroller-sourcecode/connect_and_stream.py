@@ -41,8 +41,8 @@ class ConnectAndStream(threading.Thread):
         # the ConnectAndStream thread is started after the ip address is saved in a file
 
         # local attributes inside ConnectAndStream
+        self.game_status_old = None
         self.command_relay_list = []
-        self.game_status = None
         self.data_response_old = None
         self.signalr_bearer_token = None
         self.signalr_access_token = None
@@ -383,124 +383,110 @@ class ConnectAndStream(threading.Thread):
                             print(f">>> connect_and_stream - {self.device_mac} - New Automation Rules Ready for DL")
                             self.automation_rules_update()
 
-                        # room_controller.ACTIVE_INPUT_VALUES
-                        if self.active_input_values_old != str(room_controller.ACTIVE_INPUT_VALUES):
+                        # Define a function to check if a given condition is true
+                        def check_condition(condition):
+                            if 'type' in condition and condition['type'] == 'group':
+                                # Group condition
+                                conditions = condition['conditions']
+                                operator = condition['operator']
 
-                            # print(f">>> connect_and_stream - {self.device_mac} -
-                            # {room_controller.ACTIVE_INPUT_VALUES} CURRENT VALUES")
-                            # print(f">>> connect_and_stream - {self.device_mac} -
-                            # {self.active_input_values_old} OLD HAVE CHANGED")
-
-                            # Set the var to what is in the GLOBAL var for active input values to stop loop
-                            self.active_input_values_old = str(room_controller.ACTIVE_INPUT_VALUES)
-
-                            # Define a function to check if a given condition is true
-                            def check_condition(condition):
-                                if 'type' in condition and condition['type'] == 'group':
-                                    # Group condition
-                                    conditions = condition['conditions']
-                                    operator = condition['operator']
-
-                                    # Check if all sub-conditions satisfy the operator
-                                    sub_results = [check_condition(sub_condition) for sub_condition in conditions]
-                                    if operator == 'and':
-                                        result = all(sub_results)
-                                    elif operator == 'or':
-                                        result = any(sub_results)
-                                    else:
-                                        print(f"Invalid operator {operator}")
-                                        result = False
+                                # Check if all sub-conditions satisfy the operator
+                                sub_results = [check_condition(sub_condition) for sub_condition in conditions]
+                                if operator == 'and':
+                                    result = all(sub_results)
+                                elif operator == 'or':
+                                    result = any(sub_results)
                                 else:
-                                    # Sensor condition
-                                    event_type = condition['event_type']
+                                    print(f"Invalid operator {operator}")
+                                    result = False
+                            else:
+                                # Sensor condition
+                                event_type = condition['event_type']
+
+                                if event_type == 'device':
                                     device_name = condition['device']
                                     sensor_inputs = condition['inputs']
                                     operator = condition['operator']
                                     value = condition['value']
+                                    # Find the sensor in the global variable
+                                    for sensor in room_controller.ACTIVE_INPUT_VALUES:
+                                        if sensor[0] == device_name:
+                                            sensor_values = sensor[1]
+                                            break
+                                    else:
+                                        print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
+                                              f" not found in global variable")
+                                        return False
 
-                                    if event_type == 'device':
-                                        # Find the sensor in the global variable
-                                        for sensor in room_controller.ACTIVE_INPUT_VALUES:
-                                            if sensor[0] == device_name:
-                                                sensor_values = sensor[1]
-                                                break
-                                        else:
-                                            print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
-                                                  f" not found in global variable")
-                                            return False
+                                    # Check if the inputs satisfy the condition
+                                    input_statuses = []
+                                    for bank_value in sensor_values:
+                                        input_statuses += [(bank_value >> i) & 1 for i in range(8)]
 
-                                        # Check if the inputs satisfy the condition
-                                        input_statuses = []
-                                        for bank_value in sensor_values:
-                                            input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+                                    input_values = [input_statuses[i - 1] for i in sensor_inputs]
 
-                                        input_values = [input_statuses[i - 1] for i in sensor_inputs]
-                                        if operator == 'and':
-                                            result = all(input_values) == value
-                                        elif operator == 'or':
-                                            result = any(input_values) == value
-                                        else:
-                                            print(f"Invalid operator {operator}")
-                                            result = False
+                                    if operator == 'and':
+                                        result = all(input_values) == value
+                                    elif operator == 'or':
+                                        result = any(input_values) == value
+                                    else:
+                                        print(f"Invalid operator {operator}")
+                                        result = False
 
-                                    elif event_type == 'system':
-                                        # Find the sensor in the global variable
-                                        for sensor in room_controller.ACTIVE_INPUT_VALUES:
-                                            if sensor[0] == device_name:
-                                                sensor_values = sensor[1]
-                                                break
-                                        else:
-                                            print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
-                                                  f" not found in global variable")
-                                            return False
+                                elif event_type == 'system':
+                                    operator = condition['operator']
+                                    game_status = condition['game_status']
+                                    value = condition['value']
 
-                                        # Check if the inputs satisfy the condition
-                                        input_statuses = []
-                                        for bank_value in sensor_values:
-                                            input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+                                    # print(
+                                    #     f"-------------CURRENT GLOBAL GAME STATUS: {room_controller.GLOBAL_GAME_STATUS}")
+                                    # print(f"-------------LOOKING FOR GAME VALUES: {game_status}")
 
-                                        input_values = [input_statuses[i - 1] for i in sensor_inputs]
-                                        if operator == 'and':
-                                            result = all(input_values) == value
-                                        elif operator == 'or':
-                                            result = any(input_values) == value
-                                        else:
-                                            print(f"Invalid operator {operator}")
-                                            result = False
+                                    # Check if the inputs satisfy the condition
+                                    game_value = [1 if item in [room_controller.GLOBAL_GAME_STATUS] else 0
+                                                  for item in game_status]
 
-                                return result
+                                    if operator == 'and':
+                                        result = all(game_value) == value
+                                        # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                        #       f" {result} WITH {game_value} == {value}")
+                                    elif operator == 'or':
+                                        result = any(game_value) == value
+                                        # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                        #       f" {result} WITH {game_value} == {value}")
+                                    else:
+                                        print(f"Invalid operator {operator}")
+                                        result = False
+                                else:
+                                    result = False
+                                # print(f"-------------FOUND GAME FINAL RETURNED VALUE: {result}")
+                            return result
 
-                            # Define a function to execute a given action
-                            def execute_action(action):
-                                current_datetime = datetime.now()
-                                # print("Current date and time:", current_datetime)
+                        # Define a function to execute a given action
+                        def execute_action(action):
+                            current_datetime = datetime.now()
+                            # print("Current date and time:", current_datetime)
 
-                                device_name = action['device']
-                                relay_num = int(action['relay'])
-                                relay_delay = int(action['delay'])
-                                relay_action = action['action']
+                            device_name = action['device']
+                            relay_num = int(action['relay'])
+                            relay_delay = int(action['delay'])
+                            relay_action = action['action']
 
-                                # Convert milliseconds to a timedelta object
-                                millisecond_timedelta = timedelta(milliseconds=relay_delay)
-                                # print("Current TIME DELTA:", millisecond_timedelta)
+                            # Convert milliseconds to a timedelta object
+                            millisecond_timedelta = timedelta(milliseconds=relay_delay)
+                            # print("Current TIME DELTA:", millisecond_timedelta)
 
-                                # Add 5 seconds to the current time
-                                scheduled_datetime = current_datetime + millisecond_timedelta
-                                # print("Current FUTURE DATETIME:", scheduled_datetime)
+                            # Add 5 seconds to the current time
+                            scheduled_datetime = current_datetime + millisecond_timedelta
+                            # print("Current FUTURE DATETIME:", scheduled_datetime)
 
-                                # Append additional relay commands to list to queue up.
-                                if device_name == self.device_mac:
-                                    self.command_relay_list.append([device_name, scheduled_datetime, relay_num
-                                                                    , relay_action, relay_delay])
+                            # Append additional relay commands to list to queue up.
+                            if device_name == self.device_mac:
+                                self.command_relay_list.append([device_name, scheduled_datetime, relay_num
+                                                                   , relay_action, relay_delay])
 
-                            # Loop indefinitely
-                            # while True:
-                            # Read sensor values and update the global variable
-                            #
-                            # global_var = [('0004DGH64BH2', [255, 255]),
-                            #               ('0008DC222A0C', [255, 255, 255, 255, 255, 255])]
-
-                            # Check all automation rules
+                        # Check all automation rules on every value change of inputs/relays
+                        def run_automation_rules():
                             for rule in self.automation_rules['rules']:
                                 rule_name = rule['name']
                                 conditions = rule['conditions']
@@ -527,6 +513,24 @@ class ConnectAndStream(threading.Thread):
                                     else:
                                         # Set fired flag to False
                                         rule['fired'] = False
+
+                        # if GLOBAL GAME STATUS changes then run automation rules
+                        if self.game_status_old != room_controller.GLOBAL_GAME_STATUS:
+                            # print(f">>> connect_and_stream - {self.device_mac} - GameStatus Changed:"
+                            #       f" NEW: {room_controller.GLOBAL_GAME_STATUS} and OLD: {self.game_status_old}")
+                            run_automation_rules()
+                            self.game_status_old = room_controller.GLOBAL_GAME_STATUS
+
+                        # if room_controller.ACTIVE_INPUT_VALUES change
+                        if self.active_input_values_old != str(room_controller.ACTIVE_INPUT_VALUES):
+
+                            # print(f">>> connect_and_stream - {self.device_mac} -
+                            # {room_controller.ACTIVE_INPUT_VALUES} CURRENT VALUES")
+                            # print(f">>> connect_and_stream - {self.device_mac} -
+                            # {self.active_input_values_old} OLD HAVE CHANGED")
+
+                            # Set the var to what is in the GLOBAL var for active input values to stop loop
+                            self.active_input_values_old = str(room_controller.ACTIVE_INPUT_VALUES)
 
                             # Check status of relays after automation and report to SignalR
                             self.data_response = self.ncd.get_relay_all_bank_status()
@@ -610,6 +614,9 @@ class ConnectAndStream(threading.Thread):
                                     except Exception as error:
                                         print(
                                             f'>>> connect_and_stream - {self.device_mac} SignalR Connection Error: {error}')
+
+                            # run automation rules if they need to fire
+                            run_automation_rules()
 
                         # start checking list to see if we have commands to fire for relays
                         if self.command_relay_list != []:
