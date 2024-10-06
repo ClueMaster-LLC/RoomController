@@ -234,7 +234,7 @@ class ConnectAndStream(threading.Thread):
             if self.device_type == 2:
                 self.hub_connection.on('syncdata'
                                        , (lambda data:
-                                          (old_relay_values_clear()
+                                          (relay_old_values_clear()
                                            , data_response_clear()
                                            , command_resync_true()
                                            , print(f">>> connect_and_stream - {self.device_mac} - "
@@ -246,7 +246,7 @@ class ConnectAndStream(threading.Thread):
                                           (self.ncd.turn_on_relay_by_index(function_relay(relay_num))
                                            # , relay_trigger_update()
                                            , relay_send_true()
-                                           , old_relay_values_clear()
+                                           , relay_old_values_clear()
                                            , data_response_clear()
                                            , print(f'>>> connect_and_stream - {self.device_mac} - '
                                                    f'RELAY ON # {function_relay(relay_num)}')
@@ -256,7 +256,7 @@ class ConnectAndStream(threading.Thread):
                                           (self.ncd.turn_off_relay_by_index(function_relay(relay_num))
                                            # , relay_trigger_update()
                                            , relay_send_true()
-                                           , old_relay_values_clear()
+                                           , relay_old_values_clear()
                                            , data_response_clear()
                                            , print(f'>>> connect_and_stream - {self.device_mac} - '
                                                    f'RELAY OFF # {function_relay(relay_num)}')
@@ -264,7 +264,7 @@ class ConnectAndStream(threading.Thread):
 
                 self.hub_connection.on('reset_room'
                                        , (lambda data: (self.ncd.set_relay_bank_status(0, 0)
-                                                        , old_relay_values_clear()
+                                                        , relay_old_values_clear()
                                                         , data_response_clear()
                                                         , command_reset_room()
                                                         , print(f">>> connect_and_stream - {self.device_mac}"
@@ -295,7 +295,7 @@ class ConnectAndStream(threading.Thread):
                     for relay in relay_array:
                         print(f'do it now {relay}')
 
-                def old_relay_values_clear():
+                def relay_old_values_clear():
                     self.active_input_values_old = None
 
                 def data_response_clear():
@@ -307,6 +307,10 @@ class ConnectAndStream(threading.Thread):
 
                 def command_reset_room():
                     self.command_reset_room = True
+
+                    # clearing of active automations in memory pending
+                    # Added 10-06-2024 - by: Robert
+                    self.command_relay_list.clear()
 
                 def relay_send_true():
                     self.command_relay_send = True
@@ -653,7 +657,10 @@ class ConnectAndStream(threading.Thread):
                                         # time.sleep(0.01)
 
                                         # Remove the command from the list once it has been executed
-                                        self.command_relay_list.remove(command)
+                                        if self.command_relay_list == []:
+                                            pass
+                                        else:
+                                            self.command_relay_list.remove(command)
 
                                 except Exception as error:
                                     print(f">>> connect_and_stream - {self.device_mac} - Relay Timer Command:"
@@ -661,13 +668,13 @@ class ConnectAndStream(threading.Thread):
 
                             # Clear out old relay values incase they have changed and on next loop it will check
                             # and send new values to signalR for GM Workspace to update puzzles linked to relays.
-                            old_relay_values_clear()
+                            relay_old_values_clear()
 
                         # Wait for some time before checking again
                         # TODO: See if we need to sleep to slow cpu usage and add NCD.COMMS check.
                         #  Maybe set to 0.05. This is the loop to check for automations. Too fast will eat 100% cpu
                         #  in the loop as it checks.
-                        time.sleep(0.01)
+                        time.sleep(0.05)
 
                     elif self.device_type == 1:
 

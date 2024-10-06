@@ -205,6 +205,7 @@ class AutoStartup:
         finally:
             i_socket.close()
             print(">>> auto_startup - Gateway IP Address: " + ip_address)
+            room_controller.GLOBAL_IP = ip_address
         return ip_address
 
     def validate_device_status(self):

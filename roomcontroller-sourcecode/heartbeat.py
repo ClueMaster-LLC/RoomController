@@ -16,7 +16,7 @@ MASTER_DIRECTORY = os.path.join(os.environ.get("HOME"), "CluemasterRoomControlle
 APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_data")
 
 global HEARTBEAT_STOP
-HEARTBEAT_STOP = False
+HEARTBEAT_STOP: bool = False
 
 
 # master class
@@ -60,7 +60,7 @@ class Heartbeat(threading.Thread):
                 json_response_of_unique_ids_file = json.load(unique_ids_file)
 
         except Exception as ErrorFileNotFound:
-            print(f'>>> automation - Error: {ErrorFileNotFound}')
+            print(f'>>> heartbeat - {self.device_unique_id} - ERROR: {ErrorFileNotFound}')
 
         self.device_unique_id = json_response_of_unique_ids_file["device_id"]
         self.api_bearer_key = json_response_of_unique_ids_file["api_token"]
@@ -100,7 +100,7 @@ class Heartbeat(threading.Thread):
                     time.sleep(5)
                     break
                 else:
-                    print(">>> room_controller - " + str(request_error))
+                    print(f">>> heartbeat - {self.device_unique_id} - ERROR: {request_error}")
                     time.sleep(5)
 
     def get_network_utilization(self, interval=1):

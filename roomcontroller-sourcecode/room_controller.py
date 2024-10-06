@@ -5,12 +5,16 @@ import socket
 import threading
 import time
 import requests
+import websocket
+from requests.structures import CaseInsensitiveDict
+
+# import the python scripts
 from apis import *
 import connect_and_stream
 import add_find_device
 import heartbeat
-from requests.structures import CaseInsensitiveDict
 import connected_devices
+import websocket_server
 
 # This import will be for signalR code##
 import logging
@@ -35,8 +39,13 @@ GLOBAL_AUTOMATION_RULE_PENDING = None
 # global GLOBAL_GAME_STATUS
 GLOBAL_GAME_STATUS = None
 
+# global GLOBAL_DEVICE_UNIQUE_ID
+GLOBAL_DEVICE_UNIQUE_ID = None
+
 # global GLOBAL_ROOM_ID
 # GLOBAL_ROOM_ID = None
+
+GLOBAL_IP = None
 
 
 # master class
@@ -86,10 +95,15 @@ class RoomController:
         self.heartbeat_thread = HeartbeatThread()
         self.heartbeat_thread.start()
 
+        self.WebsocketServer_thread = WebsocketServerThread()
+        self.WebsocketServer_thread.start()
+
         self.execution_environment()
         print(">>> room_controller - **********  ROOM CONTROLLER SHUTTING DOWN  **********")
         heartbeat.HEARTBEAT_STOP = True
         print(">>> room_controller - **********  STOPPING HEARTBEAT THREAD  **********")
+        websocket_server.WEBSOCKETSERVER_STOP = True
+        print(">>> room_controller - **********  STOPPING WEBSOCKET_SERVER THREAD  **********")
 
     def configurations(self):
         try:
@@ -97,6 +111,7 @@ class RoomController:
                 json_response_of_unique_ids_file = json.load(unique_ids_file)
 
             self.device_unique_id = json_response_of_unique_ids_file["device_id"]
+            self.set_device_unique_id(self.device_unique_id)
             self.api_bearer_key = json_response_of_unique_ids_file["api_token"]
             self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
 
@@ -489,6 +504,14 @@ class RoomController:
         except Exception as error:
             print(f">>> heartbeat - {self.device_unique_id} - GLOBAL_GAME_STATUS Error: {error}")
 
+    def set_device_unique_id(self, unique_device_id):
+        # command received by hub to refresh values from all device threads to update location workspace
+        global GLOBAL_DEVICE_UNIQUE_ID
+        try:
+            GLOBAL_DEVICE_UNIQUE_ID = GLOBAL_DEVICE_UNIQUE_ID
+        except Exception as error:
+            print(f">>> heartbeat - {self.device_unique_id} - GLOBAL_DEVICE_UNIQUE_ID Error: {error}")
+
     def reset_room_controller(self):
         pass
 
@@ -541,4 +564,22 @@ class HeartbeatThread(threading.Thread):
         self.heartbeat_instance = heartbeat.Heartbeat()
         print(">>> room_controller - Stopped Base Heartbeat Thread ...")
         heartbeat.HEARTBEAT_STOP = False
+        return
+
+
+# HeartBeat Thread to monitor system and game status in a separate process
+class WebsocketServerThread(threading.Thread):
+    def __init__(self):
+        super(WebsocketServerThread, self).__init__()
+        print(">>> room_controller - WebSocket Server Thread active ....")
+
+        # global attributes
+        self.active = None
+        self.WebsocketServer_instance = None
+
+    def run(self):
+        print(">>> room_controller - Starting WebSocket Server Thread ...")
+        self.WebsocketServer_instance = websocket_server.WebsocketServer()
+        print(">>> room_controller - Stopped WebSocket Server Thread ...")
+        websocket_server.WEBSOCKETSERVER_STOP = False
         return
