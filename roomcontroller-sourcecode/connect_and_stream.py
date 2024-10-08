@@ -263,12 +263,20 @@ class ConnectAndStream(threading.Thread):
                                            )))
 
                 self.hub_connection.on('reset_room'
-                                       , (lambda data: (self.ncd.set_relay_bank_status(0, 0)
-                                                        , relay_old_values_clear()
+                                       , (lambda data: (relay_old_values_clear()
                                                         , data_response_clear()
                                                         , command_reset_room()
                                                         , print(f">>> connect_and_stream - {self.device_mac}"
                                                                 f" Reset Room command received")
+                                                        )))
+
+                self.hub_connection.on('reset_puzzles'
+                                       , (lambda data: (self.ncd.set_relay_bank_status(0, 0)
+                                                        , relay_old_values_clear()
+                                                        , data_response_clear()
+                                                        , command_reset_puzzles()
+                                                        , print(f">>> connect_and_stream - {self.device_mac}"
+                                                                f" Reset Puzzles command received")
                                                         )))
 
                 self.hub_connection.on('relay_pulse'
@@ -306,6 +314,13 @@ class ConnectAndStream(threading.Thread):
                     self.command_resync = True
 
                 def command_reset_room():
+                    self.command_reset_room = True
+
+                    # clearing of active automations in memory pending
+                    # Added 10-06-2024 - by: Robert
+                    self.command_relay_list.clear()
+
+                def command_reset_puzzles():
                     self.command_reset_room = True
 
                     # clearing of active automations in memory pending
