@@ -18,13 +18,13 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 global HEARTBEAT_STOP
 HEARTBEAT_STOP: bool = False
 
-
 # master class
 class Heartbeat(threading.Thread):
     def __init__(self):
         super(Heartbeat, self).__init__()
 
         # local class attributes
+        self.snap_version = os.environ.get("SNAP_VERSION")
         self.room_id_api_url = None
         self.net_interval = None
         self.net_duration = None
@@ -85,7 +85,8 @@ class Heartbeat(threading.Thread):
                 heartbeat_api_url = POST_DEVICE_HEARTBEAT.format(device_id=self.device_unique_id,
                                                                  CpuAvg=psutil.cpu_percent(interval=None),
                                                                  MemoryAvg=psutil.virtual_memory()[2],
-                                                                 NetworkAvg=net_avg_utilization)
+                                                                 NetworkAvg=net_avg_utilization,
+                                                                 SnapVersion=self.snap_version)
                 requests.post(heartbeat_api_url, headers=self.api_headers)
                 print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
 
