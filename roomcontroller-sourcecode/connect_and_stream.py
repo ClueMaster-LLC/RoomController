@@ -73,6 +73,7 @@ class ConnectAndStream(threading.Thread):
         self.startup_init = True
         self.command_relay_send = False
         self.command_reset_room = False
+        self.command_reset_puzzles = False
 
         # Diagnostic Only, global mac addresses to verify all threads can see them
         print(f">>> connect_and_stream - {self.device_mac} - GLOBAL MAC FOUND: {room_controller.global_active_mac_ids}")
@@ -266,8 +267,8 @@ class ConnectAndStream(threading.Thread):
                                        , (lambda data: (relay_old_values_clear()
                                                         , data_response_clear()
                                                         , command_reset_room()
-                                                        , print(f">>> connect_and_stream - {self.device_mac}"
-                                                                f" Reset Room command received")
+                                                        , print(f">>> connect_and_stream - {self.device_mac} "
+                                                                f"RESET_ROOM command received")
                                                         )))
 
                 self.hub_connection.on('reset_puzzles'
@@ -275,8 +276,8 @@ class ConnectAndStream(threading.Thread):
                                                         , relay_old_values_clear()
                                                         , data_response_clear()
                                                         , command_reset_puzzles()
-                                                        , print(f">>> connect_and_stream - {self.device_mac}"
-                                                                f" Reset Puzzles command received")
+                                                        , print(f">>> connect_and_stream - {self.device_mac} "
+                                                                f"RESET_PUZZLES command received")
                                                         )))
 
                 self.hub_connection.on('relay_pulse'
@@ -321,7 +322,7 @@ class ConnectAndStream(threading.Thread):
                     self.command_relay_list.clear()
 
                 def command_reset_puzzles():
-                    self.command_reset_room = True
+                    self.command_reset_puzzles = True
 
                     # clearing of active automations in memory pending
                     # Added 10-06-2024 - by: Robert
@@ -404,81 +405,204 @@ class ConnectAndStream(threading.Thread):
 
                         # Define a function to check if a given condition is true
                         def check_condition(condition):
-                            if 'type' in condition and condition['type'] == 'group':
-                                # Group condition
-                                conditions = condition['conditions']
-                                operator = condition['operator']
-
-                                # Check if all sub-conditions satisfy the operator
-                                sub_results = [check_condition(sub_condition) for sub_condition in conditions]
-                                if operator == 'and':
-                                    result = all(sub_results)
-                                elif operator == 'or':
-                                    result = any(sub_results)
-                                else:
-                                    print(f"Invalid operator {operator}")
-                                    result = False
-                            else:
-                                # Sensor condition
-                                event_type = condition['event_type']
-
-                                if event_type == 'device':
-                                    device_name = condition['device']
-                                    sensor_inputs = condition['inputs']
+                            try:
+                                if 'type' in condition and condition['type'] == 'group':
+                                    # Group condition
+                                    conditions = condition['conditions']
                                     operator = condition['operator']
-                                    value = condition['value']
-                                    # Find the sensor in the global variable
-                                    for sensor in room_controller.ACTIVE_INPUT_VALUES:
-                                        if sensor[0] == device_name:
-                                            sensor_values = sensor[1]
-                                            break
-                                    else:
-                                        print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
-                                              f" not found in global variable")
-                                        return False
 
-                                    # Check if the inputs satisfy the condition
-                                    input_statuses = []
-                                    for bank_value in sensor_values:
-                                        input_statuses += [(bank_value >> i) & 1 for i in range(8)]
-
-                                    input_values = [input_statuses[i - 1] for i in sensor_inputs]
-
+                                    # Check if all sub-conditions satisfy the operator
+                                    sub_results = [check_condition(sub_condition) for sub_condition in conditions]
                                     if operator == 'and':
-                                        result = all(input_values) == value
+                                        result = all(sub_results)
                                     elif operator == 'or':
-                                        result = any(input_values) == value
+                                        result = any(sub_results)
                                     else:
-                                        print(f"Invalid operator {operator}")
-                                        result = False
-
-                                elif event_type == 'system':
-                                    operator = condition['operator']
-                                    game_status = condition['game_status']
-                                    value = condition['value']
-
-                                    # print(
-                                    #     f"-------------CURRENT GLOBAL GAME STATUS: {room_controller.GLOBAL_GAME_STATUS}")
-                                    # print(f"-------------LOOKING FOR GAME VALUES: {game_status}")
-
-                                    # Check if the inputs satisfy the condition
-                                    game_value = [1 if item in [room_controller.GLOBAL_GAME_STATUS] else 0
-                                                  for item in game_status]
-
-                                    if operator == 'and':
-                                        result = all(game_value) == value
-                                        # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
-                                        #       f" {result} WITH {game_value} == {value}")
-                                    elif operator == 'or':
-                                        result = any(game_value) == value
-                                        # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
-                                        #       f" {result} WITH {game_value} == {value}")
-                                    else:
-                                        print(f"Invalid operator {operator}")
+                                        print(f"Invalid operator {operator} for automation rule: {condition}")
                                         result = False
                                 else:
-                                    result = False
-                                # print(f"-------------FOUND GAME FINAL RETURNED VALUE: {result}")
+                                    # Sensor condition
+                                    event_type = condition['event_type']
+
+                                    if event_type == 'device':
+                                        device_name = condition['device']
+                                        sensor_inputs = condition['inputs']
+                                        operator = condition['operator']
+                                        value = condition['value']
+                                        # Find the sensor in the global variable
+                                        for sensor in room_controller.ACTIVE_INPUT_VALUES:
+                                            if sensor[0] == device_name:
+                                                sensor_values = sensor[1]
+                                                break
+                                        else:
+                                            print(f">>> connect_and_stream - {self.device_mac} - Sensor {device_name}"
+                                                  f" not found in global variable")
+                                            return False
+
+                                        # Check if the inputs satisfy the condition
+                                        input_statuses = []
+                                        for bank_value in sensor_values:
+                                            input_statuses += [(bank_value >> i) & 1 for i in range(8)]
+
+                                        input_values = [input_statuses[i - 1] for i in sensor_inputs]
+
+                                        if operator == 'and':
+                                            result = all(input_values) == value
+                                        elif operator == 'or':
+                                            result = any(input_values) == value
+                                        else:
+                                            print(f"Invalid operator {operator} for automation rule: {condition}")
+                                            result = False
+
+                                    elif event_type == 'game_status':
+                                        game_status_id = condition['game_status_id']
+                                        operator = condition['operator']
+                                        value = condition['value']
+
+                                        # print(
+                                        #     f"-------------CURRENT GLOBAL GAME STATUS: {room_controller.GLOBAL_GAME_STATUS}")
+                                        # print(f"-------------LOOKING FOR GAME VALUES: {game_status}")
+
+                                        # Check if the inputs satisfy the condition
+                                        game_value = [1 if item in [room_controller.GLOBAL_GAME_STATUS] else 0
+                                                      for item in game_status_id]
+
+                                        if operator == 'and':
+                                            result = all(game_value) == value
+                                            # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                            #       f" {result} WITH {game_value} == {value}")
+                                        elif operator == 'or':
+                                            result = any(game_value) == value
+                                            # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                            #       f" {result} WITH {game_value} == {value}")
+                                        else:
+                                            print(f"Invalid operator {operator} for automation rule: {condition}")
+                                            result = False
+
+                                    elif event_type == 'command':
+                                        command_type: list = condition['command_type']
+                                        operator = condition['operator']
+                                        value = condition['value']
+
+                                        command_list: list = []
+                                        if self.command_reset_puzzles:
+                                            command_list.append("reset_puzzles")
+                                        if self.command_reset_room:
+                                            command_list.append("reset_room")
+                                        # print(f"COMMAND LIST: {command_list}")
+
+                                        if command_list:
+                                            def check_items(list_to_check, reference_list):
+                                                results = [1 if item in reference_list else 0 for item in list_to_check]
+                                                return results
+
+                                            # Example usage
+                                            list_to_check = command_type  # ["apple", "banana", "cherry"]
+                                            reference_list = command_list  # ["banana", "orange", "apple", "grape"]
+
+                                            # Call the function
+                                            result_list = check_items(list_to_check, reference_list)
+                                            # print(f"Result: {result_list}")
+
+                                            if operator == 'and':
+                                                result = all(result_list) == value
+                                                if result:
+                                                    print(f">>> connect_and_stream - {self.device_mac} - FOUND: "
+                                                          f"{command_list} in {command_type} VALUES: {result_list} "
+                                                          f"with (ALL) = {value}")
+                                                else:
+                                                    print(f">>> connect_and_stream - {self.device_mac} - FOUND: "
+                                                          f"{command_list} in {command_type} VALUES: {result_list} "
+                                                          f"with not (ALL) values = {value}")
+                                            elif operator == 'or':
+                                                result = any(result_list) == value
+                                                if result:
+                                                    print(f">>> connect_and_stream - {self.device_mac} - FOUND: "
+                                                          f"{command_list} in {command_type} VALUES: {result_list} "
+                                                          f"with (ANY) = {value}")
+                                                else:
+                                                    print(f">>> connect_and_stream - {self.device_mac} - FOUND: "
+                                                          f"{command_list} in {command_type} VALUES: {result_list} "
+                                                          f"with not (ANY) values = {value}")
+                                            else:
+                                                print(f"Invalid operator {operator} for automation rule: {condition}")
+                                                result = False
+
+                                            if 'reset_puzzles' in command_type:
+                                                self.command_reset_puzzles = False
+                                            elif 'reset_room' in command_type:
+                                                self.command_reset_room = False
+
+                                        else:
+                                            # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                            #       f" {command_list} are empty. Nothing to do.")
+                                            result = False
+
+                                    # elif event_type == 'command':
+                                    #     command_type = condition['command_type']
+                                    #
+                                    #     if command_type == 'reset_room':
+                                    #         operator = condition['operator']
+                                    #         value = condition['value']
+                                    #
+                                    #         # Check if the inputs satisfy the condition
+                                    #         if self.command_reset_puzzles is True:
+                                    #             command_value: list = [1]
+                                    #         else:
+                                    #             command_value: list = [0]
+                                    #
+                                    #         if operator == 'and':
+                                    #             result = all(command_value) == value
+                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                    #             #       f" {result} WITH {game_value} == {value}")
+                                    #         elif operator == 'or':
+                                    #             result = any(command_value) == value
+                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                    #             #       f" {result} WITH {game_value} == {value}")
+                                    #         else:
+                                    #             print(f"Invalid operator {operator} for automation rule: {condition}")
+                                    #             result = False
+                                    #
+                                    #         self.command_reset_room = False
+                                    #
+                                    #     elif command_type == 'reset_puzzles':
+                                    #         operator = condition['operator']
+                                    #         value = condition['value']
+                                    #
+                                    #         # Check if the inputs satisfy the condition
+                                    #         if self.command_reset_puzzles is True:
+                                    #             command_value: list = [1]
+                                    #         else:
+                                    #             command_value: list = [0]
+                                    #
+                                    #         # print(f"COMMAND VALUE: {command_value}")
+                                    #
+                                    #         if operator == 'and':
+                                    #             result = all(command_value) == value
+                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                    #             #       f" {result} WITH {game_value} == {value}")
+                                    #         elif operator == 'or':
+                                    #             result = any(command_value) == value
+                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
+                                    #             #       f" {result} WITH {game_value} == {value}")
+                                    #         else:
+                                    #             print(f"Invalid operator {operator} for automation rule: {condition}")
+                                    #             result = False
+                                    #
+                                    #         self.command_reset_puzzles = False
+                                    #
+                                    #     else:
+                                    #         print(f"Invalid operator {command_type} for automation rule: {condition}")
+                                    #         result = False
+                                    else:
+                                        print(f"Invalid operator {event_type} for automation rule: {condition}")
+                                        result = False
+
+                            except Exception as error_condition:
+                                print(f">>> connect_and_stream - {self.device_mac} - ERROR {error_condition} in"
+                                      f" automation rule: {condition}")
+                                result = False
+
                             return result
 
                         # Define a function to execute a given action
@@ -502,7 +626,7 @@ class ConnectAndStream(threading.Thread):
                             # Append additional relay commands to list to queue up.
                             if device_name == self.device_mac:
                                 self.command_relay_list.append([device_name, scheduled_datetime, relay_num
-                                                                   , relay_action, relay_delay])
+                                                                , relay_action, relay_delay])
 
                         # Check all automation rules on every value change of inputs/relays
                         def run_automation_rules():
@@ -604,7 +728,7 @@ class ConnectAndStream(threading.Thread):
                                             #       f" {self.startup_init}, {self.command_relay_send}")
                                             if not self.command_resync and not self.startup_init and not self.command_reset_room:
                                                 print(f">>> connect_and_stream - {self.device_mac} - "
-                                                      f"SEND RELAY TRIGGER VALUES TO CLUEMASTER - "
+                                                      f"SEND RELAY POST-AUTOMATION VALUES TO CLUEMASTER - "
                                                       f"SignalR > [{self.room_id}, "
                                                       f"{self.device_mac}, "
                                                       f"{self.data_response}]")
@@ -619,9 +743,12 @@ class ConnectAndStream(threading.Thread):
 
                                         # Setting resync command to false so that when refreshing the website,
                                         # it won't cause a trigger to fire.
-                                        self.command_resync = False
-                                        self.command_relay_send = False
-                                        self.command_reset_room = False
+                                        # MOVED to AFTER run_automation_rules() so automation
+                                        # can work for command_reset_room command.
+
+                                        # self.command_resync = False
+                                        # self.command_relay_send = False
+                                        # self.command_reset_room = False
 
                                     except Exception as error:
                                         print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
@@ -631,11 +758,17 @@ class ConnectAndStream(threading.Thread):
                                     try:
                                         self.hub_connection.start()
                                     except Exception as error:
-                                        print(
-                                            f'>>> connect_and_stream - {self.device_mac} SignalR Connection Error: {error}')
+                                        print(f">>> connect_and_stream - {self.device_mac} SignalR Connection Error: "
+                                              f"{error}")
 
                             # run automation rules if they need to fire
                             run_automation_rules()
+
+                            # Setting resync command to false so that when refreshing the website,
+                            # it won't cause a trigger to fire.
+                            self.command_resync = False
+                            self.command_relay_send = False
+                            self.command_reset_room = False
 
                         # start checking list to see if we have commands to fire for relays
                         if self.command_relay_list != []:

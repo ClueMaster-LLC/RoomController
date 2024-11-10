@@ -13,6 +13,7 @@ APPLICATION_DATA_DIRECTORY = os.path.join(MASTER_DIRECTORY, "assets/application_
 
 connected_clients = set()
 auth_token = "YOUR_SECRET_BEARER_TOKEN"
+server_url = "ws://localhost:8765"
 
 
 async def authenticate(websocket, path):
@@ -59,7 +60,7 @@ async def send_command_to_all_clients(command, media_file=None):
 
 
 async def main():
-    async with websockets.serve(handler, "192.168.1.16", 8765):
+    async with websockets.serve(handler, server_url, extra_headers={"Authorization": f"Bearer {auth_token}"}):
         while True:
             # command = input("Enter command (play/pause) and media file if needed (play media.mp4): ")
             command = "play"
