@@ -538,62 +538,6 @@ class ConnectAndStream(threading.Thread):
                                             #       f" {command_list} are empty. Nothing to do.")
                                             result = False
 
-                                    # elif event_type == 'command':
-                                    #     command_type = condition['command_type']
-                                    #
-                                    #     if command_type == 'reset_room':
-                                    #         operator = condition['operator']
-                                    #         value = condition['value']
-                                    #
-                                    #         # Check if the inputs satisfy the condition
-                                    #         if self.command_reset_puzzles is True:
-                                    #             command_value: list = [1]
-                                    #         else:
-                                    #             command_value: list = [0]
-                                    #
-                                    #         if operator == 'and':
-                                    #             result = all(command_value) == value
-                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
-                                    #             #       f" {result} WITH {game_value} == {value}")
-                                    #         elif operator == 'or':
-                                    #             result = any(command_value) == value
-                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
-                                    #             #       f" {result} WITH {game_value} == {value}")
-                                    #         else:
-                                    #             print(f"Invalid operator {operator} for automation rule: {condition}")
-                                    #             result = False
-                                    #
-                                    #         self.command_reset_room = False
-                                    #
-                                    #     elif command_type == 'reset_puzzles':
-                                    #         operator = condition['operator']
-                                    #         value = condition['value']
-                                    #
-                                    #         # Check if the inputs satisfy the condition
-                                    #         if self.command_reset_puzzles is True:
-                                    #             command_value: list = [1]
-                                    #         else:
-                                    #             command_value: list = [0]
-                                    #
-                                    #         # print(f"COMMAND VALUE: {command_value}")
-                                    #
-                                    #         if operator == 'and':
-                                    #             result = all(command_value) == value
-                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
-                                    #             #       f" {result} WITH {game_value} == {value}")
-                                    #         elif operator == 'or':
-                                    #             result = any(command_value) == value
-                                    #             # print(f">>> connect_and_stream - {self.device_mac} - RESULT"
-                                    #             #       f" {result} WITH {game_value} == {value}")
-                                    #         else:
-                                    #             print(f"Invalid operator {operator} for automation rule: {condition}")
-                                    #             result = False
-                                    #
-                                    #         self.command_reset_puzzles = False
-                                    #
-                                    #     else:
-                                    #         print(f"Invalid operator {command_type} for automation rule: {condition}")
-                                    #         result = False
                                     else:
                                         print(f"Invalid operator {event_type} for automation rule: {condition}")
                                         result = False
