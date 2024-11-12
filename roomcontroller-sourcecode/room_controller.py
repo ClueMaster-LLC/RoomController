@@ -59,7 +59,7 @@ class RoomController:
         # local class attributes
         self.room_id = None
         self.signalr_bearer_token = None
-        self.device_request_api_url = None
+        # self.device_request_api_url = None
         self.api_bearer_key = None
         self.get_automationrule_request_api = None
         self.get_automationrule_api = None
@@ -72,7 +72,10 @@ class RoomController:
         self.api_headers = None
         self.discover_new_relays_request_api = None
         self.get_devicelist_api = None
-        self.general_request_api = None
+        self.post_roomcontroller_request_api = None
+        self.get_roomcontroller_request_api = None
+        self.restart_rc_id = 8
+        self.shutdown_rc_id = 9
         self.search_for_devices_id = 12
         self.update_device_list_id = 13
         self.update_automation_rule_id = 14
@@ -116,18 +119,20 @@ class RoomController:
             self.device_unique_id = json_response_of_unique_ids_file["device_id"]
             self.set_device_unique_id(self.device_unique_id)
             self.api_bearer_key = json_response_of_unique_ids_file["api_token"]
-            self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
+            # self.device_request_api_url = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
 
             self.api_headers = CaseInsensitiveDict()
             self.api_headers["Authorization"] = f"Basic {self.device_unique_id}:{self.api_bearer_key}"
             self.signalr_bearer_token = f"?access_token={self.device_unique_id}_{self.api_bearer_key}"
             # self.signalr_access_token = f'?access_token=1212-1212-1212_www5e9eb82c38bffe63233e6084c08240ttt'
 
+            # GET API
             self.discover_new_relays_request_api = NEW_RELAYS_DISCOVERY_REQUEST.format(device_id=self.device_unique_id)
             self.get_devicelist_request_api = GET_NEW_INPUT_RELAY_LIST_REQUEST.format(device_id=self.device_unique_id)
             self.get_devicelist_api = GET_NEW_INPUT_RELAY_LIST.format(device_id=self.device_unique_id)
             self.get_automationrule_api = GET_ROOM_AUTOMATION_MASTER.format(device_id=self.device_unique_id)
             self.get_automationrule_request_api = GET_ROOM_CONTROLLER_AUTOMATION_REQUEST.format(device_id=self.device_unique_id)
+            self.get_roomcontroller_request_api = ROOM_CONTROLLER_REQUEST_API.format(device_id=self.device_unique_id)
 
             # load room id into memory
             self.get_rc_room_id()
@@ -147,8 +152,8 @@ class RoomController:
                     try:
                         self.signalr_hub()
                     except Exception as error:
-                        print(f">>> room_controller - {self.device_unique_id} - SignalR Did not connect for Room Controller. "
-                              f"Server Error: {error}")
+                        print(f">>> room_controller - {self.device_unique_id} - SignalR Did not connect for Room "
+                              f"Controller. Server Error: {error}")
                         # time.sleep(5)
 
                 # print(">>> Console Output " + str(datetime.datetime.utcnow()) +
@@ -163,12 +168,47 @@ class RoomController:
 
                     if request_id == self.search_for_devices_id:
                         print(">>> room_controller - Acknowledging request for Input Relay with RequestId ", request_id)
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
-                                                                                       request_id=request_id)
-                        requests.post(self.general_request_api, headers=self.api_headers)
+                        self.post_roomcontroller_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                                   request_id=request_id)
+                        requests.post(self.post_roomcontroller_request_api, headers=self.api_headers)
 
                         # staring add_find_device thread
                         self.start_add_find_device_thread(response=relays_discovery_request.json())
+                    else:
+                        print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
+
+                time.sleep(1)
+
+                # Looking for DeviceRequest ID's 8,9
+                get_roomcontroller_request = requests.get(self.get_roomcontroller_request_api, headers=self.api_headers)
+
+                # "Waiting for code 8,9
+                get_roomcontroller_request.raise_for_status()
+
+                if get_roomcontroller_request.text not in self.api_active_null_responses:
+                    request_id = get_roomcontroller_request.json()["RequestID"]
+                    print(f">>> room_controller - {time.ctime()} + {get_roomcontroller_request} "
+                          f"+ REQUEST_ID: {request_id}")
+
+                    if request_id == self.restart_rc_id:
+                        print(">>> room_controller - Acknowledging request for Input Relay with RequestId ", request_id)
+                        self.post_roomcontroller_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                                   request_id=request_id)
+                        # Acknowledge request ID back to API to confirm receipt.
+                        requests.post(self.post_roomcontroller_request_api, headers=self.api_headers)
+
+                        # Restart the Room Controller SNAP
+                        self.restart_rc()
+
+                    elif request_id == self.shutdown_rc_id:
+                        print(">>> room_controller - Acknowledging request for Input Relay with RequestId ", request_id)
+                        self.post_roomcontroller_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                                   request_id=request_id)
+                        requests.post(self.post_roomcontroller_request_api, headers=self.api_headers)
+
+                        # Shutdown the Room Controller Device
+                        self.shutdown_rc()
+
                     else:
                         print(">>> room_controller - Unexpected Request id:", str(request_id), "returned.")
 
@@ -184,10 +224,10 @@ class RoomController:
                     if request_id == self.update_automation_rule_id:
                         print(">>> room_controller - Acknowledging request to GET new updated Automation Rule with RequestId ", request_id)
 
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(
+                        self.post_roomcontroller_request_api = POST_ROOM_CONTROLLER_REQUEST.format(
                             device_id=self.device_unique_id,
                             request_id=request_id)
-                        requests.post(self.general_request_api, headers=self.api_headers)
+                        requests.post(self.post_roomcontroller_request_api, headers=self.api_headers)
                         # print(requests.post(self.general_request_api, headers=self.api_headers))
 
                         # download latest list of devices from ClueMaster to refresh list if request_id=14
@@ -216,9 +256,9 @@ class RoomController:
                         # self.general_request_api = POST_INPUT_RELAY_REQUEST_UPDATE.format(device_id=self.device_unique_id, request_id=request_id)
                         # requests.post(self.general_request_api, headers=self.api_headers)
 
-                        self.general_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
-                                                                                       request_id=request_id)
-                        requests.post(self.general_request_api, headers=self.api_headers)
+                        self.post_roomcontroller_request_api = POST_ROOM_CONTROLLER_REQUEST.format(device_id=self.device_unique_id,
+                                                                                                   request_id=request_id)
+                        requests.post(self.post_roomcontroller_request_api, headers=self.api_headers)
                         # print(requests.post(self.general_request_api, headers=self.api_headers))
 
                         # download latest list of devices from ClueMaster to refresh list if request_id=13
@@ -257,6 +297,7 @@ class RoomController:
             except requests.exceptions.JSONDecodeError as json_error:
                 print(">>> room_controller - room_controller.py JsonDecodeError")
                 print(">>> room_controller - Error ", str(json_error))
+                time.sleep(5)
                 pass
 
             except KeyboardInterrupt:

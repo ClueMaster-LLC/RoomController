@@ -90,7 +90,7 @@ class Heartbeat(threading.Thread):
                 requests.post(heartbeat_api_url, headers=self.api_headers)
                 print(f">>> heartbeat - {self.device_unique_id} - Device HeartBeat API data sent at {time.ctime()}")
 
-                time.sleep(60)
+                time.sleep(10)
                 # print(f">>> heartbeat - {self.device_unique_id} - HEART BEAT STOP IS: {HEARTBEAT_STOP}")
                 if HEARTBEAT_STOP is True:
                     break
@@ -98,11 +98,11 @@ class Heartbeat(threading.Thread):
             except requests.exceptions.HTTPError as request_error:
                 if "401 Client Error" in str(request_error):
                     self.reset_heartbeat()
-                    time.sleep(5)
+                    time.sleep(10)
                     break
                 else:
                     print(f">>> heartbeat - {self.device_unique_id} - ERROR: {request_error}")
-                    time.sleep(5)
+                    time.sleep(10)
 
     def get_network_utilization(self, interval=1):
         net1 = psutil.net_io_counters(pernic=True)
