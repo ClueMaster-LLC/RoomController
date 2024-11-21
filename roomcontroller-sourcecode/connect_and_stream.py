@@ -320,6 +320,7 @@ class ConnectAndStream(threading.Thread):
                     # clearing of active automations in memory pending
                     # Added 10-06-2024 - by: Robert
                     self.command_relay_list.clear()
+                    print(f">>> connect_and_stream - {self.device_mac} - AUTOMATION LIST CLEARED")
 
                 def command_reset_puzzles():
                     self.command_reset_puzzles = True
@@ -327,6 +328,7 @@ class ConnectAndStream(threading.Thread):
                     # clearing of active automations in memory pending
                     # Added 10-06-2024 - by: Robert
                     self.command_relay_list.clear()
+                    print(f">>> connect_and_stream - {self.device_mac} - AUTOMATION LIST CLEARED")
 
                 def relay_send_true():
                     self.command_relay_send = True
@@ -551,7 +553,7 @@ class ConnectAndStream(threading.Thread):
 
                         # Define a function to execute a given action
                         def execute_action(action):
-                            current_datetime = datetime.now()
+                            datetime_now = datetime.now()
                             # print("Current date and time:", current_datetime)
 
                             device_name = action['device']
@@ -563,14 +565,14 @@ class ConnectAndStream(threading.Thread):
                             millisecond_timedelta = timedelta(milliseconds=relay_delay)
                             # print("Current TIME DELTA:", millisecond_timedelta)
 
-                            # Add 5 seconds to the current time
-                            scheduled_datetime = current_datetime + millisecond_timedelta
+                            # Add relay_delay milliseconds to the current time
+                            scheduled_run_datetime = datetime_now + millisecond_timedelta
                             # print("Current FUTURE DATETIME:", scheduled_datetime)
 
                             # Append additional relay commands to list to queue up.
                             if device_name == self.device_mac:
-                                self.command_relay_list.append([device_name, scheduled_datetime, relay_num
-                                                                , relay_action, relay_delay])
+                                self.command_relay_list.append([device_name, scheduled_run_datetime,
+                                                                relay_num, relay_action, relay_delay])
 
                         # Check all automation rules on every value change of inputs/relays
                         def run_automation_rules():
@@ -687,12 +689,10 @@ class ConnectAndStream(threading.Thread):
 
                                         # Setting resync command to false so that when refreshing the website,
                                         # it won't cause a trigger to fire.
-                                        # MOVED to AFTER run_automation_rules() so automation
-                                        # can work for command_reset_room command.
 
-                                        # self.command_resync = False
-                                        # self.command_relay_send = False
-                                        # self.command_reset_room = False
+                                        self.command_resync = False
+                                        self.command_relay_send = False
+                                        self.command_reset_room = False
 
                                     except Exception as error:
                                         print(f'>>> connect_and_stream - {self.device_mac} Connection Error: {error}')
@@ -707,12 +707,6 @@ class ConnectAndStream(threading.Thread):
 
                             # run automation rules if they need to fire
                             run_automation_rules()
-
-                            # Setting resync command to false so that when refreshing the website,
-                            # it won't cause a trigger to fire.
-                            self.command_resync = False
-                            self.command_relay_send = False
-                            self.command_reset_room = False
 
                         # start checking list to see if we have commands to fire for relays
                         if self.command_relay_list != []:
@@ -753,6 +747,12 @@ class ConnectAndStream(threading.Thread):
                                             pass
                                         else:
                                             self.command_relay_list.remove(command)
+                                    # else:
+                                    #     list_count = len(self.command_relay_list)
+                                    #     time_difference = scheduled_datetime - current_datetime
+                                    #     print(f">>> connect_and_stream - {self.device_mac} - CURRENT AUTOMATION LIST "
+                                    #           f"COUNT: {list_count} . Waiting {time_difference.total_seconds()} "
+                                    #           f"seconds")
 
                                 except Exception as error:
                                     print(f">>> connect_and_stream - {self.device_mac} - Relay Timer Command:"
