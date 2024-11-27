@@ -5,6 +5,7 @@ import socket
 import threading
 import time
 import requests
+import dbus
 
 import websocket
 from requests.structures import CaseInsensitiveDict
@@ -570,7 +571,7 @@ class RoomController:
             if platform.system() == "Windows":
                 # win32api.InitiateSystemShutdown()
                 print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
-                pass
+
             elif platform.system() == "Linux" or platform.system() == "Linux2":
                 import dbus
 
@@ -592,7 +593,7 @@ class RoomController:
             if platform.system() == "Windows":
                 # win32api.InitiateSystemShutdown()
                 print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
-                pass
+
             elif platform.system() == "Linux" or platform.system() == "Linux2":
                 import dbus
 

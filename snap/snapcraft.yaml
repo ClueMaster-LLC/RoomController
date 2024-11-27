@@ -75,11 +75,3 @@ parts:
 
     stage:
       - -usr/lib/x86_64-linux-gnu/libc_malloc_debug.so
-
-  # reboot:
-    # plugin: dump
-    # source: .
-    # organize:
-      # reboot.py: usr/bin/reboot
-    # stage-packages:
-      # - python3-dbus
