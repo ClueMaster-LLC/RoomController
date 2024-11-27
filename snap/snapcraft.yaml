@@ -18,14 +18,31 @@ apps:
     daemon: simple
     restart-condition: always
     command: bin/python3 $SNAP/roomcontroller-sourcecode/main.py
+    plugs:
+        - network  # For internet communication
+        - shutdown
+        - hardware-observe
+        - network-bind
 
 plugs:
-  home:
+  # home:
+  # network:
+  # network-bind:
+  # hardware-observe:
+  # network-observe:
+  # shutdown:
+
   network:
+    interface: network
+  
   network-bind:
-  hardware-observe:
-  network-observe:
+    interface: network-bind
+    
   shutdown:
+    interface: shutdown
+    
+  hardware-observe:
+    interface: hardware-observe
 
 parts:
   copy-source-code:
