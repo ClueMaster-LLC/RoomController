@@ -819,10 +819,12 @@ class ConnectAndStream(threading.Thread):
                                         # print(self.command_resync, self.startup_init)
                                         if not self.command_resync and not self.startup_init:
                                             print(f">>> connect_and_stream - {self.device_mac} - "
-                                                  f"SEND TRIGGER VALUES TO CLUEMASTER"
+                                                  f"SEND CLUE TRIGGER VALUES TO CLUEMASTER TO"
                                                   f" SignalR > [{self.room_id}, {self.device_mac}, {self.data_response}]")
 
-                                            # send trigger data to signalR hub
+                                            # IMPORTANT: Send Clue Trigger data to signalR hub so when received it will
+                                            # update a record in the auto clues table to send the next auto clue to the
+                                            # api for the tv
                                             self.hub_connection.send('SendClueTrigger', [str(self.room_id),
                                                                                          str(self.device_mac),
                                                                                          str(self.data_response)])
