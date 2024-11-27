@@ -17,6 +17,8 @@ apps:
   room-controller:
     daemon: simple
     restart-condition: always
+    environment:
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
     command: bin/python3 $SNAP/roomcontroller-sourcecode/main.py
     plugs:
         - network  # For internet communication
@@ -68,10 +70,15 @@ parts:
       - git
       - python3
       - bash
-      - python3-dbus
       
     organize:
       usr/lib/*/samba/*: usr/lib/
 
     stage:
       - -usr/lib/x86_64-linux-gnu/libc_malloc_debug.so
+
+  reboot:
+    plugin: dump
+    source: .
+    stage-packages:
+      - python3-dbus
