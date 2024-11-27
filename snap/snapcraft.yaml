@@ -50,8 +50,6 @@ parts:
     source: .
     organize:
       "static/prepare-launch": "bin/"
-    stage-packages:
-      - python3-dbus
 
   room-controller:
     plugin: python
@@ -70,6 +68,7 @@ parts:
       - git
       - python3
       - bash
+      - python3-dbus
       
     organize:
       usr/lib/*/samba/*: usr/lib/

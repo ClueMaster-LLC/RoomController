@@ -583,7 +583,7 @@ class RoomController:
                 print(f">>> heartbeat - {self.device_unique_id} - OS Reboot Command not Supported")
 
         except Exception as error:
-            print(f">>> heartbeat - ERROR: {error}")
+            print(f">>> heartbeat - {self.device_unique_id} - ERROR: {error}")
             print(f">>> heartbeat - {self.device_unique_id} - Error Sending Reboot Command")
 
     # @staticmethod
