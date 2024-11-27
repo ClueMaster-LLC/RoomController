@@ -50,6 +50,8 @@ parts:
     source: .
     organize:
       "static/prepare-launch": "bin/"
+    stage-packages:
+      - python3-dbus
 
   room-controller:
     plugin: python
@@ -75,10 +77,10 @@ parts:
     stage:
       - -usr/lib/x86_64-linux-gnu/libc_malloc_debug.so
 
-  reboot:
-    plugin: dump
-    source: .
-    organize:
-      reboot.py: usr/bin/reboot
-    stage-packages:
-      - python3-dbus
+  # reboot:
+    # plugin: dump
+    # source: .
+    # organize:
+      # reboot.py: usr/bin/reboot
+    # stage-packages:
+      # - python3-dbus
