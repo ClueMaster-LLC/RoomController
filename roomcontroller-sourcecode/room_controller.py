@@ -5,7 +5,6 @@ import socket
 import threading
 import time
 import requests
-import dbus
 
 import websocket
 from requests.structures import CaseInsensitiveDict
