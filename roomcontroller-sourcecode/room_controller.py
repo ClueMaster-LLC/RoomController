@@ -5,6 +5,7 @@ import socket
 import threading
 import time
 import requests
+
 import websocket
 from requests.structures import CaseInsensitiveDict
 
@@ -463,7 +464,7 @@ class RoomController:
             "type": "raw",
             "keep_alive_interval": 5,
             "reconnect_interval": 10,
-            "max_attempts": 3
+            "max_attempts": 99
         }).build()
         # TODO try to get retries working and connect to signalR when online
         # "accessTokenFactory": 'value'
@@ -571,8 +572,15 @@ class RoomController:
                 print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
                 pass
             elif platform.system() == "Linux" or platform.system() == "Linux2":
-                os.system('systemctl reboot -i')
-            print(f">>> heartbeat - {self.device_unique_id} - Room Controller Rebooting")
+                import dbus
+
+                bus = dbus.SystemBus()
+                bus_object = bus.get_object("org.freedesktop.login1", "/org/freedesktop/login1")
+                bus_object.Reboot(True, dbus_interface="org.freedesktop.login1.Manager")
+                print(f">>> heartbeat - {self.device_unique_id} - Room Controller Rebooting")
+                exit()
+            else:
+                print(f">>> heartbeat - {self.device_unique_id} - OS Reboot Command not Supported")
 
         except Exception as error:
             print(f">>> heartbeat - ERROR: {error}")
@@ -586,8 +594,14 @@ class RoomController:
                 print(f">>> heartbeat - {self.device_unique_id} - Windows Room Controller Rebooting")
                 pass
             elif platform.system() == "Linux" or platform.system() == "Linux2":
-                os.system('systemctl poweroff -i')
-            print(f">>> heartbeat - {self.device_unique_id} - Shutting Down Room Controller")
+                import dbus
+
+                bus = dbus.SystemBus()
+                bus_object = bus.get_object("org.freedesktop.login1", "/org/freedesktop/login1")
+                bus_object.PowerOff(True, dbus_interface="org.freedesktop.login1.Manager")
+                print(f">>> heartbeat - {self.device_unique_id} - Shutting Down Room Controller")
+            else:
+                print(f">>> heartbeat - {self.device_unique_id} - OS Reboot Command not Supported")
 
         except Exception as error:
             print(f">>> heartbeat - {self.device_unique_id} - ERROR: {error}")
